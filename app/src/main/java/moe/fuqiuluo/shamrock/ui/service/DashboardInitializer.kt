@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import moe.fuqiuluo.remote.entries.CommonResult
 import moe.fuqiuluo.remote.entries.CurrentAccount
+import moe.fuqiuluo.remote.entries.Status
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime.AccountInfo
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime.log
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime.state
@@ -47,10 +48,11 @@ object DashboardInitializer {
             try {
                 GlobalClient.get("http://127.0.0.1:$servicePort/get_account_info").let {
                     if (it.status == HttpStatusCode.OK) {
-                        val result =
-                            Json.decodeFromString<CommonResult<CurrentAccount>>(it.bodyAsText())
+                        val result: CommonResult<CurrentAccount> = Json.decodeFromString(it.bodyAsText())
                         state.isFined.value = result.retcode == 0
-                        if (result.retcode != 0) {
+                        if (result.retcode == Status.InternalHandlerError.code) {
+                            log("账号未登录。", Level.WARN)
+                        } else if (result.retcode != 0) {
                             log("尝试从接口获取账号信息失败，未知错误。", Level.ERROR)
                         } else {
                             log("心跳请求发送已发送。")

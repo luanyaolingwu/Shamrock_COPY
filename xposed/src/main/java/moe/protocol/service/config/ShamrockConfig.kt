@@ -36,6 +36,7 @@ internal object ShamrockConfig {
             putString(   "ws_addr",    intent.getStringExtra("ws_addr"))                                    // 被动WS地址
             putBoolean(  "pro_api",    intent.getBooleanExtra("pro_api", false))                // 开发调试API开关
             putBoolean(  "inject_packet",    intent.getBooleanExtra("inject_packet", false))    // 拦截无用包
+            putBoolean(  "debug",    intent.getBooleanExtra("debug", false))    // 调试模式
             putString(   "token",      intent.getStringExtra("token"))                                      // 鉴权
             putBoolean("isInit", true)
         }
@@ -116,7 +117,10 @@ internal object ShamrockConfig {
         return mmkv.getBoolean("inject_packet", false)
     }
 
-
+    fun isDebug(): Boolean {
+        val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
+        return mmkv.getBoolean("debug", false)
+    }
 
 
 }
