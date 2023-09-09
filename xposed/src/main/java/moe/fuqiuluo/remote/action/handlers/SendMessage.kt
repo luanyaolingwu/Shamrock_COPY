@@ -76,4 +76,6 @@ internal object SendMessage: IActionHandler() {
     override val requiredParams: Array<String> = arrayOf("detail_type", "message")
 
     override fun path(): String = "send_message"
+
+    override val alias: Array<String> = arrayOf("send_msg")
 }
