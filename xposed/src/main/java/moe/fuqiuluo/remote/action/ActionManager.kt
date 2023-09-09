@@ -35,6 +35,9 @@ internal object ActionManager {
             // RESOURCE ACTION
             GetRecord
         ).forEach {
+            it.alias.forEach { name ->
+                actionMap[name] = it
+            }
             actionMap[it.path()] = it
         }
     }
@@ -48,6 +51,8 @@ internal abstract class IActionHandler {
     protected abstract suspend fun internalHandle(session: ActionSession): String
 
     abstract fun path(): String
+
+    open val alias: Array<String> = arrayOf()
 
     open val requiredParams: Array<String> = arrayOf()
 
