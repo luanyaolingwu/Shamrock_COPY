@@ -31,7 +31,7 @@ internal object AioListener: IKernelMsgListener {
             if (rawMsg.isEmpty()) return
             val msgId = MessageHelper.insertChatTypeToMsgId(record.msgId, record.chatType)
             val msgHash = MessageHelper.convertMsgIdToMsgHash(record.chatType, msgId, record.peerUin)
-
+            MessageHelper.saveQMsgIdByMsgId(msgId, record.msgId)
             MessageHelper.saveMsgSeqByMsgId(record.chatType, msgId, record.msgSeq)
 
             when (record.chatType) {
