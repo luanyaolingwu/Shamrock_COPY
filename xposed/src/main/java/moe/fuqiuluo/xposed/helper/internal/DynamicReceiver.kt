@@ -34,7 +34,6 @@ internal object DynamicReceiver: BroadcastReceiver() {
                     }?.callback?.handle(intent)
                 } else if (hash != -1) {
                     mutex.withLock {
-                        LogCenter.log("", Level.DEBUG)
                         hashHandler.forEach {
                             if (hash == it.hashCode()) {
                                 it.callback?.handle(intent)

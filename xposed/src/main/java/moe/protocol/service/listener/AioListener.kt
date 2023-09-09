@@ -29,12 +29,14 @@ internal object AioListener: IKernelMsgListener {
         try {
             val rawMsg = record.elements.toCQCode(record.chatType)
             if (rawMsg.isEmpty()) return
-            val msgHash = MessageHelper.convertMsgIdToMsgHash(record.chatType, record.msgId, record.peerUin)
+            val msgId = MessageHelper.insertChatTypeToMsgId(record.msgId, record.chatType)
+            val msgHash = MessageHelper.convertMsgIdToMsgHash(record.chatType, msgId, record.peerUin)
+
+            MessageHelper.saveMsgSeqByMsgId(record.chatType, msgId, record.msgSeq)
+
             when (record.chatType) {
                 MsgConstant.KCHATTYPEGROUP -> {
                     LogCenter.log("群消息(group = ${record.peerName}(${record.peerUin}), uin = ${record.senderUin}, msg = $rawMsg)")
-                    MessageHelper.saveMsgSeqByMsgId(record.chatType, record.msgId, record.msgSeq)
-
                     ShamrockConfig.getGroupMsgRule()?.let { rule ->
                         if (rule.black?.contains(record.peerUin) == true) return
                         if (rule.white?.contains(record.peerUin) == false) return
@@ -46,8 +48,6 @@ internal object AioListener: IKernelMsgListener {
                 }
                 MsgConstant.KCHATTYPEC2C -> {
                     LogCenter.log("私聊消息(private = ${record.senderUin}, msg = $rawMsg)")
-                    MessageHelper.saveMsgSeqByMsgId(record.chatType, record.msgId, record.msgSeq)
-
                     ShamrockConfig.getPrivateRule()?.let { rule ->
                         if (rule.black?.contains(record.peerUin) == true) return
                         if (rule.white?.contains(record.peerUin) == false) return

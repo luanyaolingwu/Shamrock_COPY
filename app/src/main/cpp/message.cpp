@@ -148,3 +148,10 @@ Java_moe_protocol_servlet_helper_MessageHelper_nativeEncodeCQCode(JNIEnv *env, j
     return env->NewStringUTF(result.c_str());
 }
 
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_moe_protocol_servlet_helper_MessageHelper_insertChatTypeToMsgId(JNIEnv *env, jobject thiz,
+                                                                     jlong msg_id, jint chat_type) {
+    return (msg_id & 0xffffffffffffff00L) | chat_type;
+}

@@ -5,17 +5,13 @@ import moe.protocol.servlet.helper.MessageHelper
 import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import com.tencent.qqnt.kernel.nativeinterface.MsgElement
 import com.tencent.qqnt.kernel.nativeinterface.MsgRecord
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import moe.protocol.servlet.transfile.RichProtoSvc
-import kotlinx.io.core.BytePacketBuilder
 import moe.fuqiuluo.xposed.helper.Level
 import moe.fuqiuluo.xposed.helper.LogCenter
-import moe.fuqiuluo.xposed.tools.asJson
 import moe.fuqiuluo.xposed.tools.asJsonObject
 import moe.fuqiuluo.xposed.tools.asString
-import moe.fuqiuluo.xposed.tools.asStringOrNull
 import moe.fuqiuluo.xposed.tools.json
 
 internal typealias MsgSegment = ArrayList<HashMap<String, JsonElement>>
