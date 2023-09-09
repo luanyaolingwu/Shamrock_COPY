@@ -29,10 +29,13 @@ internal object MsgSvc: BaseSvc() {
         val chatType = MessageHelper.getChatType(msgId)
         val peerId = MessageHelper.getPeerIdByMsgId(msgId)
         val contact = MessageHelper.generateContact(chatType, peerId.toString())
+
+        val qMsgId = MessageHelper.getQMsgIdByMsgId(msgId)
+
         return withTimeout(5000) {
             val service = QRoute.api(IMsgService::class.java)
             suspendCancellableCoroutine { continuation ->
-                service.getMsgsByMsgId(contact, arrayListOf(msgId)) { code, _, msgRecords ->
+                service.getMsgsByMsgId(contact, arrayListOf(qMsgId)) { code, _, msgRecords ->
                     if (code == 0 && msgRecords.isNotEmpty()) {
                         continuation.resume(msgRecords.first())
                     } else {

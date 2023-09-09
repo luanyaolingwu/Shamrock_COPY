@@ -160,6 +160,16 @@ internal object MessageHelper {
         return mmkv.getLong(hashCode.toString(), 0)
     }
 
+    fun saveQMsgIdByMsgId(msgId: Long, qmsgId: Long) {
+        val mmkv = MMKVFetcher.mmkvWithId("id2id")
+        mmkv.putLong(msgId.toString(), qmsgId)
+    }
+
+    fun getQMsgIdByMsgId(msgId: Long): Long {
+        val mmkv = MMKVFetcher.mmkvWithId("id2id")
+        return mmkv.getLong(msgId.toString(), msgId)
+    }
+
     external fun createMessageUniseq(chatType: Int, time: Long): Long
 
     fun decodeCQCode(code: String): JsonArray {

@@ -14,6 +14,8 @@ internal object CleanCache: IActionHandler() {
         FileUtils.clearCache()
         MMKVFetcher.mmkvWithId("hash2id")
             .clear()
+        MMKVFetcher.mmkvWithId("id2id")
+            .clear()
         MMKVFetcher.mmkvWithId("seq2id")
             .clear()
         MMKVFetcher.mmkvWithId("audio2silk")
