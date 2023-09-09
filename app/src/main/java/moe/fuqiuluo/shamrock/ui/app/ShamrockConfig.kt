@@ -155,6 +155,16 @@ object ShamrockConfig {
         return preferences.getBoolean("auto_clear", false)
     }
 
+    fun isDebug(ctx: Context): Boolean {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getBoolean("debug", false)
+    }
+
+    fun setDebug(ctx: Context, v: Boolean) {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        preferences.edit().putBoolean("debug", v).apply()
+    }
+
     fun isInjectPacket(ctx: Context): Boolean {
         val preferences = ctx.getSharedPreferences("config", 0)
         return preferences.getBoolean("inject_packet", false)
@@ -180,6 +190,7 @@ object ShamrockConfig {
             "pro_api" to preferences.getBoolean("pro_api", false),
             "token" to preferences.getString("token", null),
             "inject_packet" to preferences.getBoolean("inject_packet", false),
+            "debug" to preferences.getBoolean("debug", false),
         )
     }
 

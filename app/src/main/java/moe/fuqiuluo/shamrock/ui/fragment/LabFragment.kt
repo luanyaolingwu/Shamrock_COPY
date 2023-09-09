@@ -72,6 +72,17 @@ fun LabFragment() {
                     scope.toast(ctx, "重启生效哦！")
                     return@Function true
                 }
+
+                Function(
+                    title = "显示调试日志",
+                    desc = "会导致日志刷屏。",
+                    descColor = it,
+                    isSwitch = ShamrockConfig.isDebug(ctx)
+                ) {
+                    ShamrockConfig.setDebug(ctx, it)
+                    ShamrockConfig.pushUpdate(ctx)
+                    return@Function false
+                }
             }
         }
 
