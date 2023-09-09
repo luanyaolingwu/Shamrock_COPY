@@ -81,7 +81,7 @@ fun LabFragment() {
                 ) {
                     ShamrockConfig.setDebug(ctx, it)
                     ShamrockConfig.pushUpdate(ctx)
-                    return@Function true
+                    return@Function false
                 }
             }
         }
