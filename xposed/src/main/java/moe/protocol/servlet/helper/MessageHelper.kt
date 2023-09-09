@@ -157,8 +157,7 @@ internal object MessageHelper {
 
     fun getMsgIdByHashCode(hashCode: Int): Long {
         val mmkv = MMKVFetcher.mmkvWithId("hash2id")
-        return mmkv
-            .getLong(hashCode.toString(), 0)
+        return mmkv.getLong(hashCode.toString(), 0)
     }
 
     external fun createMessageUniseq(chatType: Int, time: Long): Long
@@ -204,7 +203,7 @@ internal object MessageHelper {
         return when (chatType) {
             MsgConstant.KCHATTYPEGROUP -> mmkv.getLong("grp$msgId", 0)
             MsgConstant.KCHATTYPEC2C -> mmkv.getLong("c2c$msgId", 0)
-            else -> error("暂时不支持该类型消息: $chatType")
+            else -> error("暂时不支持该类型消息来源: $chatType")
         }
     }
 
@@ -212,4 +211,6 @@ internal object MessageHelper {
     private external fun nativeEncodeCQCode(segment: List<Map<String, String>>): String
 
     external fun getChatType(msgId: Long): Int
+
+    external fun insertChatTypeToMsgId(msgId: Long, chatType: Int): Long
 }
