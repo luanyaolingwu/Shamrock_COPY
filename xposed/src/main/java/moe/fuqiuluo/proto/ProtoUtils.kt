@@ -44,9 +44,18 @@ object ProtoUtils {
             is ByteString -> any.proto
             is Array<*> -> ProtoList(arrayListOf(*any.map { any2proto(it!!) }.toTypedArray()))
             is Collection<*> -> ProtoList(arrayListOf(*any.map { any2proto(it!!) }.toTypedArray()))
-            is Map<*, *> -> ProtoMap(hashMapOf(*any.map { (k, v) ->
-                k as Int to any2proto(v!!)
-            }.toTypedArray()))
+            is Map<*, *> -> ProtoMap().also {
+                any.forEach { (k, v) ->
+                    when (k) {
+                        is Number -> it[k.toInt()] = any2proto(v!!)
+                        is Pair<*, *> -> {
+                            val tags = walkPairTags(k)
+                            it.set(*tags.toIntArray(), v = any2proto(v!!))
+                        }
+                        else -> error("Not support type for tag: ${k.toString()}")
+                    }
+                }
+            }
             is Pair<*, *> -> {
                 val (tag, v) = any
                 val value = any2proto(v!!)

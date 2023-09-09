@@ -58,24 +58,24 @@ internal object NTServiceFetcher {
     private fun antiBackgroundMode(sessionService: IQQNTWrapperSession) {
         try {
             sessionService.javaClass.hookMethod("switchToBackGround").before {
-                LogCenter.log("阻止进入后台模式！", Level.DEBUG)
+                LogCenter.log({ "阻止进入后台模式！" }, Level.DEBUG)
                 it.result = null
             }
 
             val msgService = sessionService.msgService
             msgService.javaClass.hookMethod("switchBackGroundForMqq").before {
-                LogCenter.log("阻止进入后台模式！", Level.DEBUG)
+                LogCenter.log({ "阻止进入后台模式！" }, Level.DEBUG)
                 val cb = it.args[1] as IOperateCallback
                 cb.onResult(-1, "injected")
                 it.result = null
             }
             msgService.javaClass.hookMethod("switchBackGround").before {
-                LogCenter.log("阻止进入后台模式！", Level.DEBUG)
+                LogCenter.log({ "阻止进入后台模式！" }, Level.DEBUG)
                 val cb = it.args[1] as IOperateCallback
                 cb.onResult(-1, "injected")
                 it.result = null
             }
-            LogCenter.log("反后台模式注入成功！", Level.DEBUG)
+            LogCenter.log({ "反后台模式注入成功！" }, Level.DEBUG)
         } catch (e: Throwable) {
             LogCenter.log("Keeping NT alive failed: ${e.message}", Level.WARN)
         }

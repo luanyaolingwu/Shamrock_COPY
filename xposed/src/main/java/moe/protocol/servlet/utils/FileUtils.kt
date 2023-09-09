@@ -47,7 +47,7 @@ internal object FileUtils {
                     saveFileToCache(it)
                 }.also {
                     tmp.delete()
-                    LogCenter.log("文件下载完成: ${it.absolutePath}, 地址: $file", Level.DEBUG)
+                    LogCenter.log({ "文件下载完成: ${it.absolutePath}, 地址: $file" }, Level.DEBUG)
                 }
             }
         }
