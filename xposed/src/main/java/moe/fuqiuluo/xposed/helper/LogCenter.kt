@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import moe.protocol.servlet.utils.FileUtils
 import moe.fuqiuluo.xposed.actions.toast
 import moe.fuqiuluo.xposed.helper.internal.DataRequester
+import moe.protocol.service.config.ShamrockConfig
 import mqq.app.MobileQQ
 import java.io.File
 import java.util.Date
@@ -40,6 +41,10 @@ internal object LogCenter {
         level: Level = Level.INFO,
         toast: Boolean = false
     ) {
+        if (!ShamrockConfig.isDebug() && level == Level.DEBUG) {
+            return
+        }
+
         val log = string()
         if (toast) {
             MobileQQ.getContext().toast(log)
