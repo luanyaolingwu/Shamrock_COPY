@@ -24,12 +24,12 @@ internal object PacketReceiver {
     init {
         DynamicReceiver.register("register_handler_cmd", IPCRequest {
             val cmd = it.getStringExtra("handler_cmd")!!
-            LogCenter.log("RegisterHandler(cmd = $cmd)", Level.DEBUG)
+            LogCenter.log({ "RegisterHandler(cmd = $cmd)" }, Level.DEBUG)
             HandlerByIpcSet.add(cmd)
         })
         DynamicReceiver.register("unregister_handler_cmd", IPCRequest {
             val cmd = it.getStringExtra("handler_cmd")!!
-            LogCenter.log("UnRegisterHandler(cmd = $cmd)", Level.DEBUG)
+            LogCenter.log({ "UnRegisterHandler(cmd = $cmd)" }, Level.DEBUG)
             HandlerByIpcSet.remove(cmd)
         })
         MobileQQ.getContext().broadcast("xqbot") {
@@ -42,14 +42,14 @@ internal object PacketReceiver {
         if (HandlerByIpcSet.contains(from.serviceCmd)
             || allowCommandList.contains(from.serviceCmd)
         ) {
-            //LogCenter.log("ReceivePacket(cmd = ${from.serviceCmd})", Level.DEBUG)
+            LogCenter.log({ "ReceivePacket(cmd = ${from.serviceCmd})" }, Level.DEBUG)
             MobileQQ.getContext().broadcast("xqbot") {
                 putExtra("__cmd", from.serviceCmd)
                 putExtra("buffer", from.wupBuffer)
                 putExtra("seq", from.requestSsoSeq)
             }
         } else {
-            //LogCenter.log("ReceivePacket(cmd = ${from.serviceCmd}, seq = ${from.requestSsoSeq})", Level.DEBUG)
+            LogCenter.log({ "ReceivePacket(cmd = ${from.serviceCmd}, seq = ${from.requestSsoSeq})" }, Level.DEBUG)
             MobileQQ.getContext().broadcast("xqbot") {
                 putExtra("__hash", (from.serviceCmd + from.requestSsoSeq).hashCode())
                 putExtra("buffer", from.wupBuffer)

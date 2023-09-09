@@ -7,7 +7,6 @@ import moe.fuqiuluo.xposed.tools.asInt
 import moe.protocol.servlet.MsgSvc
 import moe.protocol.servlet.helper.MessageHelper
 import moe.protocol.servlet.msg.LongMsgHelper
-import moe.protocol.servlet.msg.MsgSegment
 
 internal object SendGroupForwardMsg: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -19,8 +18,10 @@ internal object SendGroupForwardMsg: IActionHandler() {
             }.map {
                 MsgSvc.getMsg(it)
             }
-            LongMsgHelper.uploadGroupMsg(groupId.toString(), msgs.filterNotNull())
+            val resId = LongMsgHelper.uploadGroupMsg(groupId.toString(), msgs.filterNotNull())
+            return ok(mapOf("res_id" to resId), session.echo)
         }
+
 
         return "xxx"
     }
@@ -31,6 +32,7 @@ internal object SendGroupForwardMsg: IActionHandler() {
         } else if (msgs.size > 100) {
             return logic("消息数量过多", echo)
         }
+
 
 
         TODO()

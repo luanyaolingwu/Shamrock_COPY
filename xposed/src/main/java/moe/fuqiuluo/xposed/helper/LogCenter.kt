@@ -32,18 +32,22 @@ internal object LogCenter {
     @SuppressLint("SimpleDateFormat")
     private val format = SimpleDateFormat("[HH:mm:ss] ")
 
+    fun log(string: String, level: Level = Level.INFO, toast: Boolean = false) =
+        log({ string }, level, toast)
+
     fun log(
-        string: String,
+        string: () -> String,
         level: Level = Level.INFO,
         toast: Boolean = false
     ) {
+        val log = string()
         if (toast) {
-            MobileQQ.getContext().toast(string)
+            MobileQQ.getContext().toast(log)
         }
         // 把日志广播到主进程
         GlobalScope.launch(Dispatchers.Default) {
             DataRequester.request("send_message", bodyBuilder = {
-                put("string", string)
+                put("string", log)
                 put("level", level.id)
             })
         }
@@ -51,7 +55,7 @@ internal object LogCenter {
         if (!LogFile.exists()) {
             LogFile.createNewFile()
         }
-        val format = "%s%s %s\n".format(format.format(Date()), level.name, string)
+        val format = "%s%s %s\n".format(format.format(Date()), level.name, log)
 
         LogFile.appendText(format)
     }

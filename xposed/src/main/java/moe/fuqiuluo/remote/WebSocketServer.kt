@@ -40,7 +40,7 @@ internal class WebSocketServer(
         if (path != "/api") {
             eventReceivers.add(conn)
         }
-        LogCenter.log("WSServer连接(${conn.remoteSocketAddress.address.hostAddress}:${conn.remoteSocketAddress.port}$path)", Level.DEBUG)
+        LogCenter.log({ "WSServer连接(${conn.remoteSocketAddress.address.hostAddress}:${conn.remoteSocketAddress.port}$path)" }, Level.DEBUG)
     }
 
     override fun onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean) {
@@ -48,7 +48,7 @@ internal class WebSocketServer(
         if (path != "/api") {
             eventReceivers.remove(conn)
         }
-        LogCenter.log("WSServer断开(${conn.remoteSocketAddress.address.hostAddress}:${conn.remoteSocketAddress.port}$path): $code,$reason,$remote", Level.DEBUG)
+        LogCenter.log({ "WSServer断开(${conn.remoteSocketAddress.address.hostAddress}:${conn.remoteSocketAddress.port}$path): $code,$reason,$remote" }, Level.DEBUG)
     }
 
     override fun onMessage(conn: WebSocket, message: String) {
