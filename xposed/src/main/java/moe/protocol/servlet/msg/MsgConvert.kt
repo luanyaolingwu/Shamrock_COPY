@@ -18,7 +18,9 @@ import moe.fuqiuluo.xposed.tools.asString
 import moe.fuqiuluo.xposed.tools.asStringOrNull
 import moe.fuqiuluo.xposed.tools.json
 
-internal suspend fun MsgRecord.toSegment(): ArrayList<HashMap<String, JsonElement>> {
+internal typealias MsgSegment = ArrayList<HashMap<String, JsonElement>>
+
+internal suspend fun MsgRecord.toSegment(): MsgSegment {
     return MsgConvert.convertMsgRecordToMsgSegment(this)
 }
 
@@ -26,7 +28,7 @@ internal suspend fun MsgRecord.toCQCode(): String {
     return MsgConvert.convertMsgRecordToCQCode(this)
 }
 
-internal suspend fun List<MsgElement>.toSegment(chatType: Int): ArrayList<HashMap<String, JsonElement>> {
+internal suspend fun List<MsgElement>.toSegment(chatType: Int): MsgSegment {
     return MsgConvert.convertMsgElementsToMsgSegment(chatType, this)
 }
 

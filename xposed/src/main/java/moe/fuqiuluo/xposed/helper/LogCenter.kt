@@ -1,7 +1,13 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.xposed.helper
 
 import android.annotation.SuppressLint
 import android.icu.text.SimpleDateFormat
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import moe.protocol.servlet.utils.FileUtils
 import moe.fuqiuluo.xposed.actions.toast
 import moe.fuqiuluo.xposed.helper.internal.DataRequester
@@ -35,10 +41,12 @@ internal object LogCenter {
             MobileQQ.getContext().toast(string)
         }
         // 把日志广播到主进程
-        DataRequester.request("send_message", bodyBuilder = {
-            put("string", string)
-            put("level", level.id)
-        })
+        GlobalScope.launch(Dispatchers.Default) {
+            DataRequester.request("send_message", bodyBuilder = {
+                put("string", string)
+                put("level", level.id)
+            })
+        }
 
         if (!LogFile.exists()) {
             LogFile.createNewFile()

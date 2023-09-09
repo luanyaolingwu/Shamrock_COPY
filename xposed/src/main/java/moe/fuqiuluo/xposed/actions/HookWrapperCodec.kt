@@ -6,10 +6,12 @@ import moe.protocol.service.config.ShamrockConfig
 import moe.protocol.service.PacketReceiver
 import com.tencent.msf.service.protocol.pb.SSOLoginMerge
 import com.tencent.qphone.base.remote.FromServiceMsg
+import com.tencent.qphone.base.remote.ToServiceMsg
 import com.tencent.qphone.base.util.CodecWarpper
 import kotlinx.atomicfu.atomic
-import de.robv.android.xposed.XposedBridge.log
 import kotlinx.coroutines.DelicateCoroutinesApi
+import moe.fuqiuluo.xposed.helper.Level
+import moe.fuqiuluo.xposed.helper.LogCenter
 import moe.fuqiuluo.xposed.tools.EMPTY_BYTE_ARRAY
 import moe.fuqiuluo.xposed.tools.hookMethod
 import moe.fuqiuluo.xposed.tools.slice
@@ -40,6 +42,13 @@ internal class HookWrapperCodec: IAction {
 
     override fun invoke(ctx: Context) {
         try {
+            ToServiceMsg::class.java.hookMethod("setRequestSsoSeq").before {
+                val to = it.thisObject as ToServiceMsg
+                to.getAttribute("shamrock_seq")?.let { seq ->
+                    it.args[0] = seq
+                }
+            }
+
             val isInit = atomic(false)
             CodecWarpper::class.java.hookMethod("init").after {
                 if (isInit.value) return@after
@@ -52,7 +61,7 @@ internal class HookWrapperCodec: IAction {
                 isInit.lazySet(true)
             }
         } catch (e: Exception) {
-            log(e)
+            LogCenter.log(e.stackTraceToString(), Level.ERROR)
         }
     }
 

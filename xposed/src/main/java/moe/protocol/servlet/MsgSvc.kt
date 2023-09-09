@@ -18,6 +18,10 @@ import moe.fuqiuluo.xposed.helper.NTServiceFetcher
 import kotlin.coroutines.resume
 
 internal object MsgSvc: BaseSvc() {
+    fun uploadForwardMsg() {
+
+    }
+
     /**
      * 正常获取
      */

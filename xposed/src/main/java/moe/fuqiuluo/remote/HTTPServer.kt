@@ -58,7 +58,7 @@ internal object HTTPServer {
         isServiceStarted = true
         this.currServerPort = port
         LogCenter.log("Start HTTP Server: http://0.0.0.0:$currServerPort/")
-        DataRequester.request("success", mapOf(
+        DataRequester.request("success", values = mapOf(
             "port" to currServerPort,
             "voice" to NativeLoader.isVoiceLoaded
         ))

@@ -28,10 +28,10 @@ import moe.protocol.servlet.helper.MessageHelper
 
 internal object PrimitiveListener {
     fun registerListener() {
-        PacketHandler.register("trpc.msg.olpush.OlPushService.MsgPush") {
+        PacketHandler.register("trpc.msg.olpush.OlPushService.MsgPush") { _, buffer ->
             GlobalScope.launch {
                 try {
-                    onMsgPush(ProtoUtils.decodeFromByteArray(it.slice(4)))
+                    onMsgPush(ProtoUtils.decodeFromByteArray(buffer.slice(4)))
                 } catch (e: Exception) {
                     LogCenter.log(e.stackTraceToString(), Level.WARN)
                 }

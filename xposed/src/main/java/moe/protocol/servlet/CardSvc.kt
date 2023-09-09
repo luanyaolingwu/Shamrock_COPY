@@ -2,8 +2,9 @@
 
 package moe.protocol.servlet
 
+import VIP.GetCustomOnlineStatusReq
 import VIP.GetCustomOnlineStatusRsp
-import android.util.LruCache
+import com.qq.jce.wup.UniPacket
 import com.tencent.common.app.AppInterface
 import com.tencent.mobileqq.data.Card
 import com.tencent.mobileqq.profilecard.api.IProfileDataService
@@ -15,15 +16,9 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType.Application.Json
 import io.ktor.http.contentType
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeoutOrNull
-import moe.fuqiuluo.xposed.helper.PacketHandler
 import moe.fuqiuluo.xposed.tools.GlobalClient
 import moe.fuqiuluo.xposed.tools.slice
 import mqq.app.MobileQQ
@@ -32,41 +27,23 @@ import tencent.im.oidb.cmd0x11b2.oidb_0x11b2
 import tencent.im.oidb.oidb_sso
 import kotlin.coroutines.resume
 
-
 internal object CardSvc: BaseSvc() {
-    private val LruCachePrivate = LruCache<Long, String>(5)
-    private val CacheModelShowChannel = Channel<String>()
     private val GetModelShowLock = Mutex()
     private val refreshCardLock = Mutex()
 
-    init {
-        val privatePattern = Regex("uin=([0-9]+)\"")
-        PacketHandler.register("OidbSvcTrpcTcp.0x11ca_0") {
-            val body = oidb_sso.OIDBSSOPkg()
-            body.mergeFrom(it.slice(4))
-            val rsp = oidb_0x11b2.BusinessCardV3Rsp()
-            rsp.mergeFrom(body.bytes_bodybuffer.get().toByteArray())
-            val text = rsp.signed_ark_msg.get()
-            val matcher = privatePattern.findAll(text)
-            val id = matcher.first().groups[1]!!.value
-            LruCachePrivate.put(id.toLong(), text)
-        }
-        PacketHandler.register("VipCustom.GetCustomOnlineStatus") {
-            val rsp = Packet.decodePacket(it, "rsp",  GetCustomOnlineStatusRsp())
-            GlobalScope.launch {
-                CacheModelShowChannel.send(rsp.sBuffer)
-            }
-        }
-    }
-
     suspend fun getModelShow(uin: Long = app.longAccountUin): String {
         return GetModelShowLock.withLock {
-            val toServiceMsg = createToServiceMsg("VipCustom.GetCustomOnlineStatus")
-            toServiceMsg.extraData.putLong("uin", uin)
-            send(toServiceMsg)
-            withTimeoutOrNull(5000) {
-                CacheModelShowChannel.receive()
-            } ?: error("unable to fetch contact model_show")
+            val uniPacket = UniPacket()
+            uniPacket.servantName = "VIP.CustomOnlineStatusServer.CustomOnlineStatusObj"
+            uniPacket.funcName = "GetCustomOnlineStatus"
+            val getCustomOnlineStatusReq = GetCustomOnlineStatusReq()
+            getCustomOnlineStatusReq.lUin = uin
+            getCustomOnlineStatusReq.sIMei = ""
+            uniPacket.put<Any>("req", getCustomOnlineStatusReq)
+
+            val resp = sendBufferAW("VipCustom.GetCustomOnlineStatus", false, uniPacket.encode())
+                ?: error("unable to fetch contact model_show")
+            Packet.decodePacket(resp, "rsp",  GetCustomOnlineStatusRsp()).sBuffer
         }
     }
 
@@ -98,21 +75,17 @@ internal object CardSvc: BaseSvc() {
     }
 
     suspend fun getSharePrivateArkMsg(peerId: Long): String {
-        LruCachePrivate[peerId]?.let { return it }
-
         val reqBody = oidb_0x11b2.BusinessCardV3Req()
         reqBody.uin.set(peerId)
         reqBody.jump_url.set("mqqapi://card/show_pslcard?src_type=internal&source=sharecard&version=1&uin=$peerId")
-        sendOidb("OidbSvcTrpcTcp.0x11ca_0", 4790, 0, reqBody.toByteArray())
 
-        return withTimeoutOrNull(5000) {
-            var text: String? = null
-            while (text == null) {
-                delay(100)
-                LruCachePrivate[peerId]?.let { text = it }
-            }
-            return@withTimeoutOrNull text
-        } ?: error("unable to fetch contact ark_json_text")
+        val buffer = sendOidbAW("OidbSvcTrpcTcp.0x11ca_0", 4790, 0, reqBody.toByteArray())
+            ?: error("unable to fetch contact ark_json_text")
+        val body = oidb_sso.OIDBSSOPkg()
+        body.mergeFrom(buffer.slice(4))
+        val rsp = oidb_0x11b2.BusinessCardV3Rsp()
+        rsp.mergeFrom(body.bytes_bodybuffer.get().toByteArray())
+        return rsp.signed_ark_msg.get()
     }
 
     suspend fun getProfileCard(uin: String): Card {

@@ -62,4 +62,7 @@ public class UniPacket {
     public void setEncodeName(String str) {
     }
 
+    public byte[] encode() {
+        return null;
+    }
 }

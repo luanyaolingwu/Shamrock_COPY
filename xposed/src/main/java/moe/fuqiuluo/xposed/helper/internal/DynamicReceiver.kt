@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import moe.protocol.servlet.utils.PlatformUtils
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -22,31 +23,34 @@ internal object DynamicReceiver: BroadcastReceiver() {
     private val mutex = Mutex() // 滥用的锁，尽量减少使用
 
     override fun onReceive(ctx: Context, intent: Intent) {
-        val hash = intent.getIntExtra("__hash", -1)
-        val cmd = intent.getStringExtra("__cmd") ?: ""
-        try {
-            if (cmd.isNotBlank()) {
-                cmdHandler[cmd].also {
-                    if (it == null)
-                        LogCenter.log("无广播处理器: $cmd, main = ${PlatformUtils.isMainProcess()}", Level.ERROR)
-                }?.callback?.handle(intent)
-            } else GlobalScope.launch { mutex.withLock {
-                if (hash == -1) return@withLock
-                hashHandler.forEach {
-                    if (hash == it.hashCode()) {
-                        it.callback?.handle(intent)
-                        if (it.seq != -1)
-                            hashHandler.remove(it)
-                        return@forEach
+        GlobalScope.launch(Dispatchers.Default) {
+            val hash = intent.getIntExtra("__hash", -1)
+            val cmd = intent.getStringExtra("__cmd") ?: ""
+            try {
+                if (cmd.isNotBlank()) {
+                    cmdHandler[cmd].also {
+                        if (it == null)
+                            LogCenter.log("无常驻包处理器: $cmd, main = ${PlatformUtils.isMainProcess()}", Level.ERROR)
+                    }?.callback?.handle(intent)
+                } else if (hash != -1) {
+                    mutex.withLock {
+                        LogCenter.log("", Level.DEBUG)
+                        hashHandler.forEach {
+                            if (hash == it.hashCode()) {
+                                it.callback?.handle(intent)
+                                if (it.seq != -1)
+                                    hashHandler.remove(it)
+                                return@forEach
+                            }
+                        }
                     }
                 }
-            } }
-        } catch (e: Throwable) {
-            LogCenter.log("广播处理器[$cmd]错误: $e", Level.ERROR)
+            } catch (e: Throwable) {
+                LogCenter.log("包处理器[$cmd]错误: $e", Level.ERROR)
+            }
         }
     }
 
-    // 注册持久化处理器
     fun register(cmd: String, request: IPCRequest) {
         cmdHandler[cmd] = request
     }
@@ -55,22 +59,18 @@ internal object DynamicReceiver: BroadcastReceiver() {
         cmdHandler.remove(cmd)
     }
 
-    // 注册临时处理器，用完即删除
-    fun register(request: IPCRequest) {
-        GlobalScope.launch {
-            mutex.withLock {
-                hashHandler.add(request)
-            }
+    /***
+     * 注册临时包处理器
+     */
+    suspend fun register(request: IPCRequest) {
+        mutex.withLock {
+            hashHandler.add(request)
         }
     }
 
-    fun unregister(seq: Int) {
-        GlobalScope.launch {
-            mutex.withLock {
-                hashHandler.removeIf {
-                    it.seq == seq
-                }
-            }
+    suspend fun unregister(seq: Int) {
+        mutex.withLock {
+            hashHandler.removeIf { it.seq == seq }
         }
     }
 }
