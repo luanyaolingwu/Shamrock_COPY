@@ -1,6 +1,12 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.xposed.actions
 
 import android.content.Context
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import moe.protocol.service.config.ShamrockConfig
 import moe.fuqiuluo.xposed.helper.internal.DataRequester
 
@@ -25,49 +31,51 @@ class PullConfig: IAction {
     override fun invoke(ctx: Context) {
         if (!PlatformUtils.isMainProcess()) return
 
-        DynamicReceiver.register("fetchPort", IPCRequest {
-            DataRequester.request("success", mapOf(
-                "port" to HTTPServer.currServerPort,
-                "voice" to NativeLoader.isVoiceLoaded
-            ))
-        })
-        DynamicReceiver.register("checkAndStartService", IPCRequest {
-            if (HTTPServer.isServiceStarted) {
-                HTTPServer.isServiceStarted = false
-            }
-            initHttp(MobileQQ.getContext())
-        })
-        DynamicReceiver.register("push_config", IPCRequest {
-            ctx.toast("动态推送配置文件成功。")
-            ShamrockConfig.updateConfig(it)
-        })
-        DynamicReceiver.register("change_port", IPCRequest {
-            when (it.getStringExtra("type")) {
-                "port" -> {
-                    ctx.toast("动态修改HTTP端口成功。")
-                    HTTPServer.changePort(it.getIntExtra("port", 5700))
+        GlobalScope.launch(Dispatchers.Default) {
+            DynamicReceiver.register("fetchPort", IPCRequest {
+                DataRequester.request("success", values = mapOf(
+                    "port" to HTTPServer.currServerPort,
+                    "voice" to NativeLoader.isVoiceLoaded
+                ))
+            })
+            DynamicReceiver.register("checkAndStartService", IPCRequest {
+                if (HTTPServer.isServiceStarted) {
+                    HTTPServer.isServiceStarted = false
                 }
-                "ws_port" -> {
-                    ctx.toast("动态修改WS端口不支持。")
+                initHttp(MobileQQ.getContext())
+            })
+            DynamicReceiver.register("push_config", IPCRequest {
+                ctx.toast("动态推送配置文件成功。")
+                ShamrockConfig.updateConfig(it)
+            })
+            DynamicReceiver.register("change_port", IPCRequest {
+                when (it.getStringExtra("type")) {
+                    "port" -> {
+                        ctx.toast("动态修改HTTP端口成功。")
+                        HTTPServer.changePort(it.getIntExtra("port", 5700))
+                    }
+                    "ws_port" -> {
+                        ctx.toast("动态修改WS端口不支持。")
+                    }
                 }
-            }
-        })
+            })
 
-        DataRequester.request("init", onFailure = {
-            if (!ShamrockConfig.isInit()) {
-                ctx.toast("请启动Shamrock主进程以初始化服务，进程将退出。")
-                thread {
-                    Thread.sleep(3000)
-                    exitProcess(1)
+            DataRequester.request("init", onFailure = {
+                if (!ShamrockConfig.isInit()) {
+                    ctx.toast("请启动Shamrock主进程以初始化服务，进程将退出。")
+                    thread {
+                        Thread.sleep(3000)
+                        exitProcess(1)
+                    }
+                } else {
+                    ctx.toast("Shamrock进程未启动，不会推送配置文件。")
+                    initHttp(ctx)
                 }
-            } else {
-                ctx.toast("Shamrock进程未启动，不会推送配置文件。")
+            }, bodyBuilder = null) {
+                isConfigOk = true
+                ShamrockConfig.updateConfig(it)
                 initHttp(ctx)
             }
-        }, bodyBuilder = null) {
-            isConfigOk = true
-            ShamrockConfig.updateConfig(it)
-            initHttp(ctx)
         }
     }
 

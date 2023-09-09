@@ -30,7 +30,7 @@ internal object ActionManager {
             ModifyTroopMemberName, SetGroupUnique, GetTroopHonor, GroupPoke,
 
             // MSG ACTIONS
-            SendMessage, DeleteMessage, GetMsg, GetForwardMsg,
+            SendMessage, DeleteMessage, GetMsg, GetForwardMsg, SendGroupForwardMsg,
 
             // RESOURCE ACTION
             GetRecord

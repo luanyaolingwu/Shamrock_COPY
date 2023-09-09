@@ -1,6 +1,10 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.protocol.service
 
 import com.tencent.qphone.base.remote.FromServiceMsg
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import moe.fuqiuluo.xposed.helper.Level
@@ -34,25 +38,29 @@ internal object PacketReceiver {
         }
     }
 
-    private fun msgFilter(cmd: String): Boolean {
-        return cmd !in allowCommandList && cmd !in HandlerByIpcSet
-    }
-
     private fun onReceive(from: FromServiceMsg) {
         if (HandlerByIpcSet.contains(from.serviceCmd)
             || allowCommandList.contains(from.serviceCmd)
         ) {
-            LogCenter.log("ReceivePacket(cmd = ${from.serviceCmd})", Level.DEBUG)
+            //LogCenter.log("ReceivePacket(cmd = ${from.serviceCmd})", Level.DEBUG)
             MobileQQ.getContext().broadcast("xqbot") {
                 putExtra("__cmd", from.serviceCmd)
                 putExtra("buffer", from.wupBuffer)
+                putExtra("seq", from.requestSsoSeq)
+            }
+        } else {
+            //LogCenter.log("ReceivePacket(cmd = ${from.serviceCmd}, seq = ${from.requestSsoSeq})", Level.DEBUG)
+            MobileQQ.getContext().broadcast("xqbot") {
+                putExtra("__hash", (from.serviceCmd + from.requestSsoSeq).hashCode())
+                putExtra("buffer", from.wupBuffer)
+                putExtra("seq", from.requestSsoSeq)
             }
         }
     }
 
     fun internalOnReceive(from: FromServiceMsg?) {
-        if (from == null || msgFilter(from.serviceCmd)) return
-        GlobalScope.launch {
+        if (from == null) return
+        GlobalScope.launch(Dispatchers.Default) {
             onReceive(from)
         }
     }

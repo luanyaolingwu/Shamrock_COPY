@@ -8,6 +8,8 @@ import com.tencent.qqnt.kernel.nativeinterface.IQQNTWrapperSession
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import moe.fuqiuluo.xposed.helper.Level
+import moe.fuqiuluo.xposed.helper.LogCenter
 import moe.fuqiuluo.xposed.helper.NTServiceFetcher
 import moe.fuqiuluo.xposed.helper.msgService
 import moe.fuqiuluo.xposed.tools.hookMethod
@@ -31,9 +33,12 @@ internal class FetchService: IAction {
          */
         KernelServiceImpl::class.java.hookMethod("initService").after {
             val service = it.thisObject as IKernelService
+            LogCenter.log("NTKernel try to init service: $service", Level.DEBUG)
             GlobalScope.launch {
                 NTServiceFetcher.onFetch(service)
             }
         }
+
+
     }
 }

@@ -1,10 +1,14 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.xposed.helper.internal
 
 import android.content.ContentValues
-import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import moe.fuqiuluo.xposed.helper.AppTalker
 import java.util.Timer
 import kotlin.concurrent.timer
@@ -23,13 +27,14 @@ object DataRequester {
             return seqFactory.incrementAndGet()
         }
 
-    fun request(
+    suspend fun request(
         cmd: String,
+        currSeq: Int = seq,
         values: Map<String, Any>? = null,
         onFailure: ((Throwable) -> Unit)? = null,
         callback: ICallback? = null
     ): Int {
-        return request(cmd, {
+        return request(cmd, currSeq, bodyBuilder = {
             values?.forEach { (key, value) ->
                 when (value) {
                     is Int -> this.put(key, value)
@@ -46,28 +51,31 @@ object DataRequester {
         }, onFailure, callback)
     }
 
-    fun request(
+    suspend fun request(
         cmd: String,
+        currentSeq: Int = seq,
         bodyBuilder: (ContentValues.() -> Unit)? = null,
         onFailure: ((Throwable) -> Unit)? = null,
         callback: ICallback? = null
     ): Int {
         val values = ContentValues()
         bodyBuilder?.invoke(values)
-        val currentSeq = seq
         values.put("__hash", (cmd + currentSeq).hashCode())
         values.put("__cmd", cmd)
         AppTalker.talk(values, onFailure)
         if (callback != null) {
             val timer: Timer = timer(initialDelay = 3000L, period = 5000L) {
-                DynamicReceiver.unregister(currentSeq)
-                this.cancel()
+                GlobalScope.launch(Dispatchers.Default) {
+                    DynamicReceiver.unregister(currentSeq)
+                    cancel()
+                }
             }
             val request = IPCRequest(cmd, currentSeq, values) {
                 try {
                     timer.cancel()
-                } finally { }
-                callback.handle(it)
+                } finally {
+                    callback.handle(it)
+                }
             }
             DynamicReceiver.register(request)
         }
@@ -76,7 +84,7 @@ object DataRequester {
 }
 
 fun interface ICallback {
-    fun handle(intent: Intent)
+    suspend fun handle(intent: Intent)
 }
 
 data class IPCRequest(
@@ -87,5 +95,19 @@ data class IPCRequest(
 ) {
     override fun hashCode(): Int {
         return (cmd + seq).hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IPCRequest
+
+        if (cmd != other.cmd) return false
+        if (seq != other.seq) return false
+        if (values != other.values) return false
+        if (callback != other.callback) return false
+
+        return true
     }
 }

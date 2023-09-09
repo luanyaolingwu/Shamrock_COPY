@@ -12,6 +12,7 @@ import moe.fuqiuluo.xposed.tools.getOrPost
 import moe.fuqiuluo.xposed.tools.hex2ByteArray
 import moe.fuqiuluo.xposed.tools.respond
 import moe.fuqiuluo.xposed.tools.toHexString
+import moe.protocol.servlet.BaseSvc
 import mqq.app.MobileQQ
 import oicq.wlogin_sdk.tlv_type.tlv_t100
 import oicq.wlogin_sdk.tlv_type.tlv_t106
@@ -20,16 +21,11 @@ import oicq.wlogin_sdk.tools.util
 
 fun Routing.obtainProtocolData() {
     getOrPost("/send_packet") {
-        val uin = fetchOrThrow("uin")
         val cmd = fetchOrThrow("cmd")
         val isPb = fetchOrThrow("proto").toBooleanStrict()
         val buffer = fetchOrThrow("buffer").hex2ByteArray()
-        val app = MobileQQ.getMobileQQ().waitAppRuntime() as QQAppInterface
-        val toServiceMsg = ToServiceMsg("mobileqq.service", uin, cmd)
-        toServiceMsg.putWupBuffer(buffer)
-        toServiceMsg.addAttribute("req_pb_protocol_flag", isPb)
-        app.sendToService(toServiceMsg)
-        respond(true, Status.Ok)
+        val resp = BaseSvc.sendBufferAW(cmd, isPb, buffer)
+        respond(true, Status.Ok, data = resp?.toHexString() ?: "null", msg = "成功")
     }
 
     getOrPost("/get_msf_info") {

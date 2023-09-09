@@ -1,11 +1,13 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.protocol.servlet
 
-import android.util.LruCache
 import com.tencent.common.app.AppInterface
 import com.tencent.mobileqq.app.BusinessHandlerFactory
 import com.tencent.mobileqq.app.QQAppInterface
 import com.tencent.mobileqq.data.troop.TroopInfo
 import com.tencent.mobileqq.data.troop.TroopMemberInfo
+import com.tencent.mobileqq.msf.core.MsfCore
 import com.tencent.mobileqq.pb.ByteStringMicro
 import com.tencent.mobileqq.troop.api.ITroopInfoService
 import com.tencent.mobileqq.troop.api.ITroopMemberInfoService
@@ -13,6 +15,8 @@ import com.tencent.protofile.join_group_link.join_group_link
 import com.tencent.qphone.base.remote.ToServiceMsg
 import com.tencent.qqnt.kernel.nativeinterface.MemberInfo
 import friendlist.stUinInfo
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -36,23 +40,12 @@ import kotlin.coroutines.resume
 internal object GroupSvc: BaseSvc() {
     private val RefreshTroopMemberInfoLock = Mutex()
     private val RefreshTroopMemberListLock = Mutex()
-    private val LruCacheTroop = LruCache<Long, String>(5)
 
     private lateinit var METHOD_REQ_MEMBER_INFO: Method
     private lateinit var METHOD_REQ_MEMBER_INFO_V2: Method
     private lateinit var METHOD_REQ_TROOP_LIST: Method
     private lateinit var METHOD_REQ_TROOP_MEM_LIST: Method
     private lateinit var METHOD_REQ_MODIFY_GROUP_NAME: Method
-
-    init {
-        PacketHandler.register("GroupSvc.JoinGroupLink") {
-            val body = join_group_link.RspBody()
-            body.mergeFrom(it.slice(4))
-            val text = body.signed_ark.get().toStringUtf8()
-            val groupId = body.group_code.get()
-            LruCacheTroop.put(groupId, text)
-        }
-    }
 
     fun poke(groupId: String, userId: String) {
         sendOidb("OidbSvc.0xed3", 3795, 1, protobufOf(
@@ -85,7 +78,7 @@ internal object GroupSvc: BaseSvc() {
 
         var troopList = service.allTroopList
         if(refresh || !service.isTroopCacheInited || troopList == null) {
-            if(!requestGroupList(service, troopList)) {
+            if(!requestGroupList(service)) {
                 return null
             } else {
                 troopList = service.allTroopList
@@ -293,23 +286,15 @@ internal object GroupSvc: BaseSvc() {
     }
 
     suspend fun getShareTroopArkMsg(groupId: Long): String {
-        LruCacheTroop[groupId]?.let { return it }
-
         val reqBody = join_group_link.ReqBody()
         reqBody.get_ark.set(true)
         reqBody.type.set(1)
         reqBody.group_code.set(groupId)
-
-        sendPb("GroupSvc.JoinGroupLink", reqBody.toByteArray())
-
-        return withTimeoutOrNull(5000) {
-            var text: String? = null
-            while (text == null) {
-                delay(100)
-                LruCacheTroop[groupId]?.let { text = it }
-            }
-            return@withTimeoutOrNull text
-        } ?: error("unable to fetch contact ark_json_text")
+        val buffer = sendBufferAW("GroupSvc.JoinGroupLink", true, reqBody.toByteArray())
+            ?: error("unable to fetch contact ark_json_text")
+        val body = join_group_link.RspBody()
+        body.mergeFrom(buffer.slice(4))
+        return body.signed_ark.get().toStringUtf8()
     }
 
     suspend fun getTroopMemberInfoByUin(
@@ -333,7 +318,7 @@ internal object GroupSvc: BaseSvc() {
         return info
     }
 
-    suspend fun getTroopMemberInfoByUinViaNt(groupId: String, qq: Long): MemberInfo? {
+    private suspend fun getTroopMemberInfoByUinViaNt(groupId: String, qq: Long): MemberInfo? {
         val kernelService = NTServiceFetcher.kernelService
         val sessionService = kernelService.wrapperSession
         val groupService = sessionService.groupService
@@ -391,8 +376,7 @@ internal object GroupSvc: BaseSvc() {
     }
 
     private suspend fun requestGroupList(
-        service: ITroopInfoService,
-        troopList: List<TroopInfo>?
+        service: ITroopInfoService
     ): Boolean {
         refreshTroopList()
 
@@ -402,7 +386,6 @@ internal object GroupSvc: BaseSvc() {
                     delay(1000)
                 } while (
                     !service.isTroopCacheInited
-                // || (!troopList.isNullOrEmpty() && service.hasNoTroop()) 判断不合理
                 )
                 continuation.resume(true)
             }
@@ -413,7 +396,7 @@ internal object GroupSvc: BaseSvc() {
         }
     }
 
-    fun refreshTroopMemberList(groupId: String) {
+    private fun refreshTroopMemberList(groupId: String) {
         val app = MobileQQ.getMobileQQ().waitAppRuntime()
         if (app !is AppInterface)
             throw RuntimeException("AppRuntime cannot cast to AppInterface")
@@ -434,7 +417,7 @@ internal object GroupSvc: BaseSvc() {
         METHOD_REQ_TROOP_MEM_LIST.invoke(businessHandler, true, groupId, groupUin2GroupCode(groupId.toLong()).toString(), 5)
     }
 
-    fun refreshTroopList() {
+    private fun refreshTroopList() {
         val app = MobileQQ.getMobileQQ().waitAppRuntime()
         if (app !is AppInterface)
             throw RuntimeException("AppRuntime cannot cast to AppInterface")
@@ -449,7 +432,7 @@ internal object GroupSvc: BaseSvc() {
         METHOD_REQ_TROOP_LIST.invoke(businessHandler)
     }
 
-    fun requestMemberInfo(groupId: Long, memberUin: Long) {
+    private fun requestMemberInfo(groupId: Long, memberUin: Long) {
         val app = MobileQQ.getMobileQQ().waitAppRuntime()
         if (app !is AppInterface)
             throw RuntimeException("AppRuntime cannot cast to AppInterface")
@@ -467,7 +450,7 @@ internal object GroupSvc: BaseSvc() {
         METHOD_REQ_MEMBER_INFO.invoke(businessHandler, groupId, memberUin)
     }
 
-    fun requestMemberInfoV2(groupId: Long, memberUin: Long) {
+    private fun requestMemberInfoV2(groupId: Long, memberUin: Long) {
         val app = MobileQQ.getMobileQQ().waitAppRuntime()
         if (app !is AppInterface)
             throw RuntimeException("AppRuntime cannot cast to AppInterface")
@@ -485,7 +468,7 @@ internal object GroupSvc: BaseSvc() {
         METHOD_REQ_MEMBER_INFO_V2.invoke(businessHandler, groupId.toString(), groupUin2GroupCode(groupId).toString(), arrayListOf(memberUin.toString()))
     }
 
-    suspend fun requestGroupList(dataService: ITroopInfoService, uin: Long): TroopInfo? {
+    private suspend fun requestGroupList(dataService: ITroopInfoService, uin: Long): TroopInfo? {
         val strUin = uin.toString()
         return withTimeoutOrNull(5000) {
             var troopInfo: TroopInfo?
