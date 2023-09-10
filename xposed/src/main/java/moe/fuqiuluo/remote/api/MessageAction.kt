@@ -32,7 +32,7 @@ fun Routing.messageAction() {
         call.respondText(GetMsg(msgHash))
     }
 
-    route("/send_msg") {
+    route("/(send_msg|send_message)".toRegex()) {
         get {
             val msgType = fetchGetOrThrow("message_type")
             val message = fetchGetOrThrow("message")

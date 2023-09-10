@@ -14,7 +14,7 @@ import moe.fuqiuluo.xposed.tools.json
 
 internal object SendMessage: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
-        val detailType = session.getString("detail_type")
+        val detailType = session.getStringOrNull("detail_type") ?: session.getString("message_type")
         try {
             val chatType = MessageHelper.obtainMessageTypeByDetailType(detailType)
             val peerId = when(chatType) {
@@ -73,7 +73,7 @@ internal object SendMessage: IActionHandler() {
         ), echo)
     }
 
-    override val requiredParams: Array<String> = arrayOf("detail_type", "message")
+    override val requiredParams: Array<String> = arrayOf("message")
 
     override fun path(): String = "send_message"
 
