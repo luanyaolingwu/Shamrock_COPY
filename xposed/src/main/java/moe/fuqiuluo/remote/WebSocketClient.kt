@@ -49,6 +49,7 @@ class WebSocketClient(url: String, wsHeaders: Map<String, String>): WebSocketCli
 
     override fun onClose(code: Int, reason: String?, remote: Boolean) {
         LogCenter.log("WebSocketClient onClose: $code, $reason, $remote")
+        InternalWebSocketClient = null
     }
 
     override fun onError(ex: Exception?) {

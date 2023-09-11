@@ -15,6 +15,7 @@ import moe.fuqiuluo.xposed.helper.LogCenter
 import moe.protocol.service.config.ShamrockConfig
 import moe.protocol.servlet.utils.PlatformUtils
 import mqq.app.MobileQQ
+import kotlin.concurrent.timer
 
 internal class InitRemoteService: IAction {
     override fun invoke(ctx: Context) {
@@ -43,19 +44,27 @@ internal class InitRemoteService: IAction {
         }
 
         if (ShamrockConfig.openWebSocketClient()) {
-            GlobalScope.launch {
-                try {
-                    if (InternalWebSocketClient != null) {
-                        InternalWebSocketClient?.close()
-                    }
-                    val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
-                    val curUin = runtime.currentAccountUin
-                    val wsHeaders =  mapOf("X-Self-ID" to curUin)
-                    InternalWebSocketClient = WebSocketClient(ShamrockConfig.getWebSocketClientAddress(), wsHeaders)
-                    InternalWebSocketClient?.connect()
-                } catch (e: Throwable) {
-                    LogCenter.log(e.stackTraceToString(), Level.ERROR)
+            timer(initialDelay = 0L, period = 5000L) {
+                if (InternalWebSocketClient == null) {
+                    startWebSocketClient()
                 }
+            }
+        }
+    }
+
+    private fun startWebSocketClient() {
+        GlobalScope.launch {
+            try {
+                if (InternalWebSocketClient != null) {
+                    InternalWebSocketClient?.close()
+                }
+                val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+                val curUin = runtime.currentAccountUin
+                val wsHeaders =  mapOf("X-Self-ID" to curUin)
+                InternalWebSocketClient = WebSocketClient(ShamrockConfig.getWebSocketClientAddress(), wsHeaders)
+                InternalWebSocketClient?.connect()
+            } catch (e: Throwable) {
+                LogCenter.log(e.stackTraceToString(), Level.ERROR)
             }
         }
     }
