@@ -76,8 +76,10 @@ internal object VisitorSvc: BaseSvc() {
     const val SUB_FROM_SHARE_CARD_TROOP = 102
     const val SUB_FROM_TYPE_DEFAULT = 0
 
-    suspend fun vote(target: Long, count: Int) {
-        require(count in 1 .. 20)
+    suspend fun vote(target: Long, count: Int): Result<Unit> {
+        if(count !in 1 .. 20) {
+            return Result.failure(IllegalArgumentException("vote count must be in 1 .. 20"))
+        }
         val card = CardSvc.getProfileCard(target.toString())
         sendExtra("VisitorSvc.ReqFavorite") {
             it.putLong(ProfileProtocolConst.PARAM_SELF_UIN, currentUin.toLong())
@@ -88,5 +90,6 @@ internal object VisitorSvc: BaseSvc() {
             it.putInt("iCount", count)
             it.putInt("from", FROM_SHARE_CARD)
         }
+        return Result.success(Unit)
     }
 }

@@ -7,7 +7,6 @@ import com.tencent.mobileqq.app.BusinessHandlerFactory
 import com.tencent.mobileqq.app.QQAppInterface
 import com.tencent.mobileqq.data.troop.TroopInfo
 import com.tencent.mobileqq.data.troop.TroopMemberInfo
-import com.tencent.mobileqq.msf.core.MsfCore
 import com.tencent.mobileqq.pb.ByteStringMicro
 import com.tencent.mobileqq.troop.api.ITroopInfoService
 import com.tencent.mobileqq.troop.api.ITroopMemberInfoService
@@ -16,7 +15,6 @@ import com.tencent.qphone.base.remote.ToServiceMsg
 import com.tencent.qqnt.kernel.nativeinterface.MemberInfo
 import friendlist.stUinInfo
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -26,7 +24,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import moe.fuqiuluo.proto.protobufOf
 import moe.fuqiuluo.xposed.helper.NTServiceFetcher
-import moe.fuqiuluo.xposed.helper.PacketHandler
 import moe.fuqiuluo.xposed.tools.slice
 import mqq.app.MobileQQ
 import tencent.im.oidb.cmd0x89a.oidb_0x89a
@@ -55,58 +52,49 @@ internal object GroupSvc: BaseSvc() {
         ).toByteArray())
     }
 
-    suspend fun getGroupMemberList(groupId: String, refresh: Boolean): List<TroopMemberInfo>? {
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
-        if (runtime !is AppInterface)
-            return null
-
-        val service = runtime.getRuntimeService(ITroopMemberInfoService::class.java, "all")
+    suspend fun getGroupMemberList(groupId: String, refresh: Boolean): Result<List<TroopMemberInfo>> {
+        val service = app.getRuntimeService(ITroopMemberInfoService::class.java, "all")
         var memberList = service.getAllTroopMembers(groupId)
         if (refresh || memberList == null) {
-            memberList = requestTroopMemberInfo(service, groupId)
+            memberList = requestTroopMemberInfo(service, groupId).onFailure {
+                return Result.failure(Exception("获取群成员列表失败"))
+            }.getOrThrow()
         }
 
-        if (memberList == null) {
-            return null
-        }
-
-        return memberList
+        return Result.success(memberList)
     }
 
-    suspend fun getGroupList(refresh: Boolean): List<TroopInfo>? {
+    suspend fun getGroupList(refresh: Boolean): Result<List<TroopInfo>> {
         val service = app.getRuntimeService(ITroopInfoService::class.java, "all")
 
         var troopList = service.allTroopList
         if(refresh || !service.isTroopCacheInited || troopList == null) {
             if(!requestGroupList(service)) {
-                return null
+                return Result.failure(Exception("获取群列表失败"))
             } else {
                 troopList = service.allTroopList
             }
         }
-        return troopList
+        return Result.success(troopList)
     }
 
-    suspend fun getGroupInfo(groupId: String, refresh: Boolean): TroopInfo? {
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
-        if (runtime !is AppInterface)
-            return null
-
-        val service = runtime
+    suspend fun getGroupInfo(groupId: String, refresh: Boolean): Result<TroopInfo> {
+        val service = app
             .getRuntimeService(ITroopInfoService::class.java, "all")
 
         var groupInfo = getGroupInfo(groupId)
 
         if(refresh || !service.isTroopCacheInited || groupInfo.troopuin.isNullOrBlank()) {
-            groupInfo = requestGroupList(service, groupId.toLong())
-                ?: return null
+            groupInfo = requestGroupList(service, groupId.toLong()).onFailure {
+                return Result.failure(it)
+            }.getOrThrow()
         }
 
-        return groupInfo
+        return Result.success(groupInfo)
     }
 
     suspend fun setGroupUniqueTitle(groupId: String, userId: String, title: String) {
-        val localMemberInfo = getTroopMemberInfoByUin(groupId, userId, true)!!
+        val localMemberInfo = getTroopMemberInfoByUin(groupId, userId, true).getOrThrow()
         val req = Oidb_0x8fc.ReqBody()
         req.uint64_group_code.set(groupId.toLong())
         val memberInfo = Oidb_0x8fc.MemberInfo()
@@ -235,12 +223,8 @@ internal object GroupSvc: BaseSvc() {
     }
 
     fun modifyTroopName(groupId: String, name: String) {
-        val app = MobileQQ.getMobileQQ().waitAppRuntime()
-        if (app !is AppInterface)
-            throw RuntimeException("AppRuntime cannot cast to AppInterface")
-        val businessHandler = app.getBusinessHandler(BusinessHandlerFactory.TROOP_MODIFY_HANDLER)
+         val businessHandler = app.getBusinessHandler(BusinessHandlerFactory.TROOP_MODIFY_HANDLER)
 
-        // N0(String str, String str2, boolean z)
         if (!GroupSvc::METHOD_REQ_MODIFY_GROUP_NAME.isInitialized) {
             METHOD_REQ_MODIFY_GROUP_NAME = businessHandler.javaClass.declaredMethods.first {
                 it.parameterCount == 3
@@ -301,28 +285,32 @@ internal object GroupSvc: BaseSvc() {
         groupId: String,
         uin: String,
         refresh: Boolean = false
-    ): TroopMemberInfo? {
+    ): Result<TroopMemberInfo> {
         val service = app.getRuntimeService(ITroopMemberInfoService::class.java, "all")
         var info = service.getTroopMember(groupId, uin)
         if (refresh || !service.isMemberInCache(groupId, uin) || info == null || info.troopnick == null) {
-            info = requestTroopMemberInfo(service, groupId.toLong(), uin.toLong())
+            info = requestTroopMemberInfo(service, groupId.toLong(), uin.toLong()).getOrNull()
         }
         if (info == null) {
-            info = getTroopMemberInfoByUinViaNt(groupId, uin.toLong())?.let {
+            info = getTroopMemberInfoByUinViaNt(groupId, uin.toLong()).getOrNull()?.let {
                 TroopMemberInfo().apply {
                     troopnick = it.cardName
                     friendnick = it.nick
                 }
             }
         }
-        return info
+        return if (info != null) {
+            Result.success(info)
+        } else {
+            Result.failure(Exception("获取群成员信息失败"))
+        }
     }
 
-    private suspend fun getTroopMemberInfoByUinViaNt(groupId: String, qq: Long): MemberInfo? {
+    private suspend fun getTroopMemberInfoByUinViaNt(groupId: String, qq: Long): Result<MemberInfo> {
         val kernelService = NTServiceFetcher.kernelService
         val sessionService = kernelService.wrapperSession
         val groupService = sessionService.groupService
-        return suspendCancellableCoroutine {
+        val info = suspendCancellableCoroutine {
             groupService.getTransferableMemberInfo(groupId.toLong()) { code, _, data ->
                 if (code != 0) {
                     it.resume(null)
@@ -337,13 +325,18 @@ internal object GroupSvc: BaseSvc() {
                 it.resume(null)
             }
         }
+        return if (info != null) {
+            Result.success(info)
+        } else {
+            Result.failure(Exception("获取群成员信息失败"))
+        }
     }
 
-    suspend fun getTroopMemberInfoByUid(groupId: String, uid: String): MemberInfo? {
+    suspend fun getTroopMemberInfoByUid(groupId: String, uid: String): Result<MemberInfo> {
         val kernelService = NTServiceFetcher.kernelService
         val sessionService = kernelService.wrapperSession
         val groupService = sessionService.groupService
-        return suspendCancellableCoroutine {
+        val info = suspendCancellableCoroutine {
             groupService.getTransferableMemberInfo(groupId.toLong()) { code, _, data ->
                 if (code != 0) {
                     it.resume(null)
@@ -357,10 +350,15 @@ internal object GroupSvc: BaseSvc() {
                 }
             }
         }
+        return if (info != null) {
+            Result.success(info)
+        } else {
+            Result.failure(Exception("获取群成员信息失败"))
+        }
     }
 
-    private suspend fun requestTroopMemberInfo(service: ITroopMemberInfoService, groupId: String): List<TroopMemberInfo>? {
-        return RefreshTroopMemberListLock.withLock {
+    private suspend fun requestTroopMemberInfo(service: ITroopMemberInfoService, groupId: String): Result<List<TroopMemberInfo>> {
+        val info = RefreshTroopMemberListLock.withLock {
             service.deleteTroopMembers(groupId)
             refreshTroopMemberList(groupId)
 
@@ -372,6 +370,11 @@ internal object GroupSvc: BaseSvc() {
                 } while (memberList.isNullOrEmpty())
                 return@withTimeoutOrNull memberList
             }
+        }
+        return if (info != null) {
+            Result.success(info)
+        } else {
+            Result.failure(Exception("获取群成员信息失败"))
         }
     }
 
@@ -468,9 +471,9 @@ internal object GroupSvc: BaseSvc() {
         METHOD_REQ_MEMBER_INFO_V2.invoke(businessHandler, groupId.toString(), groupUin2GroupCode(groupId).toString(), arrayListOf(memberUin.toString()))
     }
 
-    private suspend fun requestGroupList(dataService: ITroopInfoService, uin: Long): TroopInfo? {
+    private suspend fun requestGroupList(dataService: ITroopInfoService, uin: Long): Result<TroopInfo> {
         val strUin = uin.toString()
-        return withTimeoutOrNull(5000) {
+        val list = withTimeoutOrNull(5000) {
             var troopInfo: TroopInfo?
             do {
                 troopInfo = dataService.getTroopInfo(strUin)
@@ -478,10 +481,15 @@ internal object GroupSvc: BaseSvc() {
             } while (troopInfo == null || troopInfo.troopuin.isNullOrBlank())
             return@withTimeoutOrNull troopInfo
         }
+        return if (list != null) {
+            Result.success(list)
+        } else {
+            Result.failure(Exception("获取群列表失败"))
+        }
     }
 
-    private suspend fun requestTroopMemberInfo(service: ITroopMemberInfoService, groupId: Long, memberUin: Long): TroopMemberInfo? {
-        return RefreshTroopMemberInfoLock.withLock {
+    private suspend fun requestTroopMemberInfo(service: ITroopMemberInfoService, groupId: Long, memberUin: Long): Result<TroopMemberInfo> {
+        val info = RefreshTroopMemberInfoLock.withLock {
             val groupIdStr = groupId.toString()
             val memberUinStr = memberUin.toString()
 
@@ -496,6 +504,11 @@ internal object GroupSvc: BaseSvc() {
                 }
                 return@withTimeoutOrNull service.getTroopMember(groupIdStr, memberUinStr)
             }
+        }
+        return if (info != null) {
+            Result.success(info)
+        } else {
+            Result.failure(Exception("获取群成员信息失败"))
         }
     }
 }

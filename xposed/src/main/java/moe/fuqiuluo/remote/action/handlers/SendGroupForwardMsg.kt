@@ -16,7 +16,7 @@ internal object SendGroupForwardMsg: IActionHandler() {
             val msgs = hashList.map {
                 MessageHelper.getMsgIdByHashCode(it)
             }.map {
-                MsgSvc.getMsg(it)
+                MsgSvc.getMsg(it).getOrNull()
             }
             val resId = LongMsgHelper.uploadGroupMsg(groupId.toString(), msgs.filterNotNull())
             return ok(mapOf("res_id" to resId), session.echo)

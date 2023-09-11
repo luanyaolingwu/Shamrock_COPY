@@ -12,11 +12,12 @@ internal object GetTroopList: IActionHandler() {
     }
 
     suspend operator fun invoke(refresh: Boolean, echo: String = ""): String {
-        val troopList = GroupSvc.getGroupList(refresh) ?: return logic("unable to get group list", echo)
-        return ok(arrayListOf<SimpleTroopInfo>().apply {
-            troopList.forEach { groupInfo ->
-                add(
-                    SimpleTroopInfo(
+        val troopList = arrayListOf<SimpleTroopInfo>()
+        GroupSvc.getGroupList(refresh).onFailure {
+            return error(it.message ?: "unknown error", echo)
+        }.onSuccess { troops ->
+            troops.forEach { groupInfo ->
+                troopList.add(SimpleTroopInfo(
                     groupId = groupInfo.troopuin,
                     groupUin = groupInfo.troopcode,
                     groupName = groupInfo.troopname ?: groupInfo.newTroopName ?: groupInfo.oldTroopName,
@@ -27,11 +28,11 @@ internal object GetTroopList: IActionHandler() {
                     maxMember = groupInfo.wMemberMax,
                     memNum = groupInfo.wMemberNum,
                     memCount = groupInfo.wMemberNum,
-                    maxNum = groupInfo.wMemberMax,
-                )
-                )
+                    maxNum = groupInfo.wMemberMax
+                ))
             }
-        }, echo)
+        }
+        return ok(troopList, echo)
     }
 
     override fun path(): String = "get_group_list"

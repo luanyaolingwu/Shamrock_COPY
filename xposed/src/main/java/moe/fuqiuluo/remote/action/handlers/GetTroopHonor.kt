@@ -19,15 +19,18 @@ internal object GetTroopHonor: IActionHandler() {
     }
 
     suspend operator fun invoke(groupId: String, refresh: Boolean, echo: String = ""): String {
-        val memberList = GroupSvc.getGroupMemberList(groupId, refresh)
-            ?: return error("unable to fetch group member list", echo)
         val honorInfo = ArrayList<GroupMemberHonor>()
-        memberList.forEach { member ->
-            GroupSvc.parseHonor(member.honorList).forEach {
-                val honor = nativeDecodeHonor(member.memberuin, it, member.mHonorRichFlag)
-                if (honor != null) {
-                    honor.nick = member.troopnick.ifBlank { member.friendnick }
-                    honorInfo.add(honor)
+
+        GroupSvc.getGroupMemberList(groupId, refresh).onFailure {
+            return error(it.message ?: "unknown error", echo)
+        }.onSuccess { memberList ->
+            memberList.forEach { member ->
+                GroupSvc.parseHonor(member.honorList).forEach {
+                    val honor = nativeDecodeHonor(member.memberuin, it, member.mHonorRichFlag)
+                    if (honor != null) {
+                        honor.nick = member.troopnick.ifBlank { member.friendnick }
+                        honorInfo.add(honor)
+                    }
                 }
             }
         }
