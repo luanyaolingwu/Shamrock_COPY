@@ -88,27 +88,27 @@ internal object CardSvc: BaseSvc() {
         return rsp.signed_ark_msg.get()
     }
 
-    suspend fun getProfileCard(uin: String): Card {
-        return getProfileCardFromCache(uin) ?: refreshAndGetProfileCard(uin)!!
+    suspend fun getProfileCard(uin: String): Result<Card> {
+        return getProfileCardFromCache(uin).onFailure {
+            return refreshAndGetProfileCard(uin)
+        }
     }
 
-    fun getProfileCardFromCache(uin: String): Card? {
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
-        if (runtime !is AppInterface)
-            error("AppRuntime cannot cast to AppInterface")
-
-        val profileDataService = runtime
+    fun getProfileCardFromCache(uin: String): Result<Card> {
+        val profileDataService = app
             .getRuntimeService(IProfileDataService::class.java, "all")
-        return profileDataService.getProfileCard(uin, true)
+        val card = profileDataService.getProfileCard(uin, true)
+        return if (card == null) {
+            Result.failure(Exception("unable to fetch profile card"))
+        } else {
+            Result.success(card)
+        }
     }
 
-    suspend fun refreshAndGetProfileCard(uin: String): Card? {
-        val app = MobileQQ.getMobileQQ().waitAppRuntime()
-        if (app !is AppInterface)
-            error("AppRuntime cannot cast to AppInterface")
+    suspend fun refreshAndGetProfileCard(uin: String): Result<Card> {
         val dataService = app
             .getRuntimeService(IProfileDataService::class.java, "all")
-        return refreshCardLock.withLock {
+        val card = refreshCardLock.withLock {
             suspendCancellableCoroutine {
                 app.addObserver(object: ProfileCardObserver() {
                     override fun onGetProfileCard(success: Boolean, obj: Any) {
@@ -124,6 +124,11 @@ internal object CardSvc: BaseSvc() {
                 app.getRuntimeService(IProfileProtocolService::class.java, "all")
                     .requestProfileCard(app.currentUin, uin, 12, 0L, 0.toByte(), 0L, 0L, null, "", 0L, 10004, null, 0.toByte())
             }
+        }
+        return if (card == null) {
+            Result.failure(Exception("unable to fetch profile card"))
+        } else {
+            Result.success(card)
         }
     }
 

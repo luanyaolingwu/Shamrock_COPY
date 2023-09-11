@@ -82,7 +82,9 @@ internal object MessageHelper {
                 val maker = MessageMaker[msg["type"].asString]
                 if (maker != null) {
                     val data = msg["data"].asJsonObjectOrNull ?: EmptyJsonObject
-                    msgList.add(maker(chatType, msgId, targetUin, data))
+                    maker(chatType, msgId, targetUin, data).onSuccess { msgElem ->
+                        msgList.add(msgElem)
+                    }
                 }
             } catch (e: Throwable) {
                 LogCenter.log(e.stackTraceToString(), Level.ERROR)

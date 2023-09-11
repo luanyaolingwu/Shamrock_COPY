@@ -50,8 +50,8 @@ internal object SendMessage: IActionHandler() {
         } else {
             val msg = MessageHelper.decodeCQCode(message)
             if (msg.isEmpty()) {
-                LogCenter.log("CQ码解码失败，CQ码不合法", Level.WARN)
-                return logic("CQCdoe decode failed, CQCode is illegal", echo)
+                LogCenter.log("CQ码不合法", Level.WARN)
+                return logic("CQCode is illegal", echo)
             } else {
                 MsgSvc.sendToAio(chatType, peerId, MessageHelper.decodeCQCode(message))
             }

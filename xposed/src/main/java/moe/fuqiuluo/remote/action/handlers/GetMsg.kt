@@ -16,9 +16,9 @@ internal object GetMsg: IActionHandler() {
 
     suspend operator fun invoke(msgHash: Int, echo: String = ""): String {
         val msgId = MessageHelper.getMsgIdByHashCode(msgHash)
-        val msg = MsgSvc.getMsg(msgId)
-            ?: return logic("Obtain msg failed, please check your msg_id.", echo)
-
+        val msg = MsgSvc.getMsg(msgId).onFailure {
+            return logic("Obtain msg failed, please check your msg_id.", echo)
+        }.getOrThrow()
         return ok(MessageDetail(
             msg.msgTime.toInt(),
             MessageHelper.obtainDetailTypeByMsgType(msg.chatType),

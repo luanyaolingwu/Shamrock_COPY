@@ -6,7 +6,9 @@ internal class ParamsException(key: String): InternalMessageMakerError("Lack of 
 
 internal class IllegalParamsException(key: String): InternalMessageMakerError("Illegal param $key")
 
+internal object ActionMsgException: InternalMessageMakerError("action msg")
+
 internal class LogicException(why: String) : InternalMessageMakerError(why)
 
-internal class ErrorTokenException : InternalMessageMakerError("access_token error")
+internal object ErrorTokenException : InternalMessageMakerError("access_token error")
 

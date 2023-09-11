@@ -18,21 +18,21 @@ import moe.fuqiuluo.xposed.helper.NTServiceFetcher
 import kotlin.coroutines.resume
 
 internal object MsgSvc: BaseSvc() {
-    fun uploadForwardMsg() {
-
+    fun uploadForwardMsg(): Result<String> {
+        return Result.failure(Exception("Not implemented"))
     }
 
     /**
      * 正常获取
      */
-    suspend fun getMsg(msgId: Long): MsgRecord? {
+    suspend fun getMsg(msgId: Long): Result<MsgRecord> {
         val chatType = MessageHelper.getChatType(msgId)
         val peerId = MessageHelper.getPeerIdByMsgId(msgId)
         val contact = MessageHelper.generateContact(chatType, peerId.toString())
 
         val qMsgId = MessageHelper.getQMsgIdByMsgId(msgId)
 
-        return withTimeout(5000) {
+        val msg = withTimeout(5000) {
             val service = QRoute.api(IMsgService::class.java)
             suspendCancellableCoroutine { continuation ->
                 service.getMsgsByMsgId(contact, arrayListOf(qMsgId)) { code, _, msgRecords ->
@@ -47,6 +47,12 @@ internal object MsgSvc: BaseSvc() {
                 }
             }
         }
+
+        return if (msg != null) {
+            Result.success(msg)
+        } else {
+            Result.failure(Exception("获取消息失败"))
+        }
     }
 
     /**
@@ -56,19 +62,23 @@ internal object MsgSvc: BaseSvc() {
         chatType: Int,
         peerId: String,
         seq: Long
-    ): MsgRecord? {
+    ): Result<MsgRecord> {
         val contact = MessageHelper.generateContact(chatType, peerId)
-        return withTimeoutOrNull(60 * 1000) {
+        val msg = withTimeoutOrNull(60 * 1000) {
             val service = QRoute.api(IMsgService::class.java)
             suspendCancellableCoroutine { continuation ->
                 service.getMsgsBySeqs(contact, arrayListOf(seq)) { code, _, msgRecords ->
-                    //LogCenter.log("getMsgBySeq: $code, ${msgRecords?.firstOrNull()?.msgId}")
                     continuation.resume(msgRecords?.firstOrNull())
                 }
                 continuation.invokeOnCancellation {
                     continuation.resume(null)
                 }
             }
+        }
+        return if (msg != null) {
+            Result.success(msg)
+        } else {
+            Result.failure(Exception("获取消息失败"))
         }
     }
 
