@@ -16,8 +16,10 @@ internal object GetTroopMemberList: IActionHandler() {
     }
 
     suspend operator fun invoke(groupId: String, refresh: Boolean, echo: String = ""): String {
-        val memberList = GroupSvc.getGroupMemberList(groupId, refresh)
-            ?: return error("unable to get group member list", echo)
+        val memberList = GroupSvc.getGroupMemberList(groupId, refresh).onFailure {
+            return error(it.message ?: "unknown error", echo)
+        }.getOrThrow()
+
         return ok(arrayListOf<SimpleTroopMemberInfo>().apply {
             memberList.forEach {  info ->
                 if (info.memberuin != "0") {

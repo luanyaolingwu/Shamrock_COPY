@@ -13,8 +13,9 @@ internal object GetFriendList: IActionHandler() {
     }
 
     suspend operator fun invoke(refresh: Boolean, echo: String = ""): String {
-        val friendList = FriendSvc.getFriendList(refresh)
-            ?: return error("get friendlist failed, please check your account or network.", echo)
+        val friendList = FriendSvc.getFriendList(refresh).onFailure {
+            return error(it.message ?: "unknown error", echo)
+        }.getOrThrow()
         return ok(friendList.map { friend ->
             FriendEntry(
                 id = friend.uin,
