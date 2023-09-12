@@ -18,8 +18,9 @@ internal object GetTroopMemberInfo: IActionHandler() {
     }
 
     suspend operator fun invoke(groupId: String, uin: String, refresh: Boolean, echo: String = ""): String {
-        val info = GroupSvc.getTroopMemberInfoByUin(groupId, uin, refresh)
-            ?: return logic("cannot get troop member info", echo)
+        val info = GroupSvc.getTroopMemberInfoByUin(groupId, uin, refresh).onFailure {
+            return error(it.message ?: "unknown error", echo)
+        }.getOrThrow()
 
         return ok(SimpleTroopMemberInfo(
             uin = info.memberuin,

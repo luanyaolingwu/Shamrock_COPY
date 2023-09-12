@@ -22,7 +22,9 @@ import kotlin.coroutines.suspendCoroutine
 fun Routing.friendAction() {
     getOrPost("/get_stranger_info") {
         val uin = fetchOrThrow("user_id")
-        val info = CardSvc.getProfileCard(uin)
+        val info = CardSvc.getProfileCard(uin).onFailure {
+
+        }.getOrThrow()
         call.respond(mapOf(
             "user_id" to uin,
             "nickname" to info.strNick,

@@ -16,9 +16,9 @@ internal object GetProfileCard: IActionHandler() {
         val uin = session.getString("user_id")
         val refresh = session.getBooleanOrDefault("refresh", false)
 
-        var card: Card? = CardSvc.getProfileCard(uin)
+        var card: Card? = CardSvc.getProfileCard(uin).getOrNull()
         if (refresh || !card.ok()) {
-            card = CardSvc.refreshAndGetProfileCard(uin)
+            card = CardSvc.refreshAndGetProfileCard(uin).getOrNull()
         }
         if (!card.ok()) {
             return logic("get profilecard error, please check your user_id or network", session.echo)

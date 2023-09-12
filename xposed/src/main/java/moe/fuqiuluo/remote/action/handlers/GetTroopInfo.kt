@@ -13,7 +13,7 @@ internal object GetTroopInfo: IActionHandler() {
     }
 
     suspend operator fun invoke(groupId: String, refresh: Boolean, echo: String = ""): String {
-        val groupInfo = GroupSvc.getGroupInfo(groupId, refresh)
+        val groupInfo = GroupSvc.getGroupInfo(groupId, refresh).getOrNull()
         return if ( groupInfo == null || groupInfo.troopuin.isNullOrBlank()) {
             logic("Unable to obtain group information", echo)
         } else {
