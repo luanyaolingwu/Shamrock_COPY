@@ -4,18 +4,14 @@ package moe.fuqiuluo.xposed.actions
 import android.content.Context
 import com.tencent.qqnt.kernel.api.IKernelService
 import com.tencent.qqnt.kernel.api.impl.KernelServiceImpl
-import com.tencent.qqnt.kernel.nativeinterface.IQQNTWrapperSession
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import moe.fuqiuluo.xposed.helper.Level
 import moe.fuqiuluo.xposed.helper.LogCenter
 import moe.fuqiuluo.xposed.helper.NTServiceFetcher
-import moe.fuqiuluo.xposed.helper.msgService
 import moe.fuqiuluo.xposed.loader.NativeLoader
 import moe.fuqiuluo.xposed.tools.hookMethod
-import mqq.app.AppRuntime
-import mqq.app.api.IRuntimeService
 
 internal class FetchService: IAction {
     override fun invoke(ctx: Context) {

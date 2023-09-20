@@ -29,11 +29,15 @@ class XposedEntry: IXposedHookLoadPackage {
     private var firstStageInit = false
 
     override fun handleLoadPackage(param: XC_LoadPackage.LoadPackageParam) {
-        if (param.packageName == PACKAGE_NAME_QQ) {
-            entryMQQ(param.classLoader)
-        } else if (param.packageName == "android") {
-            FuckAMS.injectAMS(param.classLoader)
+        when (param.packageName) {
+            PACKAGE_NAME_QQ -> entryMQQ(param.classLoader)
+            "android" -> FuckAMS.injectAMS(param.classLoader)
+            PACKAGE_NAME_TIM -> entryTim(param.classLoader)
         }
+    }
+
+    private fun entryTim(classLoader: ClassLoader) {
+        // TIM没有NT化，暂时放弃支持
     }
 
     private fun entryMQQ(classLoader: ClassLoader) {
@@ -118,19 +122,19 @@ class XposedEntry: IXposedHookLoadPackage {
         }
     }
 
-    private fun injectClassloader(classLoader: ClassLoader?): Boolean {
-        if (classLoader != null) {
-            val parent = classLoader.parent
+    private fun injectClassloader(moduleLoader: ClassLoader?): Boolean {
+        if (moduleLoader != null) {
+            val parent = moduleLoader.parent
             val field = ClassLoader::class.java.declaredFields
                 .first { it.name == "parent" }
             field.isAccessible = true
             field.set(LuoClassloader, parent)
-            field.set(classLoader, LuoClassloader)
+            field.set(moduleLoader, LuoClassloader)
 
-            val qloader = LuoClassloader.hostClassLoader
-            val qparent = qloader.parent
-            field.set(FixedLoader, qparent)
-            field.set(qloader, FixedLoader)
+            //val qloader = LuoClassloader.hostClassLoader
+            //val qparent = qloader.parent
+            //field.set(FixedLoader, qparent)
+            //field.set(qloader, FixedLoader)
 
             return kotlin.runCatching {
                 Class.forName("mqq/app/MobileQQ")
