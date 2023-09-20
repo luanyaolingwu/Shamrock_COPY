@@ -21,7 +21,7 @@ internal object PacketReceiver {
     ) } // 非动态注册，永久常驻的包
     private val HandlerByIpcSet = hashSetOf<String>()
 
-    init {
+    fun init() {
         DynamicReceiver.register("register_handler_cmd", IPCRequest {
             val cmd = it.getStringExtra("handler_cmd")!!
             LogCenter.log({ "RegisterHandler(cmd = $cmd)" }, Level.DEBUG)
@@ -42,14 +42,14 @@ internal object PacketReceiver {
         if (HandlerByIpcSet.contains(from.serviceCmd)
             || allowCommandList.contains(from.serviceCmd)
         ) {
-            LogCenter.log({ "ReceivePacket(cmd = ${from.serviceCmd})" }, Level.DEBUG)
+            //LogCenter.log({ "ReceivePacket(cmd = ${from.serviceCmd})" }, Level.DEBUG)
             MobileQQ.getContext().broadcast("xqbot") {
                 putExtra("__cmd", from.serviceCmd)
                 putExtra("buffer", from.wupBuffer)
                 putExtra("seq", from.requestSsoSeq)
             }
         } else {
-            LogCenter.log({ "ReceivePacket(cmd = ${from.serviceCmd}, seq = ${from.requestSsoSeq})" }, Level.DEBUG)
+            //LogCenter.log({ "ReceivePacket(cmd = ${from.serviceCmd}, seq = ${from.requestSsoSeq})" }, Level.DEBUG)
             MobileQQ.getContext().broadcast("xqbot") {
                 putExtra("__hash", (from.serviceCmd + from.requestSsoSeq).hashCode())
                 putExtra("buffer", from.wupBuffer)

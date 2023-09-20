@@ -23,11 +23,11 @@ object ActionLoader {
         HookWrapperCodec::class, // 注册服务处理器
         HookForDebug::class,
         IpcService::class,
-        FixLibraryLoad::class
+        FixLibraryLoad::class,
+        FetchService::class, // 获取服务实例
     )
 
     private val ACTION_LIST = arrayOf<KClass<*>>(
-        FetchService::class, // 获取服务实例
         InitRemoteService::class, // 创建HTTP API
         NoBackGround::class, // 反QQ后台模式
     )

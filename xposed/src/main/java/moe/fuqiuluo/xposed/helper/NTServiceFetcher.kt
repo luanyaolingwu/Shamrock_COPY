@@ -12,6 +12,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import moe.protocol.servlet.utils.PlatformUtils
 import moe.fuqiuluo.xposed.tools.hookMethod
+import moe.protocol.service.PacketReceiver
 
 internal object NTServiceFetcher {
     private lateinit var iKernelService: IKernelService
@@ -26,6 +27,10 @@ internal object NTServiceFetcher {
 
             val curHash = service.hashCode() + msgService.hashCode()
             if (isInitForNt(curHash)) return
+
+            PacketHandler.initPacketHandler()
+            PacketReceiver.init()
+
             LogCenter.log("Fetch kernel service successfully: $curKernelHash,$curHash,${PlatformUtils.isMainProcess()}")
             curKernelHash = curHash
             this.iKernelService = service

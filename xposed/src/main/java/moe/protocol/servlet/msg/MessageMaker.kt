@@ -420,7 +420,9 @@ internal object MessageMaker {
                 at.atNtUid = "0"
             }
             else -> {
-                val info = GroupSvc.getTroopMemberInfoByUin(peerId, qq, true) ?: error("获取成员信息失败")
+                val info = GroupSvc.getTroopMemberInfoByUin(peerId, qq, true).onFailure {
+                    LogCenter.log("无法获取群成员信息: $qq", Level.ERROR)
+                }.getOrThrow()
                 at.content = "@${info.troopnick
                     .ifNullOrEmpty(info.friendnick)
                     .ifNullOrEmpty(qq)}"
