@@ -1,6 +1,5 @@
 package moe.fuqiuluo.xposed.helper
 
-import kotlinx.coroutines.DelicateCoroutinesApi
 import moe.fuqiuluo.xposed.helper.internal.DynamicReceiver
 import moe.fuqiuluo.xposed.helper.internal.IPCRequest
 import moe.fuqiuluo.xposed.tools.broadcast
@@ -12,7 +11,7 @@ internal object PacketHandler {
      */
     var isInit = false
 
-    init {
+    internal fun initPacketHandler() {
         DynamicReceiver.register("msf_waiter", IPCRequest {
             isInit = true
         })

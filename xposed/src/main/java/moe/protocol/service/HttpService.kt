@@ -172,8 +172,7 @@ internal object HttpService: HttpPushServlet() {
         role: MemberRole = MemberRole.Member
     ) {
         GlobalScope.launch {
-            val respond = pushTo(
-                PushMessage(
+            val respond = pushTo(PushMessage(
                 time = record.msgTime,
                 selfId = app.longAccountUin,
                 postType = "message",
@@ -193,8 +192,7 @@ internal object HttpService: HttpPushServlet() {
                     title = "",
                     level = "",
                 )
-            )
-            ) ?: return@launch
+            )) ?: return@launch
             handleQuicklyReply(record, respond.bodyAsText())
         }
     }
@@ -203,6 +201,7 @@ internal object HttpService: HttpPushServlet() {
         try {
             val data = Json.parseToJsonElement(jsonText).asJsonObject
             if (data.containsKey("reply")) {
+                LogCenter.log("quickly reply successfully", Level.DEBUG)
                 val autoEscape = data["auto_escape"].asBooleanOrNull ?: false
                 val atSender = data["at_sender"].asBooleanOrNull ?: false
                 val message = data["reply"]

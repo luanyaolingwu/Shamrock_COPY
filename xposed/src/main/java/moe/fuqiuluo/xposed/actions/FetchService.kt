@@ -12,6 +12,7 @@ import moe.fuqiuluo.xposed.helper.Level
 import moe.fuqiuluo.xposed.helper.LogCenter
 import moe.fuqiuluo.xposed.helper.NTServiceFetcher
 import moe.fuqiuluo.xposed.helper.msgService
+import moe.fuqiuluo.xposed.loader.NativeLoader
 import moe.fuqiuluo.xposed.tools.hookMethod
 import mqq.app.AppRuntime
 import mqq.app.api.IRuntimeService
@@ -31,6 +32,8 @@ internal class FetchService: IAction {
             }
         }
          */
+        NativeLoader.load("shamrock")
+
         KernelServiceImpl::class.java.hookMethod("initService").after {
             val service = it.thisObject as IKernelService
             LogCenter.log("NTKernel try to init service: $service", Level.DEBUG)
@@ -38,7 +41,5 @@ internal class FetchService: IAction {
                 NTServiceFetcher.onFetch(service)
             }
         }
-
-
     }
 }

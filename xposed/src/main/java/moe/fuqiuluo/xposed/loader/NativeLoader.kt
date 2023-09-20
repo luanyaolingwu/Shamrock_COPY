@@ -16,19 +16,22 @@ internal object NativeLoader {
             return externalLibPath.resolve("libffmpegkit.so").exists()
         }
 
+    private var isInitShamrock = false
+
     /**
      * 使目标进程可以使用来自模块的库
      */
     @SuppressLint("UnsafeDynamicallyLoadedCode")
     fun load(name: String) {
         try {
-            if (name == "shamrock" || name == "xposed") {
+            if ((name == "shamrock" || name == "xposed") && !isInitShamrock) {
                 val context = MobileQQ.getContext()
                 val packageManager = context.packageManager
                 val applicationInfo = packageManager.getApplicationInfo("moe.fuqiuluo.shamrock", 0)
                 val file = File(applicationInfo.nativeLibraryDir)
                 LogCenter.log("LoadLibrary(name = $name)")
                 System.load(file.resolve("lib$name.so").absolutePath)
+                isInitShamrock = true
             } else {
                 val sourceFile = externalLibPath.resolve("lib$name.so")
                 val soFile = MobileQQ.getContext().filesDir.parentFile!!.resolve("txlib").resolve("lib$name.so")

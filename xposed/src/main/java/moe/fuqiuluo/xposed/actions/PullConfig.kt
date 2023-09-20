@@ -42,7 +42,7 @@ class PullConfig: IAction {
                 if (HTTPServer.isServiceStarted) {
                     HTTPServer.isServiceStarted = false
                 }
-                initHttp(MobileQQ.getContext())
+                initAppService(MobileQQ.getContext())
             })
             DynamicReceiver.register("push_config", IPCRequest {
                 ctx.toast("动态推送配置文件成功。")
@@ -69,17 +69,17 @@ class PullConfig: IAction {
                     }
                 } else {
                     ctx.toast("Shamrock进程未启动，不会推送配置文件。")
-                    initHttp(ctx)
+                    initAppService(ctx)
                 }
             }, bodyBuilder = null) {
                 isConfigOk = true
                 ShamrockConfig.updateConfig(it)
-                initHttp(ctx)
+                initAppService(ctx)
             }
         }
     }
 
-    private fun initHttp(ctx: Context) {
+    private fun initAppService(ctx: Context) {
         NativeLoader.load("shamrock")
         ctx.toast(testNativeLibrary())
         ActionLoader.runService(ctx)

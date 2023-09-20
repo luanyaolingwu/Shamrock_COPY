@@ -80,7 +80,9 @@ internal object VisitorSvc: BaseSvc() {
         if(count !in 1 .. 20) {
             return Result.failure(IllegalArgumentException("vote count must be in 1 .. 20"))
         }
-        val card = CardSvc.getProfileCard(target.toString())
+        val card = CardSvc.getProfileCard(target.toString()).onFailure {
+            return Result.failure(RuntimeException("unable to fetch contact info"))
+        }.getOrThrow()
         sendExtra("VisitorSvc.ReqFavorite") {
             it.putLong(ProfileProtocolConst.PARAM_SELF_UIN, currentUin.toLong())
             it.putLong(ProfileProtocolConst.PARAM_TARGET_UIN, target)
