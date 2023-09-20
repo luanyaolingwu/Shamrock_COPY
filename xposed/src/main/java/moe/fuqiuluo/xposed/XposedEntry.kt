@@ -97,26 +97,28 @@ class XposedEntry: IXposedHookLoadPackage {
     private fun execStartupInit(ctx: Context) {
         if (sec_static_stage_inited) return
         val classLoader = ctx.classLoader.also { requireNotNull(it) }
-        if ("1" != System.getProperty("qxbot_flag")) {
-            System.setProperty("qxbot_flag", "1")
-        } else return
 
         LuoClassloader.hostClassLoader = classLoader
-        injectClassloader(XposedEntry::class.java.classLoader)
 
-        log("Process Name = " + MobileQQ.getMobileQQ().qqProcessName.apply {
-            // if (!contains("msf", ignoreCase = true)) return // 非MSF进程 退出
-        })
+        if(injectClassloader(XposedEntry::class.java.classLoader)) {
+            if ("1" != System.getProperty("qxbot_flag")) {
+                System.setProperty("qxbot_flag", "1")
+            } else return
 
-        // MSG LISTENER 进程运行在主进程
-        // API 也应该开放在主进程
+            log("Process Name = " + MobileQQ.getMobileQQ().qqProcessName.apply {
+                // if (!contains("msf", ignoreCase = true)) return // 非MSF进程 退出
+            })
 
-        sec_static_stage_inited = true
+            // MSG LISTENER 进程运行在主进程
+            // API 也应该开放在主进程
 
-        ActionLoader.runFirst(ctx)
+            sec_static_stage_inited = true
+
+            ActionLoader.runFirst(ctx)
+        }
     }
 
-    private fun injectClassloader(classLoader: ClassLoader?) {
+    private fun injectClassloader(classLoader: ClassLoader?): Boolean {
         if (classLoader != null) {
             val parent = classLoader.parent
             val field = ClassLoader::class.java.declaredFields
@@ -130,7 +132,14 @@ class XposedEntry: IXposedHookLoadPackage {
             field.set(FixedLoader, qparent)
             field.set(qloader, FixedLoader)
 
-            log("Classloader inject successfully.")
+            return kotlin.runCatching {
+                Class.forName("mqq/app/MobileQQ")
+            }.onFailure {
+                log("Classloader inject failed.")
+            }.onSuccess {
+                log("Classloader inject successfully.")
+            }.isSuccess
         }
+        return false
     }
 }
