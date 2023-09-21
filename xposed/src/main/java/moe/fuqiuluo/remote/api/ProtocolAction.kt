@@ -1,8 +1,6 @@
 package moe.fuqiuluo.remote.api
 
-import com.tencent.mobileqq.app.QQAppInterface
 import com.tencent.mobileqq.dt.model.FEBound
-import com.tencent.qphone.base.remote.ToServiceMsg
 import io.ktor.server.routing.Routing
 import moe.fuqiuluo.remote.entries.Protocol
 import moe.fuqiuluo.remote.entries.QSignDtConfig

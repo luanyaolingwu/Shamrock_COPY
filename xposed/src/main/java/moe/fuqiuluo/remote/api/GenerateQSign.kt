@@ -9,6 +9,8 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.util.pipeline.PipelineContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import moe.fuqiuluo.remote.entries.EmptyObject
 import moe.fuqiuluo.remote.entries.Status
@@ -203,6 +205,10 @@ fun Routing.qsign() {
             call.respond(OldApiResult(0, "success", sign.toHexString()))
         }
     }
+
+    route("/get_byte") {
+
+    }
 }
 
 @Serializable
@@ -230,8 +236,22 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(
         } else {
             signer = IQSigner.Stub.asInterface(binder)
         }
+    } else if (!signer.asBinder().isBinderAlive) {
+        val binder = ShamrockIpc.get(ShamrockIpc.IPC_QSIGN)
+        if (binder == null) {
+            respond(false, Status.InternalHandlerError, EmptyObject)
+            return
+        } else {
+            signer = IQSigner.Stub.asInterface(binder)
+        }
     }
-    val sign = signer.sign(cmd, seq, uin, buffer)
+    val sign = withTimeoutOrNull(5000) {
+        signer.sign(cmd, seq, uin, buffer)
+    } ?: run {
+        respond(false, Status.IAmTired, EmptyObject)
+        return
+    }
+
     call.respond(OldApiResult(0, "success", Sign(
         sign.token.toHexString(),
         sign.extra.toHexString(),

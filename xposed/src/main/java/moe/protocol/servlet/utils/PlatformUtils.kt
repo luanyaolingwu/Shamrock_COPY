@@ -30,6 +30,14 @@ internal object PlatformUtils {
      * 是否处于QQ主进程
      */
     fun isMainProcess(): Boolean {
+        return isMqq() || isTim()
+    }
+
+    fun isMqq(): Boolean {
         return MobileQQ.getMobileQQ().qqProcessName == "com.tencent.mobileqq"
+    }
+
+    fun isTim(): Boolean {
+        return MobileQQ.getMobileQQ().qqProcessName == "com.tencent.tim"
     }
 }

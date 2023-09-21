@@ -6,22 +6,23 @@ import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import de.robv.android.xposed.XposedBridge.log
 import moe.fuqiuluo.xposed.loader.ActionLoader
-import moe.fuqiuluo.xposed.loader.FixedLoader
 import moe.fuqiuluo.xposed.loader.FuckAMS
 import moe.fuqiuluo.xposed.loader.LuoClassloader
 import moe.fuqiuluo.xposed.tools.FuzzySearchClass
 import moe.fuqiuluo.xposed.tools.afterHook
+import moe.protocol.servlet.utils.PlatformUtils
 import mqq.app.MobileQQ
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 
-class XposedEntry: IXposedHookLoadPackage {
-    companion object {
-        const val PACKAGE_NAME_QQ = "com.tencent.mobileqq"
-        const val PACKAGE_NAME_QQ_INTERNATIONAL = "com.tencent.mobileqqi"
-        const val PACKAGE_NAME_QQ_LITE = "com.tencent.qqlite"
-        const val PACKAGE_NAME_TIM = "com.tencent.tim"
+internal const val PACKAGE_NAME_QQ = "com.tencent.mobileqq"
+internal const val PACKAGE_NAME_QQ_INTERNATIONAL = "com.tencent.mobileqqi"
+internal const val PACKAGE_NAME_QQ_LITE = "com.tencent.qqlite"
+internal const val PACKAGE_NAME_TIM = "com.tencent.tim"
 
+
+internal class XposedEntry: IXposedHookLoadPackage {
+    companion object {
         @JvmStatic
         var sec_static_stage_inited = false
     }
@@ -37,7 +38,7 @@ class XposedEntry: IXposedHookLoadPackage {
     }
 
     private fun entryTim(classLoader: ClassLoader) {
-        // TIM没有NT化，暂时放弃支持
+        entryMQQ(classLoader)
     }
 
     private fun entryMQQ(classLoader: ClassLoader) {
@@ -51,6 +52,8 @@ class XposedEntry: IXposedHookLoadPackage {
                 val app: Context? = field.get(null) as? Context
                 if (app != null) {
                     execStartupInit(app)
+                } else {
+                    log("Shamrock: Unable to fetch context")
                 }
             } catch (e: Throwable) {
                 log(e)
@@ -137,7 +140,7 @@ class XposedEntry: IXposedHookLoadPackage {
             //field.set(qloader, FixedLoader)
 
             return kotlin.runCatching {
-                Class.forName("mqq/app/MobileQQ")
+                Class.forName("mqq.app.MobileQQ")
             }.onFailure {
                 log("Classloader inject failed.")
             }.onSuccess {

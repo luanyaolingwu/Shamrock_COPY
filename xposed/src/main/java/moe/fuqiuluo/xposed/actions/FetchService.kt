@@ -12,30 +12,24 @@ import moe.fuqiuluo.xposed.helper.LogCenter
 import moe.fuqiuluo.xposed.helper.NTServiceFetcher
 import moe.fuqiuluo.xposed.loader.NativeLoader
 import moe.fuqiuluo.xposed.tools.hookMethod
+import moe.protocol.servlet.utils.PlatformUtils
 
 internal class FetchService: IAction {
     override fun invoke(ctx: Context) {
-        //IQQNTWrapperSession.CppProxy::class.java.hookMethod("startNT").after {
-        //    NTServiceFetcher.onNTStart()
-        //}
-        /*
-            AppRuntime::class.java.hookMethod("getRuntimeService").after {
-            val service = it.result as? IRuntimeService
-            if (service != null && service is IKernelService) {
+        NativeLoader.load("shamrock")
+
+        if (PlatformUtils.isMqq()) {
+            KernelServiceImpl::class.java.hookMethod("initService").after {
+                val service = it.thisObject as IKernelService
+                LogCenter.log("NTKernel try to init service: $service", Level.DEBUG)
                 GlobalScope.launch {
                     NTServiceFetcher.onFetch(service)
                 }
             }
+        } else {
+            // TIM 尚未进入 NTKernel
+            LogCenter.log("NTKernel try to init service: not in mqq process", Level.ERROR)
         }
-         */
-        NativeLoader.load("shamrock")
 
-        KernelServiceImpl::class.java.hookMethod("initService").after {
-            val service = it.thisObject as IKernelService
-            LogCenter.log("NTKernel try to init service: $service", Level.DEBUG)
-            GlobalScope.launch {
-                NTServiceFetcher.onFetch(service)
-            }
-        }
     }
 }
