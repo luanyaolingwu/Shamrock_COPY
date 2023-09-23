@@ -65,6 +65,12 @@ android {
                 abiFilters.add("arm64-v8a")
             }
         }
+        create("x64") {
+            dimension = "mode"
+            ndk {
+                abiFilters.add("x86_64")
+            }
+        }
     }
 
     compileOptions {
