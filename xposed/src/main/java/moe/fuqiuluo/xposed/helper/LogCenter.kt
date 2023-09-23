@@ -13,7 +13,6 @@ import moe.fuqiuluo.xposed.actions.toast
 import moe.fuqiuluo.xposed.helper.internal.DataRequester
 import moe.protocol.service.config.ShamrockConfig
 import mqq.app.MobileQQ
-import java.io.File
 import java.util.Date
 
 internal enum class Level(
@@ -65,7 +64,17 @@ internal object LogCenter {
         LogFile.appendText(format)
     }
 
-    fun getAllLog(): File {
-        return LogFile
+//    fun getAllLog(): File {
+//        return LogFile
+//    }
+
+    fun getLogLines(start: Int, recent: Boolean = false): List<String> {
+        val logData = LogFile.readLines()
+        val index = if(start > logData.size || start < 0) 0 else start
+        return if(!recent) {
+            logData.subList(index, logData.size)
+        } else {
+            logData.subList(logData.size - index, logData.size)
+        }
     }
 }
