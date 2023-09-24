@@ -8,9 +8,9 @@
 
 uint64_t readFRQ()
 {
-    uint64_t value;
-    asm volatile("mrs %0, cntfrq_el0 \n"
-                 "mrs x9, cntvct_el0": "=r"(value));
+    uint64_t value = 0;
+    //asm volatile("mrs %0, cntfrq_el0 \n"
+    //             "mrs x9, cntvct_el0": "=r"(value));
 
     return value;
 }
