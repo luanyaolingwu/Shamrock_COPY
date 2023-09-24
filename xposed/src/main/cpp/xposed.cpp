@@ -16,9 +16,9 @@ uint64_t readFRQ()
 }
 
 uint64_t hwcapsByAsm() {
-    uint64_t value;
-    asm volatile("mrs %[result], ID_AA64PFR0_EL1 "
-                : [result] "=r"(value));
+    uint64_t value = 0;
+    //asm volatile("mrs %[result], ID_AA64PFR0_EL1 "
+    //            : [result] "=r"(value));
     return value;
 }
 

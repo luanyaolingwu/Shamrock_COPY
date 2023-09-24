@@ -1,4 +1,4 @@
-<!-- docs/_sidebar.md -->
+<!-- docs/_sidebar.md.md -->
 
 * [配置](#)
     * [配置选项](#配置选项)
