@@ -55,6 +55,14 @@ internal object TicketSvc: BaseSvc() {
         return (v and 2147483647L).toString()
     }
 
+    fun getCSRF(uin: String, domain: String): String {
+        var v: Long = 5381
+        for (element in getPSKey(uin, domain) ?: "") {
+            v += (v shl 5 and 2147483647L) + element.code.toLong()
+        }
+        return (v and 2147483647L).toString()
+    }
+
     fun getStWeb(uin: String): String {
         return (app.getManager(QQAppInterface.TICKET_MANAGER) as TicketManager).getStweb(uin)
     }

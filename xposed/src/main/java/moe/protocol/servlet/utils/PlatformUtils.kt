@@ -40,4 +40,6 @@ internal object PlatformUtils {
     fun isTim(): Boolean {
         return MobileQQ.getMobileQQ().qqProcessName == "com.tencent.tim"
     }
+
+    external fun outCpuInfo(): String
 }

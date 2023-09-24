@@ -10,6 +10,7 @@ enum class Status(
 ) {
     Ok(0),
     BadRequest(10001),
+    ErrorToken(403),
     UnsupportedAction(10002),
     BadParam(10003),
     UnsupportedParam(10004),

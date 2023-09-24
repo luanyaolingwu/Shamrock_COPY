@@ -10,24 +10,27 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.util.pipeline.PipelineContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import moe.fuqiuluo.remote.entries.EmptyObject
 import moe.fuqiuluo.remote.entries.Status
-import moe.fuqiuluo.xposed.ipc.IQSigner
+import moe.fuqiuluo.xposed.ipc.qsign.IQSigner
 import moe.fuqiuluo.xposed.ipc.ShamrockIpc
+import moe.fuqiuluo.xposed.ipc.bytedata.IByteData
 import moe.fuqiuluo.xposed.tools.EMPTY_BYTE_ARRAY
-import moe.fuqiuluo.xposed.tools.fetchGetOrNull
 import moe.fuqiuluo.xposed.tools.fetchGetOrThrow
 import moe.fuqiuluo.xposed.tools.fetchOrNull
 import moe.fuqiuluo.xposed.tools.fetchOrThrow
-import moe.fuqiuluo.xposed.tools.fetchPostOrNull
 import moe.fuqiuluo.xposed.tools.fetchPostOrThrow
 import moe.fuqiuluo.xposed.tools.hex2ByteArray
 import moe.fuqiuluo.xposed.tools.respond
 import moe.fuqiuluo.xposed.tools.toHexString
 import java.nio.ByteBuffer
+
+private lateinit var signer: IQSigner
+private lateinit var byteData: IByteData
 
 fun Routing.qsign() {
     route("/sign") {
@@ -65,7 +68,8 @@ fun Routing.qsign() {
                 return@get
             }
 
-            val salt = fetchSalt(data)
+            val uin = fetchOrThrow("uin")
+            val salt = fetchSalt(data, uin)
             if (salt.isEmpty()) {
                 call.respond(OldApiResult(-2, "无法自动决断mode，请主动提供", null))
                 return@get
@@ -80,8 +84,8 @@ fun Routing.qsign() {
                 call.respond(OldApiResult(-2, "data参数不合法", null))
                 return@post
             }
-
-            val salt = fetchSalt(data)
+            val uin = fetchOrThrow("uin")
+            val salt = fetchSalt(data, uin)
             if (salt.isEmpty()) {
                 call.respond(OldApiResult(-2, "无法自动决断mode，请主动提供", null))
                 return@post
@@ -92,23 +96,33 @@ fun Routing.qsign() {
         }
     }
 
+    val getByteMutex = Mutex()
     get("/get_byte") {
-        val byteData = ByteData.getInstance()
+        val sign = getByteMutex.withLock {
+            if (!::byteData.isInitialized || !byteData.asBinder().isBinderAlive) {
+                val binder = ShamrockIpc.get(ShamrockIpc.IPC_BYTEDATA)
+                if (binder == null) {
+                    respond(false, Status.InternalHandlerError, EmptyObject)
+                    return@get
+                } else {
+                    byteData = IByteData.Stub.asInterface(binder)
+                }
+            }
+            val data = fetchGetOrThrow("data")
+            if(!(data.startsWith("810_") || data.startsWith("812_"))) {
+                call.respond(OldApiResult(-2, "data参数不合法", null))
+                return@get
+            }
 
-        val data = fetchGetOrThrow("data")
-        if(!(data.startsWith("810_") || data.startsWith("812_"))) {
-            call.respond(OldApiResult(-2, "data参数不合法", null))
-            return@get
+            val uin = fetchOrThrow("uin")
+            val salt = fetchSalt(data, uin)
+            if (salt.isEmpty()) {
+                call.respond(OldApiResult(-2, "无法自动决断mode，请主动提供", null))
+                return@get
+            }
+
+            byteData.sign(uin, data, salt).sign
         }
-
-        val salt = fetchSalt(data)
-        if (salt.isEmpty()) {
-            call.respond(OldApiResult(-2, "无法自动决断mode，请主动提供", null))
-            return@get
-        }
-
-        byteData.setDataEx("", data)
-        val sign = byteData.getSign("", data, salt)
 
         if (sign == null) {
             call.respond(OldApiResult(-2, "获取失败", null))
@@ -118,13 +132,16 @@ fun Routing.qsign() {
     }
 }
 
-private suspend inline fun PipelineContext<Unit, ApplicationCall>.fetchSalt(data: String): ByteArray {
+private suspend inline fun PipelineContext<Unit, ApplicationCall>.fetchSalt(
+    data: String,
+    uin: String
+): ByteArray {
     var mode = fetchOrNull("mode")
     if (mode == null) {
         mode = when(data) {
             "810_d", "810_a", "810_f", "810_9" -> "v2"
             "810_2", "810_25", "810_7", "810_24" -> "v1"
-            "812_a" -> "v3"
+            "812_b", "812_a" -> "v3"
             "812_5" -> "v4"
             else -> null
         }
@@ -133,14 +150,17 @@ private suspend inline fun PipelineContext<Unit, ApplicationCall>.fetchSalt(data
         return EMPTY_BYTE_ARRAY
     }
 
+    val version = fetchOrThrow("version")
+    if (!version.startsWith("6.0.0")) {
+        throw RuntimeException("version参数应该是6.0.0开头")
+    }
+
     return when (mode) {
         "v1" -> {
-            val uin = fetchOrThrow("uin").toLong()
-            val version = fetchOrThrow("version")
             val guid = fetchOrThrow("guid").hex2ByteArray()
             val salt = ByteBuffer.allocate(8 + 2 + guid.size + 2 + 10 + 4)
             val sub = data.substring(4).toInt(16)
-            salt.putLong(uin)
+            salt.putLong(uin.toLong())
             salt.putShort(guid.size.toShort())
             salt.put(guid)
             salt.putShort(version.length.toShort())
@@ -149,7 +169,6 @@ private suspend inline fun PipelineContext<Unit, ApplicationCall>.fetchSalt(data
             salt.array()
         }
         "v2" -> {
-            val version = fetchOrThrow("version")
             val guid = fetchOrThrow("guid").hex2ByteArray()
             val sub = data.substring(4).toInt(16)
             val salt = ByteBuffer.allocate(4 + 2 + guid.size + 2 + 10 + 4 + 4)
@@ -163,7 +182,6 @@ private suspend inline fun PipelineContext<Unit, ApplicationCall>.fetchSalt(data
             salt.array()
         }
         "v3" -> { // 812_a
-            val version = fetchOrThrow("version")
             val phone = fetchOrThrow("phone").toByteArray() // 86-xxx
             val salt = ByteBuffer.allocate(phone.size + 2 + 2 + version.length + 2)
             salt.put(phone)
@@ -190,23 +208,13 @@ private data class Sign(
     val requestCallback: List<Int>
 )
 
-private lateinit var signer: IQSigner
-
 private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(
     cmd: String,
     uin: String,
     seq: Int,
     buffer: ByteArray,
 ) {
-    if (!::signer.isInitialized) {
-        val binder = ShamrockIpc.get(ShamrockIpc.IPC_QSIGN)
-        if (binder == null) {
-            respond(false, Status.InternalHandlerError, EmptyObject)
-            return
-        } else {
-            signer = IQSigner.Stub.asInterface(binder)
-        }
-    } else if (!signer.asBinder().isBinderAlive) {
+    if (!::signer.isInitialized || !signer.asBinder().isBinderAlive) {
         val binder = ShamrockIpc.get(ShamrockIpc.IPC_QSIGN)
         if (binder == null) {
             respond(false, Status.InternalHandlerError, EmptyObject)

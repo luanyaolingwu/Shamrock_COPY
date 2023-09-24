@@ -7,6 +7,7 @@ import moe.fuqiuluo.xposed.actions.DataReceiver
 import moe.fuqiuluo.xposed.actions.FetchService
 import moe.fuqiuluo.xposed.actions.FixLibraryLoad
 import moe.fuqiuluo.xposed.actions.ForceTablet
+import moe.fuqiuluo.xposed.actions.GuidLock
 import moe.fuqiuluo.xposed.actions.HookForDebug
 import moe.fuqiuluo.xposed.actions.HookWrapperCodec
 import moe.fuqiuluo.xposed.actions.IAction
@@ -30,6 +31,7 @@ object ActionLoader {
     private val ACTION_LIST = arrayOf<KClass<*>>(
         InitRemoteService::class, // 创建HTTP API
         NoBackGround::class, // 反QQ后台模式
+        GuidLock::class,
     )
 
     // 先从APP拉取配置文件，再执行其他操作

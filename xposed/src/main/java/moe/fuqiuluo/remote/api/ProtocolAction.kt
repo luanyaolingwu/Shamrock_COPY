@@ -26,6 +26,14 @@ fun Routing.obtainProtocolData() {
         respond(true, Status.Ok, data = resp?.toHexString() ?: "null", msg = "成功")
     }
 
+    getOrPost("/set_guid") {
+        val guid = fetchOrThrow("guid").hex2ByteArray()
+        val ctx = MobileQQ.getContext()
+        util.save_cur_guid(ctx, guid)
+        util.saveGuidToFile(ctx, guid)
+        respond(true, Status.Ok, msg = "成功")
+    }
+
     getOrPost("/get_msf_info") {
         val mqq = MobileQQ.getMobileQQ()
         val ctx = MobileQQ.getContext()
@@ -50,7 +58,7 @@ fun Routing.obtainProtocolData() {
             code = Status.Ok,
             data = Protocol(
                 mqq.qqProcessName,
-                mqq.appId.toLong(), mqq.qua, mqq.ntCoreVersion,
+                mqq.appId.toLong(), mqq.qua, kotlin.runCatching { mqq.ntCoreVersion }.getOrDefault(0),
                 mqq.msfConnectedNetType,
                 qimei,
                 util.getSvnVersion(),

@@ -7,6 +7,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import moe.fuqiuluo.xposed.helper.internal.DynamicReceiver
 import moe.fuqiuluo.xposed.helper.internal.IPCRequest
+import moe.fuqiuluo.xposed.ipc.bytedata.ByteDataCreator
+import moe.fuqiuluo.xposed.ipc.bytedata.IByteData
+import moe.fuqiuluo.xposed.ipc.qsign.QSignGenerator
 import moe.fuqiuluo.xposed.tools.broadcast
 import mqq.app.MobileQQ
 import kotlin.coroutines.resume
@@ -14,9 +17,11 @@ import kotlin.coroutines.suspendCoroutine
 
 internal object ShamrockIpc {
     const val IPC_QSIGN = "qsign"
+    const val IPC_BYTEDATA = "bytedata"
 
-    private val IpcChannel = hashMapOf(
-        IPC_QSIGN to QSignGenerator
+    private val IpcChannel = hashMapOf<String, IBinder>(
+        IPC_QSIGN to QSignGenerator,
+        IPC_BYTEDATA to ByteDataCreator
     )
     private val mLock = Mutex()
 

@@ -6,15 +6,17 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import moe.fuqiuluo.remote.action.ActionManager
 import moe.fuqiuluo.remote.action.ActionSession
-import moe.fuqiuluo.remote.action.handlers.CleanCache
-import moe.fuqiuluo.remote.action.handlers.GetModelShow
-import moe.fuqiuluo.remote.action.handlers.RestartMe
-import moe.fuqiuluo.remote.action.handlers.SetModelShow
+import moe.fuqiuluo.remote.action.handlers.*
 import moe.fuqiuluo.xposed.tools.fetchOrNull
 import moe.fuqiuluo.xposed.tools.fetchOrThrow
 import moe.fuqiuluo.xposed.tools.getOrPost
 
 fun Routing.userAction() {
+    getOrPost("/_get_model_show") {
+        val model = fetchOrThrow("model")
+        call.respondText(GetModelShowList(model))
+    }
+
     getOrPost("/_set_model_show") {
         val modelShow = fetchOrThrow("model")
         call.respondText(SetModelShow(modelShow))
@@ -33,36 +35,12 @@ fun Routing.userAction() {
         call.respondText(RestartMe(2000))
     }
 
-    getOrPost("/set_qq_profile") {
-        val nickName = fetchOrThrow("nickname")
-        val company = fetchOrThrow("company")
-        val email = fetchOrThrow("email")
-        val college = fetchOrThrow("college")
-        val personalNote = fetchOrThrow("personal_note")
-
-        val age = fetchOrNull("age")
-        val birthday = fetchOrNull("birthday")
-
-        val handler = ActionManager["set_qq_profile"]!!
-
-        call.respondText(handler.handle(ActionSession(mapOf(
-            "nickname" to nickName,
-            "company" to company,
-            "email" to email,
-            "college" to college,
-            "personal_note" to personalNote,
-            "age" to age,
-            "birthday" to birthday
-        ))))
-    }
-
     getOrPost("/send_like") {
         val uin = fetchOrThrow("user_id")
         val cnt = fetchOrThrow("times")
         call.respondText(ActionManager["send_like"]?.handle(ActionSession(mapOf(
             "user_id" to uin,
             "cnt" to cnt
-        ))) ?: throw LogicException("Unable to obtain send_like handler.")
-        )
+        ))) ?: throw LogicException("Unable to obtain send_like handler."))
     }
 }
