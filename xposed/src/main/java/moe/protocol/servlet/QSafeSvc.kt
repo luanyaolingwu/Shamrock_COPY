@@ -1,22 +1,27 @@
 package moe.protocol.servlet
 
-import mqq.app.MobileQQ
-import oicq.wlogin_sdk.tools.util
+import QQService.SvcDevLoginInfo
+import QQService.SvcReqGetDevLoginInfo
+import QQService.SvcRspGetDevLoginInfo
+import com.qq.jce.wup.UniPacket
+import mqq.app.Packet
+import java.util.ArrayList
 
 
 internal object QSafeSvc: BaseSvc() {
 
-    fun getOnlineClients()  {
-        val createToServiceMsg = createToServiceMsg("StatSvc.GetDevLoginInfo")
-        createToServiceMsg.extraData.putLong("iLoginType", 1L)
-        createToServiceMsg.extraData.putLong("iNextItemIndex", 0)
-        createToServiceMsg.extraData.putLong("iRequireMax", 20L)
-        createToServiceMsg.extraData.putLong("iTimeStamp", System.currentTimeMillis() / 1000)
-        createToServiceMsg.extraData.putString("strAppName", "Shamrock")
-        createToServiceMsg.extraData.putByteArray("vecGuid", util.getGuidFromFile(MobileQQ.getContext()))
-        createToServiceMsg.extraData.putLong("iGetDevListType", 5L)
-        send(createToServiceMsg)
+    suspend fun getOnlineClients(): ArrayList<SvcDevLoginInfo>? {
+        val req = SvcReqGetDevLoginInfo()
+        val uniPacket = UniPacket()
+        uniPacket.servantName = "StatSvc"
+        uniPacket.funcName = "SvcReqGetDevLoginInfo"
 
+        uniPacket.put<Any>("SvcReqGetDevLoginInfo", req)
+
+        val resp = sendBufferAW("StatSvc.GetDevLoginInfo", false, uniPacket.encode())
+            ?: error("unable to fetch contact model_show")
+        return Packet.decodePacket(resp, "rsp",  SvcRspGetDevLoginInfo()).vecCurrentLoginDevInfo
     }
+
 
 }
