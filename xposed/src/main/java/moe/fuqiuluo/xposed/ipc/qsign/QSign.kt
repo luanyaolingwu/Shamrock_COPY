@@ -1,7 +1,9 @@
-package moe.fuqiuluo.xposed.ipc
+package moe.fuqiuluo.xposed.ipc.qsign
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.tencent.mobileqq.fe.FEKit
+import moe.fuqiuluo.xposed.ipc.qsign.IQSigner
 
 data class IQSign(
     val token: ByteArray,
@@ -32,5 +34,12 @@ data class IQSign(
         override fun newArray(size: Int): Array<IQSign?> {
             return arrayOfNulls(size)
         }
+    }
+}
+
+internal object QSignGenerator: IQSigner.Stub() {
+    override fun sign(cmd: String, seq: Int, uin: String, buffer: ByteArray): IQSign {
+        val sign = FEKit.getInstance().getSign(cmd, buffer, seq, uin)
+        return IQSign(sign.token, sign.extra, sign.sign,)
     }
 }

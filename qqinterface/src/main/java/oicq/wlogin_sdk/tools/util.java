@@ -26,4 +26,18 @@ public class util {
     public static byte[] get_android_dev_info(Context context) {
         return null;
     }
+
+    public static void save_cur_guid(Context ctx, byte[] guid) {
+
+    }
+
+    public static void saveGuidToFile(Context ctx, byte[] guid) {
+        throw new UnsupportedOperationException();
+    }
+
+
+    public static byte[] get_last_guid(Context context) {
+        return null;
+    }
+
 }

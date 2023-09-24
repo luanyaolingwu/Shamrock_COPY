@@ -32,42 +32,4 @@ fun Routing.obtainFrameworkInfo() {
         delay(3000)
         exitProcess(0)
     }
-
-    getOrPost("/get_account_info") {
-        val accounts = MobileQQ.getMobileQQ().allAccounts
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
-        val curUin = runtime.currentAccountUin
-        val account = accounts?.firstOrNull { it.uin == curUin }
-        if (!runtime.isLogin || account == null || !account.isLogined) {
-            this.call.respond(CommonResult("ok", Status.InternalHandlerError.code, CurrentAccount(
-                1094950020L, false, "未登录"
-            )))
-        } else {
-            this.call.respond(CommonResult("ok", 0, CurrentAccount(
-                curUin.toLong(), runtime.isLogin, if (runtime is QQAppInterface) runtime.currentNickname else "unknown"
-            )))
-        }
-    }
-
-    getOrPost("/get_history_account_info") {
-        val accounts = MobileQQ.getMobileQQ().allAccounts
-        val accountList = accounts.map {
-            CurrentAccount(it.uin.toLong(), it.isLogined)
-        }
-        respond(true, Status.Ok, accountList)
-    }
-
-    getOrPost("/get_login_info") {
-        val accounts = MobileQQ.getMobileQQ().allAccounts
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
-        val curUin = runtime.currentAccountUin
-        val account = accounts.firstOrNull { it.uin == curUin }
-        if (account == null || !account.isLogined) {
-            respond(false, Status.BadParam, msg = "当前不处于已登录状态")
-        } else {
-            respond(true, Status.Ok, StdAccount(
-                curUin.toLong(),if (runtime is QQAppInterface) runtime.currentNickname else "unknown"
-            ))
-        }
-    }
 }

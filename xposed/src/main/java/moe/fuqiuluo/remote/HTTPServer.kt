@@ -46,6 +46,7 @@ internal object HTTPServer {
                     ticketActions()
                     fetchRes()
                     showLog()
+                    profileRouter()
                     if (ShamrockConfig.isPro()) {
                         qsign()
                         obtainProtocolData()

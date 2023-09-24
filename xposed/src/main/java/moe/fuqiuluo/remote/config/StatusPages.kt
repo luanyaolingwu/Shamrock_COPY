@@ -21,7 +21,7 @@ fun Application.statusPages() {
             call.respond(CommonResult("failed", Status.LogicError.code, ErrorCatch(call.request.uri, cause.message ?: "")))
         }
         exception<ErrorTokenException> { call, cause ->
-            call.respond(CommonResult("failed", Status.BadRequest.code, ErrorCatch(call.request.uri, cause.message ?: "")))
+            call.respond(CommonResult("failed", Status.ErrorToken.code, ErrorCatch(call.request.uri, cause.message ?: "")))
         }
         exception<Throwable> { call, cause ->
             call.respond(CommonResult("failed", Status.InternalHandlerError.code, ErrorCatch(call.request.uri, cause.stackTraceToString())))

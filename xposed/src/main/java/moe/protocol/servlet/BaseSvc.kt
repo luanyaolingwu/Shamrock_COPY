@@ -89,11 +89,13 @@ abstract class BaseSvc {
         }
 
         fun sendBuffer(cmd: String, isPb: Boolean, buffer: ByteArray, seq: Int) {
+
             val toServiceMsg = ToServiceMsg("mobileqq.service", app.currentUin, cmd)
             toServiceMsg.putWupBuffer(buffer)
             toServiceMsg.addAttribute("req_pb_protocol_flag", isPb)
             toServiceMsg.addAttribute("shamrock_seq", seq)
             app.sendToService(toServiceMsg)
+
         }
     }
 
