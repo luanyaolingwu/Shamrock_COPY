@@ -1,4 +1,4 @@
-<!-- docs/_sidebar.md -->
+<!-- docs/_sidebar.md.md -->
 
 * [简介](/)
 * [开始](/start/README.md)
