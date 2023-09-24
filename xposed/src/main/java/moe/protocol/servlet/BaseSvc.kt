@@ -10,6 +10,7 @@ import com.tencent.qphone.base.remote.ToServiceMsg
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import moe.fuqiuluo.xposed.helper.PacketHandler
 import moe.fuqiuluo.xposed.helper.internal.DynamicReceiver
@@ -68,8 +69,8 @@ abstract class BaseSvc {
                         timer.cancel()
                         continuation.resume(buffer)
                     })
+                    sendBuffer(cmd, isPb, data, seq)
                 }
-                sendBuffer(cmd, isPb, data, seq)
             }
         }
 
@@ -89,13 +90,11 @@ abstract class BaseSvc {
         }
 
         fun sendBuffer(cmd: String, isPb: Boolean, buffer: ByteArray, seq: Int) {
-
             val toServiceMsg = ToServiceMsg("mobileqq.service", app.currentUin, cmd)
             toServiceMsg.putWupBuffer(buffer)
             toServiceMsg.addAttribute("req_pb_protocol_flag", isPb)
             toServiceMsg.addAttribute("shamrock_seq", seq)
             app.sendToService(toServiceMsg)
-
         }
     }
 

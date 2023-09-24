@@ -13,8 +13,8 @@ internal object GetOnlineClients: IActionHandler() {
     }
 
     suspend operator fun invoke(echo: String = ""): String {
-        val clients = QSafeSvc.getOnlineClients() ?: return logic("获取在线设备信息失败", echo)
-
+        val clients = QSafeSvc.getOnlineClients()
+            ?: return logic("获取在线设备信息失败", echo)
         return ok(clients.map {
             DevInfo(it.iAppId, it.strDeviceName, it.strDeviceTypeInfo, it.iLoginTime,
                 it.iLoginPlatform, it.strLoginLocation,
@@ -28,11 +28,11 @@ internal object GetOnlineClients: IActionHandler() {
     @Serializable
     data class DevInfo(
         @SerialName("app_id") val appId: Long,
-        @SerialName("device_name") val deviceName: String,
-        @SerialName("device_kind") val deviceType: String,
-        @SerialName("login_time") val loginTime: Long,
-        @SerialName("login_platform") val loginPlatform: Long,
-        @SerialName("location") val location: String,
-        @SerialName("guid") val guid: String = ""
+        @SerialName("device_name") val deviceName: String?,
+        @SerialName("device_kind") val deviceType: String?,
+        @SerialName("login_time") val loginTime: Long?,
+        @SerialName("login_platform") val loginPlatform: Long?,
+        @SerialName("location") val location: String?,
+        @SerialName("guid") val guid: String? = ""
     )
 }

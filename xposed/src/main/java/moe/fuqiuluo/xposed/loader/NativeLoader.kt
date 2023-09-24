@@ -24,7 +24,8 @@ internal object NativeLoader {
     @SuppressLint("UnsafeDynamicallyLoadedCode")
     fun load(name: String) {
         try {
-            if ((name == "shamrock" || name == "xposed") && !isInitShamrock) {
+            if ((name == "shamrock" || name == "xposed")) {
+                if (isInitShamrock) return
                 val context = MobileQQ.getContext()
                 val packageManager = context.packageManager
                 val applicationInfo = packageManager.getApplicationInfo("moe.fuqiuluo.shamrock", 0)

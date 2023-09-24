@@ -26,9 +26,9 @@ internal class FetchService: IAction {
                     NTServiceFetcher.onFetch(service)
                 }
             }
-        } else {
+        } else if (PlatformUtils.isTim()) {
             // TIM 尚未进入 NTKernel
-            LogCenter.log("NTKernel try to init service: not in mqq process", Level.ERROR)
+            LogCenter.log("NTKernel init failed: tim not support NT", Level.ERROR)
         }
 
     }
