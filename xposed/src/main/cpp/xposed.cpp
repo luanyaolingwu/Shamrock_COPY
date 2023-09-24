@@ -2,8 +2,8 @@
 #include <string>
 #include <utility>
 #include <sys/auxv.h>
-
-/* 通过移位Bit Mask来读取相应的标志位 */
+/*
+/* 通过移位Bit Mask来读取相应的标志位
 #define BIT_SHIFTS(n)			(uint64_t(1) << (n))
 
 uint64_t readFRQ()
@@ -56,3 +56,4 @@ Java_moe_protocol_servlet_utils_PlatformUtils_outCpuInfo(JNIEnv *env, jobject th
 
     return env->NewStringUTF(out.c_str());
 }
+*/

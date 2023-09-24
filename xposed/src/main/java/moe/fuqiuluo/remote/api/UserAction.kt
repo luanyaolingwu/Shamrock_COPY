@@ -12,6 +12,10 @@ import moe.fuqiuluo.xposed.tools.fetchOrThrow
 import moe.fuqiuluo.xposed.tools.getOrPost
 
 fun Routing.userAction() {
+    getOrPost("/_get_online_clients") {
+        call.respondText(GetOnlineClients())
+    }
+
     getOrPost("/_get_model_show") {
         val model = fetchOrThrow("model")
         call.respondText(GetModelShowList(model))

@@ -5,6 +5,7 @@ import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 import de.robv.android.xposed.XposedBridge.log
+import moe.fuqiuluo.utils.MMKVFetcher
 import moe.fuqiuluo.xposed.loader.ActionLoader
 import moe.fuqiuluo.xposed.loader.FuckAMS
 import moe.fuqiuluo.xposed.loader.LuoClassloader
@@ -120,6 +121,10 @@ internal class XposedEntry: IXposedHookLoadPackage {
             // API 也应该开放在主进程
 
             sec_static_stage_inited = true
+
+            if (PlatformUtils.isTim()) {
+                MMKVFetcher.initMMKV(ctx)
+            }
 
             ActionLoader.runFirst(ctx)
         }
