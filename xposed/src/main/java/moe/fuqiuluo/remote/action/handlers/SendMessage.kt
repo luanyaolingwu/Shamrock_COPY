@@ -53,7 +53,7 @@ internal object SendMessage: IActionHandler() {
                 LogCenter.log("CQ码不合法", Level.WARN)
                 return logic("CQCode is illegal", echo)
             } else {
-                MsgSvc.sendToAio(chatType, peerId, MessageHelper.decodeCQCode(message))
+                MsgSvc.sendToAio(chatType, peerId, msg)
             }
         }
         return ok(MessageResult(

@@ -34,13 +34,14 @@ internal object DynamicReceiver: BroadcastReceiver() {
                     }?.callback?.handle(intent)
                 } else if (hash != -1) {
                     mutex.withLock {
-                        hashHandler.forEach {
+                        hashHandler.removeIf {
                             if (hash == it.hashCode()) {
-                                it.callback?.handle(intent)
-                                if (it.seq != -1)
-                                    hashHandler.remove(it)
-                                return@forEach
+                                GlobalScope.launch {
+                                    it.callback?.handle(intent)
+                                }
+                                return@removeIf it.seq != -1
                             }
+                            return@removeIf false
                         }
                     }
                 }
@@ -62,6 +63,8 @@ internal object DynamicReceiver: BroadcastReceiver() {
      * 注册临时包处理器
      */
     suspend fun register(request: IPCRequest) {
+        LogCenter.log({ "registerHandler[${request.hashCode()}](cmd = ${request.cmd}, seq = ${request.seq})" }, Level.DEBUG)
+
         mutex.withLock {
             hashHandler.add(request)
         }

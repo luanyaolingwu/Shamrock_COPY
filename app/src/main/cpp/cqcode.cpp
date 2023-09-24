@@ -51,7 +51,7 @@ void decode_cqcode(const std::string& code, std::vector<std::unordered_map<std::
             }
         } else if (c == ',') {
             if (is_start) {
-                if (!kv.contains("_type") && !cache.empty()) {
+                if (kv.count("_type") == 0 && !cache.empty()) {
                     kv.emplace("_type", cache);
                     cache.clear();
                 } else {
@@ -80,6 +80,7 @@ void decode_cqcode(const std::string& code, std::vector<std::unordered_map<std::
                     kv.clear();
                     key_tmp.clear();
                     cache.clear();
+                    is_start = false;
                 }
             } else {
                 throw illegal_code();

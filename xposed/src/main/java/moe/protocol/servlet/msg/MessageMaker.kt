@@ -157,13 +157,13 @@ internal object MessageMaker {
     }
 
     private suspend fun createContactElem(chatType: Int, msgId: Long, peerId: String, data: JsonObject): Result<MsgElement> {
-        data.checkAndThrow("type", "id")
-        val type = data["type"].asString
+        data.checkAndThrow("id")
+        val type = data["type"].asStringOrNull ?: data["kind"].asStringOrNull
         val id = data["id"].asString
         val elem = MsgElement()
 
         when (type) {
-            "qq" -> {
+            "private", "qq" -> {
                 val ark = ArkElement(CardSvc.getSharePrivateArkMsg(id.toLong()), null, null)
                 elem.arkElement = ark
             }

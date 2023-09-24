@@ -42,18 +42,20 @@ internal object PacketReceiver {
         if (HandlerByIpcSet.contains(from.serviceCmd)
             || allowCommandList.contains(from.serviceCmd)
         ) {
-            //LogCenter.log({ "ReceivePacket(cmd = ${from.serviceCmd})" }, Level.DEBUG)
+            LogCenter.log({ "ReceivePacket(cmd = ${from.serviceCmd})" }, Level.DEBUG)
             MobileQQ.getContext().broadcast("xqbot") {
                 putExtra("__cmd", from.serviceCmd)
                 putExtra("buffer", from.wupBuffer)
                 putExtra("seq", from.requestSsoSeq)
             }
         } else {
-            //LogCenter.log({ "ReceivePacket(cmd = ${from.serviceCmd}, seq = ${from.requestSsoSeq})" }, Level.DEBUG)
+            val seq = if (from.appSeq == -1) from.requestSsoSeq else from.appSeq
+            val hash = (from.serviceCmd + seq).hashCode()
+            LogCenter.log({ "ReceivePacket[$hash](cmd = ${from.serviceCmd}, seq = $seq)" }, Level.DEBUG)
             MobileQQ.getContext().broadcast("xqbot") {
-                putExtra("__hash", (from.serviceCmd + from.requestSsoSeq).hashCode())
+                putExtra("__hash", hash)
                 putExtra("buffer", from.wupBuffer)
-                putExtra("seq", from.requestSsoSeq)
+                putExtra("seq", seq)
             }
         }
     }
