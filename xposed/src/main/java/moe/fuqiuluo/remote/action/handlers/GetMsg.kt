@@ -27,7 +27,8 @@ internal object GetMsg: IActionHandler() {
             MessageSender(
                 msg.senderUin, msg.sendNickName, "unknown", 0, msg.senderUid
             ),
-            MsgConvert.convertMsgRecordToMsgSegment(msg)
+            MsgConvert.convertMsgRecordToMsgSegment(msg),
+            msg.peerUin.toString()
         ), echo)
     }
 

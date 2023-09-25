@@ -20,5 +20,7 @@ internal object LeaveTroop: IActionHandler() {
 
     override val requiredParams: Array<String> = arrayOf("group_id")
 
+    override val alias: Array<String> = arrayOf("set_group_leave")
+
     override fun path(): String = "leave_group"
 }

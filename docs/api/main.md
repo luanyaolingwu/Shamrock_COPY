@@ -76,7 +76,7 @@ API 的响应是一个 JSON 数据, 如下:
     "wording": "对错误的详细解释(中文), 仅在 API 调用失败时有该字段",
     "data": {
         "响应数据名": "数据值",
-        "响应数据名2": "数据值",
+        "响应数据名2": "数据值"
     },
     "echo": "'回声', 如果请求时指定了 echo, 那么响应也会包含 echo"
 }
@@ -198,7 +198,7 @@ API 的响应是一个 JSON 数据, 如下:
 
 该接口将返回处理结果。
 
-## 获取当前账号在线客户端列表
+## ～获取当前账号在线客户端列表～
 
 该接口用于获取当前账号在线客户端列表。
 
@@ -208,8 +208,753 @@ API 的响应是一个 JSON 数据, 如下:
 
 ### 响应
 
-```json
-
+```json5
+// 废弃，待实现
 ```
+
+# 资料卡
+
+## 获取陌生人信息
+
+该接口用于获取陌生人信息。
+
+### 路由名称
+
+`POST｜GET /get_stranger_info`
+
+### 参数
+
+| 参数名     | 类型    | 必需  | 说明  |
+|---------|-------|-----|-----|
+| user_id | int64 | 是   | QQ号 |
+
+### 响应
+
+```json
+{
+  "user_id": "12345678",
+  "nickname": "伏秋洛~",
+  "age": "18",
+  "sex": "female"
+}
+```
+
+!> 该api可能返回了例子响应中没有的参数，请不要作为参考使用。
+
+## 获取好友列表
+
+该接口用于获取好友列表。
+
+> 该方法无输入参数，除了`refresh`参数决断是否刷新数据，可能不是立即生效。
+
+### 路由名称
+
+`POST｜GET /get_friend_list`
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": [
+    {
+      "user_id": "12345678",
+      "user_name": "伏秋洛~",
+      "user_displayname": "伏秋洛~",
+      "user_remark": "伏秋洛~",
+      "age": 18,
+      "gender": 2,
+      "group_id": 0,
+      "platform": "MOBILE_ANDROID",
+      "term_type": 65799
+    }
+  ]
+}
+```
+
+## ~获取单向好友列表~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+# 用户操作
+
+## ~删除好友~
+
+该接口用于删除好友。
+
+!> 该接口尚未实现，如有需要请提交issue。
+
+### 路由名称
+
+`POST｜GET /delete_friend`
+
+## ~删除单向好友~
+
+该接口用于删除单向好友。
+
+!> 该接口尚未实现，如有需要请提交issue。
+
+## 获取群信息
+
+该接口用于获取群信息。
+
+### 路由名称
+
+`POST｜GET /get_group_info`
+
+### 参数
+
+| 参数名      | 类型    | 必需  | 说明  |
+|----------|-------|-----|-----|
+| group_id | int64 | 是   | 群号  |
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": {
+    "group_id": "12345678",
+    "group_name": "PRIVATE",
+    "group_remark": "",
+    "group_uin": "645830205",
+    "admins": [
+      1919810,
+      114514,
+      11111111
+    ],
+    "class_text": null,
+    "is_frozen": false,
+    "max_member": 200,
+    "member_num": 4,
+    "member_count": 4,
+    "max_member_count": 200
+  }
+}
+```
+
+!> 该api可能返回了例子响应中没有的参数，请不要作为参考使用。
+
+## 获取群列表
+
+该接口用于获取群列表。
+
+### 路由名称
+
+`POST｜GET /get_group_list`
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": [
+    {
+      "group_id": "28000000",
+      "group_name": "TXHook",
+      "group_remark": "",
+      "group_uin": "1234567",
+      "admins": [
+        12345678,
+        22222222
+      ],
+      "class_text": null,
+      "is_frozen": false,
+      "max_member": 200,
+      "member_num": 54,
+      "member_count": 54,
+      "max_member_count": 200
+    }
+  ]
+}
+```
+
+## 获取群成员信息
+
+该接口用于获取群成员信息。
+
+### 路由名称
+
+`POST｜GET /get_group_member_info`
+
+### 参数
+
+| 参数名      | 类型    | 必需  | 说明  |
+|----------|-------|-----|-----|
+| group_id | int64 | 是   | 群号  |
+| user_id  | int64 | 是   | QQ号 |
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": {
+    "user_id": "123456678",
+    "group_id": "11111111111",
+    "user_name": "伏秋洛~",
+    "sex": "female",
+    "title": "",
+    "title_expire_time": 0,
+    "nickname": "伏秋洛~",
+    "user_displayname": "群昵称",
+    "distance": 100,
+    "honor": [],
+    "join_time": 1597173804,
+    "last_active_time": 1694287344,
+    "last_sent_time": 1694287344,
+    "unique_name": "",
+    "area": "",
+    "level": 10315,
+    "role": "owner",
+    "unfriendly": false,
+    "card_changeable": false
+  }
+}
+```
+
+## 获取群成员列表
+
+该接口用于获取群成员列表。
+
+### 路由名称
+
+`POST｜GET /get_group_member_list`
+
+### 参数
+
+| 参数名      | 类型    | 必需  | 说明  |
+|----------|-------|-----|-----|
+| group_id | int64 | 是   | 群号  |
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": [
+    {
+      "user_id": "22222222",
+      "group_id": "11111111",
+      "user_name": "伏秋洛~",
+      "sex": "female",
+      "title": "",
+      "title_expire_time": 0,
+      "nickname": "伏秋洛~",
+      "user_displayname": "二比",
+      "distance": 100,
+      "honor": [],
+      "join_time": 1597173804,
+      "last_active_time": 1694287344,
+      "last_sent_time": 1694287344,
+      "unique_name": "",
+      "area": "",
+      "level": 10315,
+      "role": "owner",
+      "unfriendly": false,
+      "card_changeable": false
+    }
+  ]
+}
+```
+
+## 获取群荣誉信息
+
+该接口用于获取群荣誉信息。
+
+### 路由名称
+
+`POST｜GET /get_group_honor_info`
+
+### 参数
+
+| 参数名      | 类型    | 必需  | 说明  |
+|----------|-------|-----|-----|
+| group_id | int64 | 是   | 群号  |
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": {
+    "group_id": "702991377",
+    "current_talkative": null,
+    "talkative_list": [],
+    "performer_list": [
+      {
+        "use_id": "203411690",
+        "nickname": "洛洛喵",
+        "avatar": "https://qzonestyle.gtimg.cn/aoi/sola/20200217190136_92JEGFKC5k.png",
+        "day_count": 0,
+        "id": 2,
+        "description": "群聊之火"
+      }
+    ],
+    "legend_list": [],
+    "strong_newbie_list": [],
+    "emotion_list": [
+      {
+        "use_id": "1619180855",
+        "nickname": "没有人比我更懂女装",
+        "avatar": "https://qzonestyle.gtimg.cn/aoi/sola/20200213150434_3tDmsJExCP.png",
+        "day_count": 0,
+        "id": 6,
+        "description": "快乐源泉"
+      }
+    ]
+  }
+}
+```
+
+## ~获取群系统消息~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~获取精华消息列表~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~获取群 @全体成员 剩余次数~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+# 消息操作
+
+## 发送私聊消息
+
+该接口用于发送私聊消息。
+
+### 路由名称
+
+`POST｜GET /send_private_msg`
+
+!> WebSocket不支持该action！
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| user_id | int64  | 是 | QQ号 |
+| message | string | 是 | 消息内容 |
+| auto_escape | bool | 否 | 是否不作为cq解析 |
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": {
+    "message_id": 2102466734,
+    "time": 1695580017.687
+  }
+}
+```
+
+## 发送群聊消息
+
+该接口用于发送群聊消息。
+
+### 路由名称
+
+`POST｜GET /send_group_msg`
+
+!> WebSocket不支持该action！
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| group_id | int64  | 是 | 群号 |
+| message | string | 是 | 消息内容 |
+| auto_escape | bool | 否 | 是否不作为cq解析 |
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": {
+    "message_id": 2102466734,
+    "time": 1695580017.687
+  }
+}
+```
+
+## ~发送讨论组消息~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## 发送消息
+
+该接口用于发送消息。
+
+### 路由名称
+
+`POST｜GET /send_msg`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| message_type | string | 是 | 消息类型, 支持 private、group , 分别对应私聊、群组, 如不传入, 则根据传入的 *_id 参数判断 |
+| user_id | int64  | 是/否 | QQ号 |
+| group_id | int64  | 是/否 | 群号 |
+| discuss_id | int64  | 是/否 | 讨论组号 |
+| message | string | 是 | 消息内容 |
+| auto_escape | bool | 否 | 是否不作为cq解析 |
+
+!> 当前消息并不支持讨论组！
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": {
+    "message_id": 2102466734,
+    "time": 1695580017.687
+  }
+}
+```
+
+## 获取消息
+
+该接口用于获取消息。
+
+### 路由名称
+
+`POST｜GET /get_msg`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| message_id | int32 | 是 | 消息ID |
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": {
+    "time": 1695580015,
+    "message_type": "group",
+    "message_id": 2102466734,
+    "real_id": 17365,
+    "sender": {
+      "user_id": 12345678,
+      "nickname": "伏秋洛",
+      "sex": "unknown",
+      "age": 0,
+      "uid": "u_3xxxxxxxxx"
+    },
+    "message": [
+      {
+        "type": "text",
+        "data": {
+          "text": "111"
+        }
+      }
+    ],
+    "group_id": "11451419"
+  }
+}
+```
+
+!> 该api可能返回了例子响应中没有的参数，请不要作为参考使用。
+
+## 撤回消息
+
+该接口用于撤回消息。
+
+### 路由名称
+
+`POST｜GET /delete_msg`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| message_id | int32 | 是 | 消息ID |
+
+
+## ~标记消息已读~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~获取合并转发内容~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~发送合并转发 ( 群聊 )~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~发送合并转发 ( 私聊 )~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~获取群消息历史记录~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+# 资源操作
+
+## ~获取图片~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~检查是否可以发送图片~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~图片 OCR~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## 获取语音
+
+该接口用于获取语音。
+
+### 路由名称
+
+`POST｜GET /get_record`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| file | string | 是 | 文件md5 |
+| out_format | string | 是 | 输出格式 |
+
+### 响应
+
+```json5
+{
+  "status": "ok",
+  "retcode": 0,
+  "data": {
+    "file": "/path/to/xxx",
+    "url": "http://xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  }
+}
+```
+
+## ~检查是否可以发送语音~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+# 处理
+
+## ~处理加好友请求~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~处理加群请求／邀请~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+# 群操作
+
+## 设置群名
+
+该接口用于设置群名。
+
+### 路由名称
+
+`POST｜GET /set_group_name`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| group_id | int64 | 是 | 群号 |
+| group_name | string | 是 | 群名 |
+
+## ~设置群头像~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## 设置群管理员
+
+该接口用于设置群管理员。
+
+### 路由名称
+
+`POST｜GET /set_group_admin`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| group_id | int64 | 是 | 群号 |
+| user_id | int64 | 是 | QQ号 |
+| enable | bool | 是 | 是否设置 |
+
+## ~设置群备注~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## 设置群组专属头衔
+
+该接口用于设置群组专属头衔。
+
+### 路由名称
+
+`POST｜GET /set_group_special_title`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| group_id | int64 | 是 | 群号 |
+| user_id | int64 | 是 | QQ号 |
+| special_title | string | 是 | 头衔 |
+
+!> 该api可能返回了例子响应中没有的参数，请不要作为参考使用。
+
+## 群全员禁言
+
+该接口用于群全员禁言。
+
+### 路由名称
+
+`POST｜GET /set_group_whole_ban`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| group_id | int64 | 是 | 群号 |
+| enable | bool | 是 | 是否禁言 |
+
+## 群单人禁言
+
+该接口用于群单人禁言。
+
+### 路由名称
+
+`POST｜GET /set_group_ban`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| group_id | int64 | 是 | 群号 |
+| user_id | int64 | 是 | QQ号 |
+| duration | int64 | 是 | 禁言时长 |
+
+> `duration`为0时，解除禁言！
+
+## ~群匿名用户禁言~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~设置精华消息~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~移出精华消息~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~群打卡~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~群设置匿名~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~发送群公告~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~获取群公告~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## 群组踢人
+
+该接口用于群组踢人。
+
+### 路由名称
+
+`POST｜GET /set_group_kick`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| group_id | int64 | 是 | 群号 |
+| user_id | int64 | 是 | QQ号 |
+| reject_add_request | bool | 否 | 拒绝再加群 |
+
+## 退出群组
+
+该接口用于退出群组。
+
+### 路由名称
+
+`POST｜GET /set_group_leave`
+
+### 参数
+
+| 参数名 | 类型 | 必需 | 说明 |
+|--------------|--------|--|-----|
+| group_id | int64 | 是 | 群号 |
+
+## ~解散群聊~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+# 文件系统
+
+## ~上传群文件~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~删除群文件~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~创建群文件文件夹~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~删除群文件文件夹~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~获取群文件系统信息~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~获取群根目录文件列表~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~获取群子目录文件列表~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~获取群文件资源链接~
+
+!> 当前不支持该操作，如有需要，请提交issue。
+
+## ~上传私聊文件~
+
+!> 当前不支持该操作，如有需要，请提交issue。
 
 

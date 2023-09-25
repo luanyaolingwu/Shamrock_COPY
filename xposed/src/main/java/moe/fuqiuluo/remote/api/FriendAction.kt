@@ -1,15 +1,13 @@
 package moe.fuqiuluo.remote.api
 
-import com.tencent.mobileqq.data.Card
 import com.tencent.mobileqq.profilecard.api.IProfileCardBlacklistApi
 import com.tencent.mobileqq.qroute.QRoute
-import moe.protocol.servlet.CardSvc
 import io.ktor.server.application.call
-import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import moe.fuqiuluo.remote.action.handlers.GetFriendList
+import moe.fuqiuluo.remote.action.handlers.GetStrangerInfo
 import moe.fuqiuluo.remote.entries.Status
 import moe.fuqiuluo.xposed.tools.fetchGetOrThrow
 import moe.fuqiuluo.xposed.tools.fetchOrNull
@@ -22,23 +20,11 @@ import kotlin.coroutines.suspendCoroutine
 fun Routing.friendAction() {
     getOrPost("/get_stranger_info") {
         val uin = fetchOrThrow("user_id")
-        val info = CardSvc.getProfileCard(uin).onFailure {
-
-        }.getOrThrow()
-        call.respond(mapOf(
-            "user_id" to uin,
-            "nickname" to info.strNick,
-            "age" to info.age.toString(),
-            "sex" to when(info.shGender) {
-                Card.FEMALE -> "female"
-                Card.MALE -> "male"
-                else -> "unknown"
-            }
-        ))
+        call.respondText(GetStrangerInfo(uin))
     }
 
     getOrPost("/get_friend_list") {
-        val refresh = fetchOrNull("refresh")?.toBoolean() ?: false
+        val refresh = fetchOrNull("refresh")?.toBooleanStrictOrNull() ?: false
         call.respondText(GetFriendList(refresh))
     }
 

@@ -12,6 +12,11 @@ import moe.fuqiuluo.xposed.tools.fetchOrThrow
 import moe.fuqiuluo.xposed.tools.getOrPost
 
 fun Routing.userAction() {
+    getOrPost("/set_group_leave") {
+        val group = fetchOrThrow("group_id")
+        call.respondText(LeaveTroop(group))
+    }
+
     getOrPost("/_get_online_clients") {
         call.respondText(GetOnlineClients())
     }
