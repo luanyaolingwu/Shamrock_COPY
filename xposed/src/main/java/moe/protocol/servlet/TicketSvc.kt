@@ -49,11 +49,14 @@ internal object TicketSvc: BaseSvc() {
     }
 
     fun getCSRF(pskey: String = getPSKey(getUin())): String {
-        var v: Long = 5381
-        for (element in pskey) {
-            v += (v shl 5 and 2147483647L) + element.code.toLong()
+        if (pskey.isEmpty()) {
+            return "0"
         }
-        return (v and 2147483647L).toString()
+        var v = 5381
+        for (element in pskey) {
+            v += ((v shl 5) + element.code.toLong()).toInt()
+        }
+        return (v and Int.MAX_VALUE).toString()
     }
 
     fun getCSRF(uin: String, domain: String): String {

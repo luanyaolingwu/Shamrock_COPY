@@ -8,6 +8,10 @@ import com.tencent.mobileqq.emoticon.QQSysFaceUtil
 import com.tencent.mobileqq.pb.ByteStringMicro
 import com.tencent.qphone.base.remote.ToServiceMsg
 import com.tencent.qqnt.kernel.nativeinterface.*
+import kotlinx.io.core.BytePacketBuilder
+import kotlinx.io.core.readBytes
+import kotlinx.io.core.toByteArray
+import kotlinx.io.core.writeFully
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import moe.protocol.servlet.helper.ContactHelper
@@ -33,6 +37,7 @@ import moe.protocol.servlet.transfile.trans
 import moe.protocol.servlet.transfile.with
 import moe.protocol.servlet.utils.PlatformUtils
 import moe.fuqiuluo.utils.AudioUtils
+import moe.fuqiuluo.utils.DeflateTools
 import moe.fuqiuluo.utils.MediaType
 import moe.fuqiuluo.xposed.helper.Level
 import moe.fuqiuluo.xposed.helper.LogCenter
@@ -41,10 +46,12 @@ import moe.fuqiuluo.xposed.helper.msgService
 import moe.fuqiuluo.xposed.tools.asBooleanOrNull
 import moe.fuqiuluo.xposed.tools.asInt
 import moe.fuqiuluo.xposed.tools.asIntOrNull
+import moe.fuqiuluo.xposed.tools.asJsonObject
 import moe.fuqiuluo.xposed.tools.asLong
 import moe.fuqiuluo.xposed.tools.asString
 import moe.fuqiuluo.xposed.tools.asStringOrNull
 import moe.fuqiuluo.xposed.tools.ifNullOrEmpty
+import moe.protocol.servlet.ark.WeatherSvc
 import moe.protocol.servlet.helper.ActionMsgException
 import mqq.app.MobileQQ
 import tencent.im.oidb.cmd0xb77.oidb_cmd0xb77
@@ -85,9 +92,31 @@ internal object MessageMaker {
         peerId: String,
         data: JsonObject
     ): Result<MsgElement> {
-        data.checkAndThrow("code")
-        val code = data["code"].asInt
+        var code = data["code"].asIntOrNull
 
+        if (code == null) {
+            data.checkAndThrow("city")
+            val city = data["city"].asString
+            code = WeatherSvc.searchCity(city).onFailure {
+                LogCenter.log("无法获取城市天气: $city", Level.ERROR)
+            }.getOrNull()?.firstOrNull()?.adcode
+        }
+
+        if (code != null) {
+            WeatherSvc.fetchWeatherCard(code).onSuccess {
+                val element = MsgElement()
+                element.elementType = MsgConstant.KELEMTYPEARKSTRUCT
+                val share = it["weekStore"]
+                    .asJsonObject["share"]
+                    .asJsonObject["data"].toString()
+
+                element.arkElement = ArkElement(share, null, MsgConstant.ARKSTRUCTELEMENTSUBTYPEUNKNOWN)
+
+                return Result.success(element)
+            }.onFailure {
+                LogCenter.log("无法发送天气分享", Level.ERROR)
+            }
+        }
 
         return Result.failure(ActionMsgException)
     }
