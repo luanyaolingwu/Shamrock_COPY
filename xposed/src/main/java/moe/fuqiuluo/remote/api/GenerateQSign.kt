@@ -96,33 +96,37 @@ fun Routing.qsign() {
         }
     }
 
-    val getByteMutex = Mutex()
     get("/get_byte") {
-        val sign = getByteMutex.withLock {
-            if (!::byteData.isInitialized || !byteData.asBinder().isBinderAlive) {
-                val binder = ShamrockIpc.get(ShamrockIpc.IPC_BYTEDATA)
-                if (binder == null) {
-                    respond(false, Status.InternalHandlerError, EmptyObject)
-                    return@get
-                } else {
-                    byteData = IByteData.Stub.asInterface(binder)
-                }
-            }
-            val data = fetchGetOrThrow("data")
-            if(!(data.startsWith("810_") || data.startsWith("812_"))) {
-                call.respond(OldApiResult(-2, "data参数不合法", null))
+        if (!::byteData.isInitialized || !byteData.asBinder().isBinderAlive) {
+            val binder = ShamrockIpc.get(ShamrockIpc.IPC_BYTEDATA)
+            if (binder == null) {
+                respond(false, Status.InternalHandlerError, EmptyObject)
                 return@get
+            } else {
+                byteData = IByteData.Stub.asInterface(binder)
             }
-
-            val uin = fetchOrThrow("uin")
-            val salt = fetchSalt(data, uin)
-            if (salt.isEmpty()) {
-                call.respond(OldApiResult(-2, "无法自动决断mode，请主动提供", null))
-                return@get
-            }
-
-            byteData.sign(uin, data, salt).sign
         }
+
+        if(!::byteData.isInitialized || !byteData.asBinder().isBinderAlive) {
+            respond(false, Status.InternalHandlerError, msg = "无法bind服务")
+            return@get
+        }
+
+
+        val data = fetchGetOrThrow("data")
+        if(!(data.startsWith("810_") || data.startsWith("812_"))) {
+            call.respond(OldApiResult(-2, "data参数不合法", null))
+            return@get
+        }
+
+        val uin = fetchOrThrow("uin")
+        val salt = fetchSalt(data, uin)
+        if (salt.isEmpty()) {
+            call.respond(OldApiResult(-2, "无法自动决断mode，请主动提供", null))
+            return@get
+        }
+
+        val sign = byteData.sign(uin, data, salt).sign
 
         if (sign == null) {
             call.respond(OldApiResult(-2, "获取失败", null))
@@ -217,16 +221,22 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(
     if (!::signer.isInitialized || !signer.asBinder().isBinderAlive) {
         val binder = ShamrockIpc.get(ShamrockIpc.IPC_QSIGN)
         if (binder == null) {
-            respond(false, Status.InternalHandlerError, EmptyObject)
+            respond(false, Status.InternalHandlerError)
             return
         } else {
             signer = IQSigner.Stub.asInterface(binder)
         }
     }
+
+    if(!::byteData.isInitialized || !byteData.asBinder().isBinderAlive) {
+        respond(false, Status.InternalHandlerError, msg = "无法bind服务")
+        return
+    }
+
     val sign = withTimeoutOrNull(5000) {
         signer.sign(cmd, seq, uin, buffer)
     } ?: run {
-        respond(false, Status.IAmTired, EmptyObject)
+        respond(false, Status.IAmTired)
         return
     }
 
