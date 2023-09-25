@@ -104,6 +104,7 @@ internal class XposedEntry: IXposedHookLoadPackage {
 
     private fun execStartupInit(ctx: Context) {
         if (sec_static_stage_inited) return
+
         val classLoader = ctx.classLoader.also { requireNotNull(it) }
 
         LuoClassloader.hostClassLoader = classLoader
@@ -132,17 +133,26 @@ internal class XposedEntry: IXposedHookLoadPackage {
 
     private fun injectClassloader(moduleLoader: ClassLoader?): Boolean {
         if (moduleLoader != null) {
+            if (kotlin.runCatching {
+                moduleLoader.loadClass("mqq.app.MobileQQ")
+            }.isSuccess) {
+                log("ModuleClassloader already injected.")
+                return true
+            }
+
             val parent = moduleLoader.parent
             val field = ClassLoader::class.java.declaredFields
                 .first { it.name == "parent" }
             field.isAccessible = true
-            field.set(LuoClassloader, parent)
-            field.set(moduleLoader, LuoClassloader)
 
-            //val qloader = LuoClassloader.hostClassLoader
-            //val qparent = qloader.parent
-            //field.set(FixedLoader, qparent)
-            //field.set(qloader, FixedLoader)
+            field.set(LuoClassloader, parent)
+
+            if (LuoClassloader.load("mqq.app.MobileQQ") == null) {
+                log("LuoClassloader init failed.")
+                return false
+            }
+
+            field.set(moduleLoader, LuoClassloader)
 
             return kotlin.runCatching {
                 Class.forName("mqq.app.MobileQQ")

@@ -1,6 +1,7 @@
 package moe.protocol.servlet
 
 import com.tencent.mobileqq.app.QQAppInterface
+import mqq.app.MobileQQ
 import mqq.manager.TicketManager
 
 internal object TicketSvc: BaseSvc() {
@@ -36,7 +37,7 @@ internal object TicketSvc: BaseSvc() {
         val uin = getUin()
         val skey = getSKey(uin)
         val pskey = getPSKey(uin)
-        return "o_cookie=$uin; ied_qq=o$uin; pac_uid=1_$uin; uin=o$uin; skey=$skey; p_uin=o$uin; p_skey=$pskey;"
+        return "uin=o$uin; skey=$skey; p_uin=o$uin; p_skey=$pskey"
     }
 
     fun getCookie(domain: String): String {
@@ -44,10 +45,10 @@ internal object TicketSvc: BaseSvc() {
         val skey = getSKey(uin)
         val pskey = getPSKey(uin, domain) ?: ""
         val pt4token = getPt4Token(uin, domain) ?: ""
-        return "o_cookie=$uin; ied_qq=o$uin; pac_uid=1_$uin; uin=o$uin; skey=$skey; p_uin=o$uin; p_skey=$pskey; pt4_token=$pt4token;"
+        return "uin=o$uin; skey=$skey; p_uin=o$uin; p_skey=$pskey; pt4_token=$pt4token"
     }
 
-    fun getCSRF(pskey: String): String {
+    fun getCSRF(pskey: String = getPSKey(getUin())): String {
         var v: Long = 5381
         for (element in pskey) {
             v += (v shl 5 and 2147483647L) + element.code.toLong()
@@ -72,7 +73,9 @@ internal object TicketSvc: BaseSvc() {
     }
 
     fun getPSKey(uin: String): String {
-        return (app.getManager(QQAppInterface.TICKET_MANAGER) as TicketManager).getSuperkey(uin)
+        val manager = (app.getManager(QQAppInterface.TICKET_MANAGER) as TicketManager)
+        manager.reloadCache(MobileQQ.getContext())
+        return manager.getSuperkey(uin) ?: ""
     }
 
     fun getPSKey(uin: String, domain: String): String? {

@@ -34,7 +34,10 @@ internal object ActionManager {
             SendMessage, DeleteMessage, GetMsg, GetForwardMsg, SendGroupForwardMsg,
 
             // RESOURCE ACTION
-            GetRecord
+            GetRecord,
+
+            // WEATHER
+            GetWeatherCityCode,
         ).forEach {
             it.alias.forEach { name ->
                 actionMap[name] = it
