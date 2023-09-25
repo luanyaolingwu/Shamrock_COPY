@@ -2,6 +2,7 @@ package moe.fuqiuluo.xposed.loader
 
 object LuoClassloader: ClassLoader() {
     lateinit var hostClassLoader: ClassLoader
+    lateinit var ctxClassLoader: ClassLoader
 
     fun load(name: String): Class<*>? {
         return kotlin.runCatching {
@@ -13,7 +14,11 @@ object LuoClassloader: ClassLoader() {
         return kotlin.runCatching {
             hostClassLoader.loadClass(name)
         }.getOrElse {
-            super.loadClass(name)
+            kotlin.runCatching {
+                ctxClassLoader.loadClass(name)
+            }.getOrElse {
+                super.loadClass(name)
+            }
         }
     }
 }

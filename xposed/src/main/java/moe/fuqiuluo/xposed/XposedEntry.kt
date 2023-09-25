@@ -43,6 +43,8 @@ internal class XposedEntry: IXposedHookLoadPackage {
     }
 
     private fun entryMQQ(classLoader: ClassLoader) {
+        LuoClassloader.ctxClassLoader = classLoader
+
         val startup = afterHook(51) { param ->
             try {
                 val clz = param.thisObject.javaClass.classLoader!!
