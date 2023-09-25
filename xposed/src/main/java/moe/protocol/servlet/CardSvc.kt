@@ -39,7 +39,7 @@ internal object CardSvc: BaseSvc() {
             val getCustomOnlineStatusReq = GetCustomOnlineStatusReq()
             getCustomOnlineStatusReq.lUin = uin
             getCustomOnlineStatusReq.sIMei = ""
-            uniPacket.put<Any>("req", getCustomOnlineStatusReq)
+            uniPacket.put("req", getCustomOnlineStatusReq)
 
             val resp = sendBufferAW("VipCustom.GetCustomOnlineStatus", false, uniPacket.encode())
                 ?: error("unable to fetch contact model_show")
