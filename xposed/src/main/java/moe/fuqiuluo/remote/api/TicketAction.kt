@@ -26,7 +26,7 @@ fun Routing.ticketActions() {
     getOrPost("/get_cookies") {
         val domain = fetchOrNull("domain")
         if (domain != null) {
-            call.respondText(GetCookies(domain))
+            call.respondText(GetCookies(domain = domain))
         } else {
             call.respondText(GetCookies())
         }

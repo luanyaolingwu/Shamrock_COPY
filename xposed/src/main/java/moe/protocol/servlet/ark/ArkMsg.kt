@@ -1,8 +1,8 @@
-package moe.protocol.servlet
+package moe.protocol.servlet.ark
 
 import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
+import moe.protocol.servlet.BaseSvc
 import tencent.im.oidb.cmd0xb77.oidb_cmd0xb77
-import kotlin.concurrent.thread
 
 sealed class ArkAppInfo(
     val appId: Long,

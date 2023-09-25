@@ -47,6 +47,7 @@ internal object HTTPServer {
                     fetchRes()
                     showLog()
                     profileRouter()
+                    weatherAction()
                     if (ShamrockConfig.isPro()) {
                         qsign()
                         obtainProtocolData()

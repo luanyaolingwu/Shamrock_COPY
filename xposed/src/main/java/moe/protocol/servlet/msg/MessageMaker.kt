@@ -16,8 +16,8 @@ import moe.protocol.servlet.helper.LogicException
 import moe.protocol.servlet.helper.MusicHelper
 import moe.protocol.servlet.helper.ParamsException
 import moe.protocol.servlet.helper.IllegalParamsException
-import moe.protocol.servlet.ArkAppInfo
-import moe.protocol.servlet.ArkMsgSvc
+import moe.protocol.servlet.ark.ArkAppInfo
+import moe.protocol.servlet.ark.ArkMsgSvc
 import moe.protocol.servlet.CardSvc
 import moe.protocol.servlet.GroupSvc
 import moe.protocol.servlet.LbsSvc
@@ -75,8 +75,22 @@ internal object MessageMaker {
         "location" to MessageMaker::createLocationElem,
         "music" to MessageMaker::createMusicElem,
         "reply" to MessageMaker::createReplyElem,
+        "weather" to MessageMaker::createWeatherElem,
         //"multi_msg" to MessageMaker::createLongMsgStruct,
     )
+
+    private suspend fun createWeatherElem(
+        chatType: Int,
+        msgId: Long,
+        peerId: String,
+        data: JsonObject
+    ): Result<MsgElement> {
+        data.checkAndThrow("code")
+        val code = data["code"].asInt
+
+
+        return Result.failure(ActionMsgException)
+    }
 
     private suspend fun createReplyElem(
         chatType: Int,

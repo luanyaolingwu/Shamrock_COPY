@@ -1,5 +1,7 @@
 package mqq.manager;
 
+import android.content.Context;
+
 public interface TicketManager extends Manager {
     String getA2(String uin);
 
@@ -37,7 +39,7 @@ public interface TicketManager extends Manager {
 
     //void registTicketManagerListener(TicketManagerListener ticketManagerListener);
 
-    //void reloadCache(Context context);
+    void reloadCache(Context context);
 
     int sendRPCData(long j2, String str, String str2, byte[] bArr, int i2);
 
