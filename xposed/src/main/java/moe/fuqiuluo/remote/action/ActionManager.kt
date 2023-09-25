@@ -37,7 +37,7 @@ internal object ActionManager {
             GetRecord,
 
             // WEATHER
-            GetWeatherCityCode,
+            GetWeatherCityCode, GetWeather
         ).forEach {
             it.alias.forEach { name ->
                 actionMap[name] = it

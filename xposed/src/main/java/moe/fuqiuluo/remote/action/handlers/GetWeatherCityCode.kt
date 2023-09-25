@@ -24,7 +24,7 @@ internal object GetWeatherCityCode: IActionHandler() {
         return ok(regions, echo)
     }
 
-    override fun path(): String = "/get_weather_city_code"
+    override fun path(): String = "get_weather_city_code"
 
 
     override val requiredParams: Array<String> = arrayOf("city")
