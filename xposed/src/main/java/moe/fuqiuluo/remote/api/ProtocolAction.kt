@@ -5,6 +5,7 @@ import io.ktor.server.routing.Routing
 import moe.fuqiuluo.remote.entries.Protocol
 import moe.fuqiuluo.remote.entries.QSignDtConfig
 import moe.fuqiuluo.remote.entries.Status
+import moe.fuqiuluo.utils.MMKVFetcher
 import moe.fuqiuluo.xposed.tools.fetchOrThrow
 import moe.fuqiuluo.xposed.tools.getOrPost
 import moe.fuqiuluo.xposed.tools.hex2ByteArray
@@ -31,6 +32,8 @@ fun Routing.obtainProtocolData() {
         val ctx = MobileQQ.getContext()
         util.save_cur_guid(ctx, guid)
         util.saveGuidToFile(ctx, guid)
+        val guildLock = MMKVFetcher.mmkvWithId("guid")
+        guildLock.putString("guid", guid.toHexString())
         respond(true, Status.Ok, msg = "成功")
     }
 
