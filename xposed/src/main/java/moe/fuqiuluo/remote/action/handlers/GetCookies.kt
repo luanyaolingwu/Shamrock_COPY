@@ -16,7 +16,7 @@ internal object GetCookies: IActionHandler() {
         return ok(Credentials(cookie = TicketSvc.getCookie()), echo)
     }
 
-    operator fun invoke(domain: String, echo: String = ""): String {
+    suspend operator fun invoke(domain: String, echo: String = ""): String {
         return ok(Credentials(cookie = TicketSvc.getCookie(domain)), echo)
     }
 

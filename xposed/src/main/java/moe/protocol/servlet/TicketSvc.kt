@@ -1,8 +1,14 @@
 package moe.protocol.servlet
 
 import com.tencent.mobileqq.app.QQAppInterface
+import moe.fuqiuluo.proto.ProtoUtils
+import moe.fuqiuluo.proto.asUtf8String
+import moe.fuqiuluo.proto.protobufMapOf
+import moe.fuqiuluo.proto.protobufOf
+import moe.fuqiuluo.xposed.tools.slice
 import mqq.app.MobileQQ
 import mqq.manager.TicketManager
+import tencent.im.oidb.oidb_sso
 
 internal object TicketSvc: BaseSvc() {
     object SigType {
@@ -40,7 +46,7 @@ internal object TicketSvc: BaseSvc() {
         return "uin=o$uin; skey=$skey; p_uin=o$uin; p_skey=$pskey"
     }
 
-    fun getCookie(domain: String): String {
+    suspend fun getCookie(domain: String): String {
         val uin = getUin()
         val skey = getSKey(uin)
         val pskey = getPSKey(uin, domain) ?: ""
@@ -59,7 +65,7 @@ internal object TicketSvc: BaseSvc() {
         return (v and Int.MAX_VALUE).toString()
     }
 
-    fun getCSRF(uin: String, domain: String): String {
+    suspend fun getCSRF(uin: String, domain: String): String {
         var v: Long = 5381
         for (element in getPSKey(uin, domain) ?: "") {
             v += (v shl 5 and 2147483647L) + element.code.toLong()
@@ -81,8 +87,22 @@ internal object TicketSvc: BaseSvc() {
         return manager.getSuperkey(uin) ?: ""
     }
 
-    fun getPSKey(uin: String, domain: String): String? {
-        return (app.getManager(QQAppInterface.TICKET_MANAGER) as TicketManager).getPskey(uin, domain)
+    suspend fun getLessPSKey(domain: String): String? {
+        val resp = sendOidbAW("OidbSvcTcp.0x102a", 4138, 0, protobufOf(
+            1 to arrayOf(domain),
+            //2 to 3
+        ).toByteArray()) ?: return null
+
+        val body = oidb_sso.OIDBSSOPkg()
+        body.mergeFrom(resp.slice(4))
+
+        return ProtoUtils.decodeFromByteArray(body.bytes_bodybuffer.get().toByteArray())[1][2].asUtf8String
+    }
+
+    suspend fun getPSKey(uin: String, domain: String): String? {
+        return (app.getManager(QQAppInterface.TICKET_MANAGER) as TicketManager).getPskey(uin, domain).let {
+            if (it.isNullOrBlank()) getLessPSKey(domain) else it
+        }
     }
 
     fun getPt4Token(uin: String, domain: String): String? {
