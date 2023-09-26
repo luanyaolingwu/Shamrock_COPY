@@ -12,7 +12,7 @@ internal object GetCSRF: IActionHandler() {
         return invoke(domain, session.echo)
     }
 
-    operator fun invoke(domain: String, echo: String = ""): String {
+    suspend operator fun invoke(domain: String, echo: String = ""): String {
         val uin = TicketSvc.getUin()
         val pskey = TicketSvc.getPSKey(uin, domain)
             ?: return invoke()

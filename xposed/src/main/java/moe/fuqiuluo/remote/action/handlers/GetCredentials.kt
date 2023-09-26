@@ -22,7 +22,7 @@ internal object GetCredentials: IActionHandler() {
         ), echo)
     }
 
-    operator fun invoke(domain: String, echo: String = ""): String {
+    suspend operator fun invoke(domain: String, echo: String = ""): String {
         val uin = TicketSvc.getUin()
         val skey = TicketSvc.getSKey(uin)
         val pskey = TicketSvc.getPSKey(uin, domain) ?: ""
