@@ -97,7 +97,7 @@ fun Routing.qsign() {
     }
 
     get("/get_byte") {
-        if (!::byteData.isInitialized || !byteData.asBinder().isBinderAlive) {
+        if (!::byteData.isInitialized) {
             val binder = ShamrockIpc.get(ShamrockIpc.IPC_BYTEDATA)
             if (binder == null) {
                 respond(false, Status.InternalHandlerError, EmptyObject)
@@ -105,11 +105,6 @@ fun Routing.qsign() {
             } else {
                 byteData = IByteData.Stub.asInterface(binder)
             }
-        }
-
-        if(!::byteData.isInitialized || !byteData.asBinder().isBinderAlive) {
-            respond(false, Status.InternalHandlerError, msg = "无法bind服务")
-            return@get
         }
 
 
@@ -218,7 +213,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(
     seq: Int,
     buffer: ByteArray,
 ) {
-    if (!::signer.isInitialized || !signer.asBinder().isBinderAlive) {
+    if (!::signer.isInitialized) {
         val binder = ShamrockIpc.get(ShamrockIpc.IPC_QSIGN)
         if (binder == null) {
             respond(false, Status.InternalHandlerError)
@@ -226,11 +221,6 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(
         } else {
             signer = IQSigner.Stub.asInterface(binder)
         }
-    }
-
-    if(!::signer.isInitialized || !signer.asBinder().isBinderAlive) {
-        respond(false, Status.InternalHandlerError, msg = "无法bind服务")
-        return
     }
 
     val sign = withTimeoutOrNull(5000) {
