@@ -228,7 +228,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(
         }
     }
 
-    if(!::byteData.isInitialized || !byteData.asBinder().isBinderAlive) {
+    if(!::signer.isInitialized || !signer.asBinder().isBinderAlive) {
         respond(false, Status.InternalHandlerError, msg = "无法bind服务")
         return
     }
