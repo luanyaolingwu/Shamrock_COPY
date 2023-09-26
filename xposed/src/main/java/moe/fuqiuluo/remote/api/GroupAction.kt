@@ -12,6 +12,7 @@ import moe.fuqiuluo.remote.action.handlers.GetTroopInfo
 import moe.fuqiuluo.remote.action.handlers.GetTroopList
 import moe.fuqiuluo.remote.action.handlers.GetTroopMemberInfo
 import moe.fuqiuluo.remote.action.handlers.GetTroopMemberList
+import moe.fuqiuluo.remote.action.handlers.GroupPoke
 import moe.fuqiuluo.remote.action.handlers.ModifyTroopMemberName
 import moe.fuqiuluo.remote.action.handlers.ModifyTroopName
 import moe.fuqiuluo.remote.action.handlers.SetGroupAdmin
@@ -22,6 +23,12 @@ import moe.fuqiuluo.xposed.tools.fetchOrThrow
 import moe.fuqiuluo.xposed.tools.getOrPost
 
 fun Routing.troopAction() {
+    getOrPost("/group_touch") {
+        val groupId = fetchOrThrow("group_id")
+        val userId = fetchOrThrow("user_id")
+        call.respondText(GroupPoke(groupId, userId))
+    }
+
     getOrPost("/get_group_honor_info") {
         val groupId = fetchOrThrow("group_id")
         val refresh = fetchOrNull("refresh")?.toBooleanStrict() ?: false

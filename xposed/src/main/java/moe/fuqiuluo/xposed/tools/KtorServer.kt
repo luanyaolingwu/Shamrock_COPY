@@ -152,6 +152,14 @@ fun Routing.getOrPost(path: String, body: suspend PipelineContext<Unit, Applicat
     }
 }
 
+@io.ktor.util.KtorDsl
+fun Routing.getOrPost(path: Regex, body: suspend PipelineContext<Unit, ApplicationCall>.(Unit) -> Unit) {
+    route(path) {
+        get(body)
+        post(body)
+    }
+}
+
 @ShamrockDsl
 suspend inline fun PipelineContext<Unit, ApplicationCall>.respond(
     isOk: Boolean,
