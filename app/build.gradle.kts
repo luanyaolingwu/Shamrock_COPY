@@ -17,7 +17,7 @@ android {
         minSdk = 24
         targetSdk = 33
         versionCode = (System.currentTimeMillis() / 1000).toInt()
-        versionName = "1.0.1"
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -60,6 +60,13 @@ android {
 
     productFlavors {
         create("app") {
+            dimension = "mode"
+            ndk {
+                abiFilters.add("arm64-v8a")
+                abiFilters.add("x86_64")
+            }
+        }
+        create("arm64") {
             dimension = "mode"
             ndk {
                 abiFilters.add("arm64-v8a")
