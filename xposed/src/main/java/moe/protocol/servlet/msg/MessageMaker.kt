@@ -82,9 +82,21 @@ internal object MessageMaker {
         "location" to MessageMaker::createLocationElem,
         "music" to MessageMaker::createMusicElem,
         "reply" to MessageMaker::createReplyElem,
+        "touch" to MessageMaker::createTouchElem,
         "weather" to MessageMaker::createWeatherElem,
         //"multi_msg" to MessageMaker::createLongMsgStruct,
     )
+
+    private suspend fun createTouchElem(
+        chatType: Int,
+        msgId: Long,
+        peerId: String,
+        data: JsonObject
+    ): Result<MsgElement> {
+        data.checkAndThrow("id")
+        GroupSvc.poke(peerId, data["id"].asString)
+        return Result.failure(ActionMsgException)
+    }
 
     private suspend fun createWeatherElem(
         chatType: Int,
@@ -176,8 +188,8 @@ internal object MessageMaker {
                     data["title"].asString,
                     data["singer"].asStringOrNull ?: "",
                     data["url"].asString,
-                    "",
-                    data["url"].asString
+                    data["image"].asStringOrNull ?: "",
+                    data["audio"].asString
                 )
             }
             else -> LogCenter.log("不支持的音乐分享类型: $type", Level.ERROR)
