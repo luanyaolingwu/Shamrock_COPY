@@ -10,6 +10,7 @@
     * [事件过滤](/config/main.md#事件过滤)
 * [API](/api/main.md)
   * [请求与响应](/api/main.md#请求与响应)
-* [支持的消息](/cqcode/main.md)
+* [消息](/cqcode/main.md)
   * [消息格式](/cqcode/main.md#消息格式)
   * [消息支持](/cqcode/main.md#消息支持)
+* [事件](/event/main.md)

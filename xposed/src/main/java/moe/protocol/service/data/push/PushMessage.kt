@@ -13,6 +13,7 @@ internal enum class MsgSubType {
     @SerialName("normal") NORMAL,
     @SerialName("anonymous") ANONYMOUS,
     @SerialName("notice") NOTICE,
+    @SerialName("group_self") GroupSelf,
 
     /**
      * 私聊子类型
