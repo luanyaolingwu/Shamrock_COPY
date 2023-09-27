@@ -4,6 +4,7 @@ import android.content.Intent
 import moe.fuqiuluo.utils.MMKVFetcher
 import moe.fuqiuluo.xposed.tools.GlobalJson
 import mqq.app.MobileQQ
+import java.io.File
 
 internal object ShamrockConfig {
     private val ConfigDir = MobileQQ.getContext().getExternalFilesDir(null)!!
@@ -38,6 +39,16 @@ internal object ShamrockConfig {
             putBoolean(  "inject_packet",    intent.getBooleanExtra("inject_packet", false))    // 拦截无用包
             putBoolean(  "debug",    intent.getBooleanExtra("debug", false))    // 调试模式
             putString(   "token",      intent.getStringExtra("token"))                                      // 鉴权
+
+            // 接收ssl配置
+            putString(   "key_store",      intent.getStringExtra("key_store"))  // 证书路径
+            putString(   "ssl_pwd",      intent.getStringExtra("ssl_pwd"))  // 证书密码
+            putString(   "ssl_private_pwd",      intent.getStringExtra("ssl_private_pwd"))  // 证书私钥密码
+            putString(   "ssl_alias",      intent.getStringExtra("ssl_alias"))  // 证书别名
+            putInt(      "ssl_port",    intent.getIntExtra("ssl_port", 5701))                         // 主动HTTP端口
+
+
+
             putBoolean("isInit", true)
         }
     }
@@ -122,5 +133,35 @@ internal object ShamrockConfig {
         return mmkv.getBoolean("debug", false)
     }
 
+    fun ssl(): Boolean {
+        return getKeyStorePath()?.exists() == true
+    }
 
+    fun getKeyStorePath(): File? {
+        val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
+        mmkv.getString("key_store", null)?.let {
+            return File(it)
+        }
+        return null
+    }
+
+    fun sslPwd(): CharArray? {
+        val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
+        return mmkv.getString("ssl_pwd", null)?.toCharArray()
+    }
+
+    fun sslPrivatePwd(): String? {
+        val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
+        return mmkv.getString("ssl_private_pwd", null)
+    }
+
+    fun sslAlias(): String? {
+        val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
+        return mmkv.getString("ssl_alias", null)
+    }
+
+    fun getSslPort(): Int {
+        val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
+        return mmkv.getInt("ssl_port", getPort())
+    }
 }
