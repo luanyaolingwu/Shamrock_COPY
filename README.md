@@ -4,6 +4,8 @@
 
 > 本项目仅提供学习与交流用途，请在24小时内删除，本项目目的是研究Xposed和Lsposed框架的使用，以及Epic框架开发相关知识，如有违反法律，请联系删除。
 
+> 学习交流群：758533243
+
 # 部署教程 / API文档
 
 -> [点我直达](https://linxinrao.github.io/Shamrock/docs)
