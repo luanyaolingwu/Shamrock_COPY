@@ -11,6 +11,7 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 val ToolbarColor = Color(0xFF6f6f6f)
+val ToolbarColorDark = Color(0xFFc2c2c2)
 
 val TabSelectedColor = Color(0xFF5A5A5A)
 val TabUnSelectedColor = Color(0xFF6f6f6f)
