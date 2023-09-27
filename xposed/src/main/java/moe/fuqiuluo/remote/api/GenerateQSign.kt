@@ -29,8 +29,8 @@ import moe.fuqiuluo.xposed.tools.respond
 import moe.fuqiuluo.xposed.tools.toHexString
 import java.nio.ByteBuffer
 
-private lateinit var signer: IQSigner
-private lateinit var byteData: IByteData
+private var signer: IQSigner? = null
+private var byteData: IByteData? = null
 
 fun Routing.qsign() {
     route("/sign") {
@@ -97,16 +97,18 @@ fun Routing.qsign() {
     }
 
     get("/get_byte") {
-        if (!::byteData.isInitialized) {
+        if (byteData == null || byteData?.asBinder()?.isBinderAlive == false) {
             val binder = ShamrockIpc.get(ShamrockIpc.IPC_BYTEDATA)
             if (binder == null) {
-                respond(false, Status.InternalHandlerError, EmptyObject)
+                call.respond(OldApiResult(-2, "获取失败", null))
                 return@get
             } else {
                 byteData = IByteData.Stub.asInterface(binder)
+                binder.linkToDeath({
+                    byteData = null
+                }, 0)
             }
         }
-
 
         val data = fetchGetOrThrow("data")
         if(!(data.startsWith("810_") || data.startsWith("812_"))) {
@@ -121,7 +123,7 @@ fun Routing.qsign() {
             return@get
         }
 
-        val sign = byteData.sign(uin, data, salt).sign
+        val sign = byteData!!.sign(uin, data, salt).sign
 
         if (sign == null) {
             call.respond(OldApiResult(-2, "获取失败", null))
@@ -207,24 +209,35 @@ private data class Sign(
     val requestCallback: List<Int>
 )
 
+private suspend fun initSigner(): Boolean {
+    val binder = ShamrockIpc.get(ShamrockIpc.IPC_QSIGN)
+    if (binder == null) {
+        //respond(false, Status.InternalHandlerError)
+        return false
+    } else {
+        signer = IQSigner.Stub.asInterface(binder)
+        binder.linkToDeath({
+            signer = null
+        }, 0)
+        return true
+    }
+}
+
 private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(
     cmd: String,
     uin: String,
     seq: Int,
     buffer: ByteArray,
 ) {
-    if (!::signer.isInitialized) {
-        val binder = ShamrockIpc.get(ShamrockIpc.IPC_QSIGN)
-        if (binder == null) {
+    if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
+        if (!initSigner()) {
             respond(false, Status.InternalHandlerError)
             return
-        } else {
-            signer = IQSigner.Stub.asInterface(binder)
         }
     }
 
     val sign = withTimeoutOrNull(5000) {
-        signer.sign(cmd, seq, uin, buffer)
+        signer!!.sign(cmd, seq, uin, buffer)
     } ?: run {
         respond(false, Status.IAmTired)
         return
@@ -236,3 +249,4 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(
         sign.sign.toHexString(), "", listOf()
     )))
 }
+
