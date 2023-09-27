@@ -115,7 +115,7 @@ private fun AppMainView() {
 
     // Home
     val isFined = remember { mutableStateOf(false) }
-    val coreVersion = remember { mutableStateOf("1.0.0") }
+    val coreVersion = remember { mutableStateOf("1.0.3") }
     val coreName = remember { mutableStateOf("Xposed") }
     val coreCode = remember { mutableIntStateOf(1000) }
     val voiceSwitch = remember { mutableStateOf(false) }

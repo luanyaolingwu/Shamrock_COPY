@@ -4,6 +4,61 @@ import android.content.Context
 import moe.fuqiuluo.shamrock.ui.service.internal.broadcastToModule
 
 object ShamrockConfig {
+    fun getSSLKeyPath(ctx: Context): String {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getString("key_store", "")!!
+    }
+
+    fun setSSLKeyPath(ctx: Context, path: String) {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        preferences.edit().putString("key_store", path).apply()
+        pushUpdate(ctx)
+    }
+
+    fun getSSLPort(ctx: Context): Int {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getInt("ssl_port", 5701)
+    }
+
+    fun setSSLPort(ctx: Context, port: Int) {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        preferences.edit().putInt("ssl_port", port).apply()
+        pushUpdate(ctx)
+    }
+
+    fun getSSLAlias(ctx: Context): String {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getString("ssl_alias", "")!!
+    }
+
+    fun setSSLAlias(ctx: Context, alias: String) {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        preferences.edit().putString("ssl_alias", alias).apply()
+        pushUpdate(ctx)
+    }
+
+    fun getSSLPwd(ctx: Context): String {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getString("ssl_pwd", "")!!
+    }
+
+    fun setSSLPwd(ctx: Context, alias: String) {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        preferences.edit().putString("ssl_pwd", alias).apply()
+        pushUpdate(ctx)
+    }
+
+    fun getSSLPrivatePwd(ctx: Context): String {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getString("ssl_private_pwd", "")!!
+    }
+
+    fun setSSLPrivatePwd(ctx: Context, alias: String) {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        preferences.edit().putString("ssl_private_pwd", alias).apply()
+        pushUpdate(ctx)
+    }
+
     fun getHttpAddr(ctx: Context): String {
         val preferences = ctx.getSharedPreferences("config", 0)
         return preferences.getString("http_addr", "shamrock.moe:80")!!
@@ -182,15 +237,20 @@ object ShamrockConfig {
             "port" to preferences.getInt("port", 5700),
             "ws" to preferences.getBoolean("ws", false),
             "ws_port" to preferences.getInt("ws_port", 5800),
+            "ssl_port" to preferences.getInt("ssl_port", 5701),
             "http" to preferences.getBoolean("webhook", false),
             "http_addr" to preferences.getString("http_addr", ""),
             "ws_client" to preferences.getBoolean("ws_client", false),
             "use_cqcode" to preferences.getBoolean("use_cqcode", false),
             "ws_addr" to preferences.getString("ws_addr", ""),
+            "ssl_alias" to preferences.getString("ssl_alias", ""),
             "pro_api" to preferences.getBoolean("pro_api", false),
             "token" to preferences.getString("token", null),
+            "ssl_pwd" to preferences.getString("ssl_pwd", ""),
             "inject_packet" to preferences.getBoolean("inject_packet", false),
             "debug" to preferences.getBoolean("debug", false),
+            "ssl_private_pwd" to preferences.getString("ssl_private_pwd", ""),
+            "key_store" to preferences.getString("key_store", ""),
         )
     }
 

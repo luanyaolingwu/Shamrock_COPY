@@ -4,14 +4,10 @@ package moe.fuqiuluo.shamrock.ui.fragment
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Build
-import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,9 +22,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,20 +33,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.edit
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import moe.fuqiuluo.shamrock.R
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime
 import moe.fuqiuluo.shamrock.ui.app.Level
@@ -61,6 +54,7 @@ import moe.fuqiuluo.shamrock.ui.theme.TabSelectedColor
 import moe.fuqiuluo.shamrock.ui.theme.TabUnSelectedColor
 import moe.fuqiuluo.shamrock.ui.tools.InputDialog
 import moe.fuqiuluo.shamrock.ui.tools.toast
+import java.io.File
 
 
 @Composable
@@ -81,6 +75,110 @@ fun DashboardFragment(
         InformationCard(ctx)
         APIInfoCard(scope, ctx)
         FunctionCard(scope, ctx, "功能设置")
+        SSLCard(ctx)
+    }
+}
+
+@Composable
+private fun SSLCard(ctx: Context) {
+    ActionBox(
+        modifier = Modifier.padding(top = 12.dp),
+        painter = painterResource(id = R.drawable.baseline_security_24),
+        title = "SSL配置"
+    ) {
+        Column {
+            Divider(
+                modifier = Modifier,
+                color = TabUnSelectedColor,
+                thickness = 0.2.dp
+            )
+
+            val sslPort = remember { mutableStateOf(ShamrockConfig.getSSLPort(ctx).toString()) }
+            TextItem(
+                title = "SSL端口",
+                desc = "端口范围在0~65565，并确保可用。",
+                text = sslPort,
+                hint = "请输入端口号",
+                error = "端口范围应在0~65565",
+                checker = {
+                    it.isNotBlank() && it.toInt() in 0 .. 65565
+                },
+                confirm = {
+                    val newPort = sslPort.value.toInt()
+                    ShamrockConfig.setSSLPort(ctx, newPort)
+                    AppRuntime.log("设置SSL(HTTP)端口为$newPort，立即生效尝试中。")
+                }
+            )
+
+            val keyStore = remember { mutableStateOf(ShamrockConfig.getSSLKeyPath(ctx)) }
+            TextItem(
+                title = "SSL证书",
+                desc = "BKS签名的证书。",
+                text = keyStore,
+                hint = "输入证书路径",
+                error = "证书路径不合法或不存在",
+                checker = {
+                    it.isNotBlank()
+                },
+                confirm = {
+                    val new = keyStore.value
+                    ShamrockConfig.setSSLKeyPath(ctx, new)
+                    AppRuntime.log("设置SSL证书为[$new]。")
+                }
+            )
+
+            val alias = remember { mutableStateOf(ShamrockConfig.getSSLAlias(ctx)) }
+            TextItem(
+                title = "SSL别名",
+                desc = "BKS签名的别名，确保大小写区分正确。",
+                text = alias,
+                hint = "输入签名别名",
+                error = "别名不合法",
+                checker = {
+                    it.isNotBlank()
+                },
+                confirm = {
+                    val new = alias.value
+                    ShamrockConfig.setSSLAlias(ctx, new)
+                    AppRuntime.log("设置SSL别名为[$new]。")
+                }
+            )
+
+            val sslPwd = remember { mutableStateOf(ShamrockConfig.getSSLPwd(ctx)) }
+            TextItem(
+                title = "SSL密码",
+                desc = "BKS签名的密码。",
+                text = sslPwd,
+                hint = "输入签名密码",
+                error = "密码不合法",
+                checker = {
+                    it.isNotBlank()
+                },
+                confirm = {
+                    val new = sslPwd.value
+                    ShamrockConfig.setSSLPwd(ctx, new)
+                    AppRuntime.log("设置SSL密码为[$new]。")
+                }
+            )
+
+            val sslPrivatePwd = remember { mutableStateOf(ShamrockConfig.getSSLPrivatePwd(ctx)) }
+            TextItem(
+                title = "SSL Private密码",
+                desc = "BKS签名的Private密码。",
+                text = sslPrivatePwd,
+                hint = "输入Private密码",
+                error = "密码不合法",
+                checker = {
+                    it.isNotBlank()
+                },
+                confirm = {
+                    val new = sslPrivatePwd.value
+                    ShamrockConfig.setSSLPrivatePwd(ctx, new)
+                    AppRuntime.log("设置SSL Private密码为[$new]。")
+                }
+            )
+
+        }
     }
 }
 
@@ -501,6 +599,47 @@ private fun AccountCard(
                 fontSize = 14.sp
             )
         }
+    }
+}
+
+@Composable
+private inline fun TextItem(
+    title: String,
+    desc: String,
+    text: MutableState<String>,
+    hint: String,
+    error: String,
+    noinline checker: (String) -> Boolean,
+    crossinline confirm: (String) -> Unit,
+    crossinline cancel: () -> Unit = {
+
+    }
+) {
+    val dialogPortInputState = InputDialog(
+        openDialog = remember { mutableStateOf(false) },
+        title = title,
+        desc = desc,
+        isError = remember { mutableStateOf(false) },
+        text = text,
+        hint = hint,
+        keyboardType = KeyboardType.Number,
+        errorText = error,
+        checker = checker
+    )
+    InfoItem(
+        title = title,
+        content = text.value.ifEmpty { "未配置" },
+        titleColor = TabSelectedColor,
+        contentColor = if (text.value.isEmpty()) TabUnSelectedColor else TabSelectedColor
+    ) {
+        dialogPortInputState.show(
+            confirm = {
+                confirm(it)
+            },
+            cancel = {
+                cancel()
+            }
+        )
     }
 }
 
