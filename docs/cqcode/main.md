@@ -619,11 +619,11 @@ CQ码:
 
 该操作请查看API `/send_group_forward_msg`中的定义，因为NTQQ上传消息改动大，请注意接口请求格式有所变动！
 
-## ~XML 消息~
+## ~XML消息~
 
 !> Shamrock没有该消息段支持， 如果需要请提交issue！
 
-## JSON 消息
+## JSON消息
 
 消息段: 
 
