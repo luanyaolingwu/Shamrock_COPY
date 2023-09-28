@@ -16,11 +16,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+lateinit var GlobalColor: ThemeColor
+
 private val DarkColorScheme = darkColorScheme(
     primary = TabSelectedColor,
-    secondary = Color(0xFFCCC2DC),
-    tertiary = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    secondary = Color(0xFF000000),
+    tertiary = Color(0xFF000000),
+    surface = Color(0xFF000000),
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -28,15 +30,6 @@ private val LightColorScheme = lightColorScheme(
     secondary = Color(0xFFCCC2DC),
     tertiary = Color(0xFFFFFBFE),
     surface = Color(0xFFFFFBFE),
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
 )
 
 @Composable
@@ -49,11 +42,23 @@ fun ShamrockTheme(
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (darkTheme) {
+                GlobalColor = DarkColor
+                dynamicDarkColorScheme(context)
+            } else {
+                GlobalColor = LightColor
+                dynamicLightColorScheme(context)
+            }
         }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> {
+            GlobalColor = DarkColor
+            DarkColorScheme
+        }
+        else -> {
+            GlobalColor = LightColor
+            LightColorScheme
+        }
     }
     val view = LocalView.current
     if (!view.isInEditMode) {

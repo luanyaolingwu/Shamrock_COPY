@@ -48,14 +48,9 @@ import moe.fuqiuluo.shamrock.R
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime
 import moe.fuqiuluo.shamrock.ui.app.Level
 import moe.fuqiuluo.shamrock.ui.app.ShamrockConfig
-import moe.fuqiuluo.shamrock.ui.theme.ACCOUNT_END_COLOR
-import moe.fuqiuluo.shamrock.ui.theme.ACCOUNT_START_COLOR
-import moe.fuqiuluo.shamrock.ui.theme.TabSelectedColor
-import moe.fuqiuluo.shamrock.ui.theme.TabUnSelectedColor
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
+import moe.fuqiuluo.shamrock.ui.theme.ThemeColor
 import moe.fuqiuluo.shamrock.ui.tools.InputDialog
-import moe.fuqiuluo.shamrock.ui.tools.toast
-import java.io.File
-
 
 @Composable
 fun DashboardFragment(
@@ -73,7 +68,7 @@ fun DashboardFragment(
     ) {
         AccountCard(nick, uin)
         InformationCard(ctx)
-        APIInfoCard(scope, ctx)
+        APIInfoCard(ctx)
         FunctionCard(scope, ctx, "功能设置")
         SSLCard(ctx)
     }
@@ -89,7 +84,7 @@ private fun SSLCard(ctx: Context) {
         Column {
             Divider(
                 modifier = Modifier,
-                color = TabUnSelectedColor,
+                color = GlobalColor.Divider,
                 thickness = 0.2.dp
             )
 
@@ -184,7 +179,6 @@ private fun SSLCard(ctx: Context) {
 
 @Composable
 private fun APIInfoCard(
-    scope: CoroutineScope,
     ctx: Context
 ) {
     ActionBox(
@@ -195,7 +189,7 @@ private fun APIInfoCard(
         Column {
             Divider(
                 modifier = Modifier,
-                color = TabUnSelectedColor,
+                color = GlobalColor.Divider,
                 thickness = 0.2.dp
             )
 
@@ -307,14 +301,13 @@ private fun FunctionCard(
         Column {
             Divider(
                 modifier = Modifier,
-                color = TabUnSelectedColor,
+                color = GlobalColor.Divider,
                 thickness = 0.2.dp
             )
 
             Function(
                 title = "强制平板模式",
                 desc = "强制QQ使用平板模式，实现共存登录。",
-                descColor = TabSelectedColor,
                 isSwitch = ShamrockConfig.isTablet(ctx)
             ) {
                 ShamrockConfig.setTablet(ctx, it)
@@ -324,7 +317,6 @@ private fun FunctionCard(
             Function(
                 title = "HTTP回调",
                 desc = "OneBot标准的HTTPAPI回调，Shamrock作为Client。",
-                descColor = TabSelectedColor,
                 isSwitch = ShamrockConfig.isWebhook(ctx)
             ) {
                 ShamrockConfig.setWebhook(ctx, it)
@@ -334,7 +326,6 @@ private fun FunctionCard(
             Function(
                 title = "消息格式为CQ码",
                 desc = "HTTPAPI回调的消息格式，关闭则为消息段。",
-                descColor = TabSelectedColor,
                 isSwitch = ShamrockConfig.isUseCQCode(ctx)
             ) {
                 ShamrockConfig.setUseCQCode(ctx, it)
@@ -344,7 +335,6 @@ private fun FunctionCard(
             Function(
                 title = "主动WebSocket",
                 desc = "OneBot标准WebSocket，Shamrock作为Server。",
-                descColor = TabSelectedColor,
                 isSwitch = ShamrockConfig.isWs(ctx)
             ) {
                 ShamrockConfig.setWs(ctx, it)
@@ -354,7 +344,6 @@ private fun FunctionCard(
             Function(
                 title = "被动WebSocket",
                 desc = "OneBot标准WebSocket，Shamrock作为Client。",
-                descColor = TabSelectedColor,
                 isSwitch = ShamrockConfig.isWsClient(ctx)
             ) {
                 ShamrockConfig.setWsClient(ctx, it)
@@ -379,7 +368,7 @@ private fun FunctionCard(
 private fun Function(
     title: String,
     desc: String? = null,
-    descColor: Color? = null,
+    descColor: Color? = GlobalColor.NoticeBoxText,
     isSwitch: Boolean,
     onClick: (Boolean) -> Boolean
 ) {
@@ -397,7 +386,7 @@ private fun Function(
         }
         ActionSwitch(
             text = title,
-            isSwitch = isSwitch
+            isSwitch = isSwitch,
         ) {
             onClick(it)
         }
@@ -414,7 +403,7 @@ private fun InformationCard(ctx: Context) {
         Column {
             Divider(
                 modifier = Modifier,
-                color = TabUnSelectedColor,
+                color = GlobalColor.Divider,
                 thickness = 0.2.dp
             )
 
@@ -437,8 +426,8 @@ private fun InformationCard(ctx: Context) {
 @Composable
 private fun InfoItem(
     modifier: Modifier = Modifier,
-    titleColor: Color = TabSelectedColor,
-    contentColor: Color = TabSelectedColor,
+    titleColor: Color = GlobalColor.NoticeBoxText,
+    contentColor: Color = GlobalColor.NoticeBoxText,
     title: String,
     content: String,
     doubleClick: ((String) -> Unit)? = null
@@ -484,7 +473,7 @@ private fun AccountCard(
             .fillMaxWidth()
             .background(
                 Brush.linearGradient(
-                    listOf(ACCOUNT_START_COLOR, ACCOUNT_END_COLOR)
+                    listOf(ThemeColor.ColorAccountCardStart, ThemeColor.ColorAccountCardEnd)
                 ), shape = RoundedCornerShape(12.dp)
             ),
         verticalAlignment = Alignment.CenterVertically
@@ -570,8 +559,8 @@ private inline fun TextItem(
     InfoItem(
         title = title,
         content = text.value.ifEmpty { "未配置" },
-        titleColor = TabSelectedColor,
-        contentColor = if (text.value.isEmpty()) TabUnSelectedColor else TabSelectedColor
+        titleColor = GlobalColor.DataBoxTextLight,
+        contentColor = if (text.value.isEmpty()) GlobalColor.DataBoxTextDark else GlobalColor.DataBoxTextLight
     ) {
         dialogPortInputState.show(
             confirm = {

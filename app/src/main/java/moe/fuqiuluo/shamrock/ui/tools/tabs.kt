@@ -5,6 +5,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Indication
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
 import kotlin.math.max
 
 private enum class ColorSchemeKeyTokens {
@@ -113,33 +114,8 @@ private object ElevationTokens {
 }
 
 private object PrimaryNavigationTabTokens {
-    val ActiveIndicatorColor = ColorSchemeKeyTokens.Primary
     val ActiveIndicatorHeight = 3.0.dp
-    val ActiveIndicatorShape = RoundedCornerShape(3.0.dp)
-    val ContainerColor = ColorSchemeKeyTokens.Surface
-    val ContainerElevation = ElevationTokens.Level0
     val ContainerHeight = 48.0.dp
-    val ContainerShape = ShapeKeyTokens.CornerNone
-    val DividerColor = ColorSchemeKeyTokens.SurfaceVariant
-    val DividerHeight = 1.0.dp
-    val ActiveFocusIconColor = ColorSchemeKeyTokens.Primary
-    val ActiveHoverIconColor = ColorSchemeKeyTokens.Primary
-    val ActiveIconColor = ColorSchemeKeyTokens.Primary
-    val ActivePressedIconColor = ColorSchemeKeyTokens.Primary
-    val IconAndLabelTextContainerHeight = 64.0.dp
-    val IconSize = 24.0.dp
-    val InactiveFocusIconColor = ColorSchemeKeyTokens.OnSurface
-    val InactiveHoverIconColor = ColorSchemeKeyTokens.OnSurface
-    val InactiveIconColor = ColorSchemeKeyTokens.OnSurfaceVariant
-    val InactivePressedIconColor = ColorSchemeKeyTokens.OnSurface
-    val ActiveFocusLabelTextColor = ColorSchemeKeyTokens.Primary
-    val ActiveHoverLabelTextColor = ColorSchemeKeyTokens.Primary
-    val ActiveLabelTextColor = ColorSchemeKeyTokens.Primary
-    val ActivePressedLabelTextColor = ColorSchemeKeyTokens.Primary
-    val InactiveFocusLabelTextColor = ColorSchemeKeyTokens.OnSurface
-    val InactiveHoverLabelTextColor = ColorSchemeKeyTokens.OnSurface
-    val InactiveLabelTextColor = ColorSchemeKeyTokens.OnSurfaceVariant
-    val InactivePressedLabelTextColor = ColorSchemeKeyTokens.OnSurface
     val LabelTextFont = TypographyKeyTokens.TitleSmall
 }
 
@@ -273,7 +249,7 @@ fun ShamrockTab(
     enabled: Boolean = true,
     text: @Composable (() -> Unit)? = null,
     icon: @Composable (() -> Unit)? = null,
-    selectedContentColor: Color = LocalContentColor.current,
+    selectedContentColor: Color = GlobalColor.TabSelected,
     unselectedContentColor: Color = selectedContentColor,
     indication: Indication? = rememberRipple(bounded = true, color = selectedContentColor),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
@@ -306,7 +282,7 @@ fun ShamrockTab(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    selectedContentColor: Color = LocalContentColor.current,
+    selectedContentColor: Color = GlobalColor.TabSelected,
     unselectedContentColor: Color = selectedContentColor,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     indication: Indication? = rememberRipple(bounded = true, color = selectedContentColor),
@@ -319,6 +295,7 @@ fun ShamrockTab(
     TabTransition(selectedContentColor, unselectedContentColor, selected) {
         Column(
             modifier = modifier
+                .background(GlobalColor.Toolbar)
                 .selectable(
                     selected = selected,
                     onClick = onClick,
@@ -333,6 +310,7 @@ fun ShamrockTab(
             content = content
         )
     }
+
 }
 
 private const val TabFadeInAnimationDuration = 150

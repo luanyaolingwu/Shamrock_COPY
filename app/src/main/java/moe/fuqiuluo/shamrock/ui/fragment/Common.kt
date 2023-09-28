@@ -26,9 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import moe.fuqiuluo.shamrock.R
-import moe.fuqiuluo.shamrock.ui.theme.NoticeBoxBackground
-import moe.fuqiuluo.shamrock.ui.theme.NoticeBoxIconColor
-import moe.fuqiuluo.shamrock.ui.theme.NoticeBoxTextColor
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
 import moe.fuqiuluo.shamrock.ui.tools.IosSwitch
 
 @Composable
@@ -42,7 +40,7 @@ fun NoticeBox(
             .fillMaxWidth()
             .indication(remember { MutableInteractionSource() }, null)
             .background(
-                color = NoticeBoxBackground,
+                color = GlobalColor.NoticeBox,
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable(enabled = onClick != null) {
@@ -66,12 +64,12 @@ fun NoticeBox(
                     .height(20.dp),
                 painter = painterResource(id = R.drawable.round_warning_24),
                 contentDescription = "WarningIcon",
-                tint = NoticeBoxIconColor
+                tint = GlobalColor.NoticeBoxIcon
             )
             Text(
                 text = text,
                 fontSize = 11.sp,
-                color = NoticeBoxTextColor
+                color = GlobalColor.NoticeBoxText
             )
         }
     }
@@ -84,13 +82,13 @@ fun ActionBox(
     title: String,
     content: @Composable (textColor: Color) -> Unit
 ) {
-    val textColor = NoticeBoxTextColor
+    val textColor = GlobalColor.NoticeBoxText
     Box(
         modifier = modifier
             .fillMaxWidth()
             .indication(remember { MutableInteractionSource() }, null)
             .background(
-                color = NoticeBoxBackground,
+                color = GlobalColor.NoticeBox,
                 shape = RoundedCornerShape(12.dp)
             )
     ) {
