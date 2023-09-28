@@ -274,7 +274,7 @@ private fun APIInfoCard(
                 title = "鉴权Token",
                 desc = "用于鉴权的Token。",
                 text = authToken,
-                hint = "12345678",
+                hint = "请填写鉴权token",
                 error = "输入的参数不合法",
                 checker = {
                     it.length in 0 .. 36
