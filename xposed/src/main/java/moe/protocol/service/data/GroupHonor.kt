@@ -18,7 +18,7 @@ internal const val HONOR_GIFT = 13
 
 @Serializable
 internal data class GroupMemberHonor(
-    @SerialName("use_id") val userId: String,
+    @SerialName("user_id") val userId: String,
     @SerialName("nickname") var nick: String,
     @SerialName("avatar") val avatar: String,
     @SerialName("day_count") val dayCount: Int,

@@ -489,7 +489,7 @@ API 的响应是一个 JSON 数据, 如下:
     "talkative_list": [],
     "performer_list": [
       {
-        "use_id": "203411690",
+        "user_id": "203411690",
         "nickname": "洛洛喵",
         "avatar": "https://qzonestyle.gtimg.cn/aoi/sola/20200217190136_92JEGFKC5k.png",
         "day_count": 0,
@@ -501,7 +501,7 @@ API 的响应是一个 JSON 数据, 如下:
     "strong_newbie_list": [],
     "emotion_list": [
       {
-        "use_id": "1619180855",
+        "user_id": "1619180855",
         "nickname": "没有人比我更懂女装",
         "avatar": "https://qzonestyle.gtimg.cn/aoi/sola/20200213150434_3tDmsJExCP.png",
         "day_count": 0,
