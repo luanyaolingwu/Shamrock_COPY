@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.sp
 import moe.fuqiuluo.shamrock.R
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime
 import moe.fuqiuluo.shamrock.ui.app.ShamrockConfig
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
 import moe.fuqiuluo.shamrock.ui.theme.LocalString
-import moe.fuqiuluo.shamrock.ui.theme.TabUnSelectedColor
 import moe.fuqiuluo.shamrock.ui.tools.NoticeTextDialog
 import moe.fuqiuluo.shamrock.ui.tools.toast
 
@@ -58,7 +58,7 @@ fun LabFragment() {
             Column {
                 Divider(
                     modifier = Modifier,
-                    color = TabUnSelectedColor,
+                    color = GlobalColor.Divider,
                     thickness = 0.2.dp
                 )
 
@@ -94,7 +94,7 @@ fun LabFragment() {
             Column {
                 Divider(
                     modifier = Modifier,
-                    color = TabUnSelectedColor,
+                    color = GlobalColor.Divider,
                     thickness = 0.2.dp
                 )
 
@@ -131,7 +131,7 @@ fun LabFragment() {
             Column {
                 Divider(
                     modifier = Modifier,
-                    color = TabUnSelectedColor,
+                    color = GlobalColor.Divider,
                     thickness = 0.2.dp
                 )
 

@@ -76,7 +76,6 @@ import moe.fuqiuluo.shamrock.ui.theme.LocalString
 import moe.fuqiuluo.shamrock.ui.theme.RANDOM_SUB_TITLE
 import moe.fuqiuluo.shamrock.ui.theme.RANDOM_TITLE
 import moe.fuqiuluo.shamrock.ui.theme.ShamrockTheme
-import moe.fuqiuluo.shamrock.ui.theme.TabSelectedColor
 import moe.fuqiuluo.shamrock.ui.tools.NoIndication
 import moe.fuqiuluo.shamrock.ui.tools.ShamrockTab
 
@@ -188,7 +187,7 @@ private fun AppMainView() {
                         indicator = {
                             TabRowDefaults.Indicator(
                                 Modifier.tabIndicatorOffset(it[state.currentPage]),
-                                color = TabSelectedColor,
+                                color = GlobalColor.TabItem,
                                 height = (3.3).dp
                             )
                         },

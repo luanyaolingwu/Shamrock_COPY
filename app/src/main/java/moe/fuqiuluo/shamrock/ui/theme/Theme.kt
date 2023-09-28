@@ -19,14 +19,14 @@ import androidx.core.view.WindowCompat
 lateinit var GlobalColor: ThemeColor
 
 private val DarkColorScheme = darkColorScheme(
-    primary = TabSelectedColor,
+    primary = ThemeColor.ColorTabSelected,
     secondary = Color(0xFF000000),
     tertiary = Color(0xFF000000),
     surface = Color(0xFF000000),
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = TabSelectedColor,
+    primary = ThemeColor.ColorTabSelected,
     secondary = Color(0xFFCCC2DC),
     tertiary = Color(0xFFFFFBFE),
     surface = Color(0xFFFFFBFE),
