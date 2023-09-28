@@ -41,7 +41,14 @@ internal object HTTPServer {
     internal var currServerPort: Int = 0
 
     private fun Application.configModule() {
-        install(Auth)
+        install(Auth).let {
+            val token = ShamrockConfig.getToken()
+            if (token.isBlank()) {
+                LogCenter.log("未配置Token，将不进行鉴权。", Level.WARN)
+            } else {
+                LogCenter.log("配置Token: $token", Level.INFO)
+            }
+        }
         contentNegotiation()
         statusPages()
         routing {
