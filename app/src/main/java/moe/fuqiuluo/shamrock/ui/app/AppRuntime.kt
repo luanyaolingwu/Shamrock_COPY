@@ -14,6 +14,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
 import java.util.Date
 
 object AppRuntime {
@@ -61,7 +62,7 @@ object AppRuntime {
                         spanStyles = logger.logRanges.map {
                             AnnotatedString.Range(
                                 SpanStyle(
-                                    color = it.level.color
+                                    color = it.level.color ?: GlobalColor.NoticeBoxText
                                 ), it.start, it.end
                             )
                         },
@@ -92,11 +93,11 @@ class RuntimeState(
 }
 
 enum class Level(
-    val color: Color,
+    val color: Color?,
     val id: Byte
 ) {
     DEBUG(Color(0xFF4CAF50), 0),
-    INFO(Color(0xff6c6c6c), 1),
+    INFO(null, 1),
     WARN(Color(0xFFFF9800), 2),
     ERROR(Color(0xFFE91E63), 3),
 }

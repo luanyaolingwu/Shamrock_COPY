@@ -71,15 +71,14 @@ import moe.fuqiuluo.shamrock.ui.fragment.HomeFragment
 import moe.fuqiuluo.shamrock.ui.fragment.LabFragment
 import moe.fuqiuluo.shamrock.ui.fragment.LogFragment
 import moe.fuqiuluo.shamrock.ui.service.internal.broadcastToModule
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
 import moe.fuqiuluo.shamrock.ui.theme.LocalString
 import moe.fuqiuluo.shamrock.ui.theme.RANDOM_SUB_TITLE
 import moe.fuqiuluo.shamrock.ui.theme.RANDOM_TITLE
 import moe.fuqiuluo.shamrock.ui.theme.ShamrockTheme
 import moe.fuqiuluo.shamrock.ui.theme.TabSelectedColor
-import moe.fuqiuluo.shamrock.ui.theme.ToolbarColor
 import moe.fuqiuluo.shamrock.ui.tools.NoIndication
 import moe.fuqiuluo.shamrock.ui.tools.ShamrockTab
-import java.lang.StringBuilder
 
 class MainActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,7 +109,7 @@ private fun AppMainView() {
     LaunchedEffect(systemUiController, statusBarDarkIcons, navigationBarDarkIcons) {
         systemUiController.statusBarDarkContentEnabled = statusBarDarkIcons
         systemUiController.navigationBarDarkContentEnabled = navigationBarDarkIcons
-        systemUiController.setStatusBarColor(Color.White)
+        systemUiController.setStatusBarColor(GlobalColor.StatusBar)
     }
 
     // Home
@@ -180,7 +179,7 @@ private fun AppMainView() {
                     TabRow(
                         modifier = Modifier
                             .width(1080.dp)
-                            .background(Color.White)
+                            .background(GlobalColor.Toolbar)
                             .absolutePadding(left = 70.dp, right = 70.dp)
                         ,
                         selectedTabIndex = state.currentPage,
@@ -233,12 +232,12 @@ private fun ToolBar(title: String) {
         title = { Column {
             Text(
                 text = title,
-                color = ToolbarColor,
+                color = GlobalColor.ToolbarText,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = RANDOM_SUB_TITLE.random(),
-                color = ToolbarColor,
+                color = GlobalColor.ToolbarText,
                 fontSize = 14.sp
             )
         } },
@@ -246,9 +245,9 @@ private fun ToolBar(title: String) {
             .fillMaxWidth(),
         colors = topAppBarColors(
             titleContentColor = Color.Black,
-            containerColor = Color.White,
-            scrolledContainerColor = Color.White,
-            navigationIconContentColor = Color.White
+            containerColor = GlobalColor.Toolbar,
+            scrolledContainerColor = GlobalColor.Toolbar,
+            navigationIconContentColor = GlobalColor.Toolbar
         )
     )
 }
@@ -290,7 +289,7 @@ private fun AnimatedTab(scope: CoroutineScope, state: PagerState, index: Int, ti
             }, enter = enter, exit = exit, modifier = Modifier) {
                 Text(
                     text = titleWithIcon.first,
-                    color = TabSelectedColor,
+                    color = GlobalColor.TabItem,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier

@@ -34,9 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import moe.fuqiuluo.shamrock.R
 import moe.fuqiuluo.shamrock.ui.app.RuntimeState
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
 import moe.fuqiuluo.shamrock.ui.theme.LocalString
-import moe.fuqiuluo.shamrock.ui.theme.STATE_END_COLOR
-import moe.fuqiuluo.shamrock.ui.theme.STATE_START_COLOR
 
 @Composable
 fun HomeFragment(
@@ -105,7 +104,7 @@ private fun StatusCardBoard(
             .fillMaxWidth()
             .background(
                 Brush.linearGradient(
-                    listOf(STATE_START_COLOR, STATE_END_COLOR)
+                    listOf(GlobalColor.StatusCardStart, GlobalColor.StatusCardEnd)
                 ), shape = RoundedCornerShape(12.dp)
             ),
         verticalAlignment = Alignment.CenterVertically

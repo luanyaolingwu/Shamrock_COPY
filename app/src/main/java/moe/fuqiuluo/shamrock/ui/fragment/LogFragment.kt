@@ -22,15 +22,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime
 import moe.fuqiuluo.shamrock.ui.app.Logger
-import moe.fuqiuluo.shamrock.ui.theme.NoticeBoxBackground
-import moe.fuqiuluo.shamrock.ui.theme.NoticeBoxTextColor
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
 
 @Composable
 fun LogFragment(
@@ -50,7 +48,7 @@ fun LogFragment(
                 .fillMaxSize()
                 .indication(remember { MutableInteractionSource() }, null)
                 .background(
-                    color = NoticeBoxBackground,
+                    color = GlobalColor.NoticeBox,
                     shape = RoundedCornerShape(12.dp)
                 )
                 .verticalScroll(rememberScrollState())
@@ -71,7 +69,7 @@ fun LogFragment(
                         modifier = Modifier.fillMaxWidth(),
                         text = logger.logValue.value,
                         fontSize = 12.sp,
-                        color = NoticeBoxTextColor
+                        color = GlobalColor.NoticeBoxText
                     )
                 }
             }
