@@ -91,8 +91,6 @@ object DarkColor: ThemeColor {
     override val Divider = ThemeColor.ColorDarkTabUnSelected
 }
 
-val TabSelectedColor = Color(0xFF5A5A5A)
-val TabUnSelectedColor = Color(0xFF6f6f6f)
 
 
 
