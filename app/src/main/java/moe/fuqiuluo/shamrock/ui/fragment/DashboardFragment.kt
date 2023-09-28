@@ -199,150 +199,91 @@ private fun APIInfoCard(
                 thickness = 0.2.dp
             )
 
-            val port = remember { mutableStateOf(ShamrockConfig.getHttpPort(ctx).toString()) }
             val wsPort = remember { mutableStateOf(ShamrockConfig.getWsPort(ctx).toString()) }
-
-            val dialogPortInputState = InputDialog(
-                openDialog = remember { mutableStateOf(false) },
+            val port = remember { mutableStateOf(ShamrockConfig.getHttpPort(ctx).toString()) }
+            TextItem(
                 title = "主动HTTP端口",
                 desc = "端口范围在0~65565，并确保可用。",
-                isError = remember { mutableStateOf(false) },
                 text = port,
                 hint = "请输入端口号",
-                keyboardType = KeyboardType.Number,
-                errorText = "端口范围应在0~65565",
-            ) {
-                it.isNotBlank() && it.toInt() in 0 .. 65565 && wsPort.value != port.value
-            }
-            InfoItem(
-                title = "主动HTTP监听端口",
-                content = port.value
-            ) {
-                dialogPortInputState.show(
-                    confirm = {
-                        val newPort = port.value.toInt()
-                        ShamrockConfig.setHttpPort(ctx, newPort)
-                        AppRuntime.log("设置主动HTTP监听端口为$newPort，立即生效尝试中。")
-                    },
-                    cancel = {
-                        scope.toast(ctx, "取消修改")
-                    }
-                )
-            }
+                error = "端口范围应在0~65565",
+                checker = {
+                    it.isNotBlank() && it.toInt() in 0 .. 65565 && wsPort.value != it
+                },
+                confirm = {
+                    val newPort = port.value.toInt()
+                    ShamrockConfig.setHttpPort(ctx, newPort)
+                    AppRuntime.log("设置主动HTTP监听端口为$newPort，立即生效尝试中。")
+                }
+            )
 
-            val dialogWsPortInputState = InputDialog(
-                openDialog = remember { mutableStateOf(false) },
+            TextItem(
                 title = "主动WebSocket端口",
-                desc = "端口范围在0~65565，请确保可用。",
-                isError = remember { mutableStateOf(false) },
+                desc = "端口范围在0~65565，并确保可用。",
                 text = wsPort,
                 hint = "请输入端口号",
-                keyboardType = KeyboardType.Number,
-                errorText = "端口范围应在0~65565",
-            ) {
-                it.isNotBlank() && it.toInt() in 0 .. 65565 && wsPort.value != port.value
-            }
-            InfoItem(
-                title = "主动WebSocket端口",
-                content = wsPort.value
-            ) {
-                dialogWsPortInputState.show(
-                    confirm = {
-                        val newPort = wsPort.value.toInt()
-                        ShamrockConfig.setWsPort(ctx, newPort)
-                        AppRuntime.log("设置主动WebSocket监听端口为$newPort。")
-                    },
-                    cancel = {
-                        scope.toast(ctx, "取消修改")
-                    }
-                )
-            }
+                error = "端口范围应在0~65565",
+                checker = {
+                    it.isNotBlank() && it.toInt() in 0 .. 65565 && it != port.value
+                },
+                confirm = {
+                    val newPort = wsPort.value.toInt()
+                    ShamrockConfig.setWsPort(ctx, newPort)
+                    AppRuntime.log("设置主动WebSocket监听端口为$newPort。")
+                }
+            )
 
             val webHookAddress = remember { mutableStateOf(ShamrockConfig.getHttpAddr(ctx)) }
-            val dialogWebHookAddressInputState = InputDialog(
-                openDialog = remember { mutableStateOf(false) },
+            TextItem(
                 title = "回调HTTP地址",
                 desc = "无需携带’http://‘，例如：shamrock.moe:80。",
-                isError = remember { mutableStateOf(false) },
                 text = webHookAddress,
                 hint = "shamrock.moe:80",
-                keyboardType = KeyboardType.Text,
-                errorText = "输入的地址不合法",
-            ) {
-                it.isNotBlank() && !it.startsWith("http://")
-                        && !it.startsWith("https://")
-                        && !it.startsWith("ws://")
-            }
-            InfoItem(
-                title = "被动HTTP回调地址",
-                content = webHookAddress.value
-            ) {
-                dialogWebHookAddressInputState.show(
-                    confirm = {
-                        ShamrockConfig.setHttpAddr(ctx, webHookAddress.value)
-                        AppRuntime.log("设置回调HTTP地址为[${webHookAddress.value}]。")
-                    },
-                    cancel = {
-                        scope.toast(ctx, "取消修改")
-                    }
-                )
-            }
+                error = "输入的地址不合法",
+                checker = {
+                    it.isNotBlank() && !it.startsWith("http://")
+                            && !it.startsWith("https://")
+                            && !it.startsWith("ws://")
+                },
+                confirm = {
+                    ShamrockConfig.setHttpAddr(ctx, webHookAddress.value)
+                    AppRuntime.log("设置回调HTTP地址为[${webHookAddress.value}]。")
+                }
+            )
 
             val wsAddress = remember { mutableStateOf(ShamrockConfig.getWsAddr(ctx)) }
-            val dialogWsAddressInputState = InputDialog(
-                openDialog = remember { mutableStateOf(false) },
-                title = "被动WebSocket地址",
+            TextItem(
+                title = "主动WebSocket地址",
                 desc = "无需携带‘ws://’，例如：shamrock.moe:81。",
-                isError = remember { mutableStateOf(false) },
                 text = wsAddress,
                 hint = "shamrock.moe:81",
-                keyboardType = KeyboardType.Text,
-                errorText = "输入的地址不合法",
-            ) {
-                it.isNotBlank() && !it.startsWith("http://") && !it.startsWith("https://") && !it.startsWith("ws://")
-            }
-            InfoItem(
-                title = "被动WebSocket地址",
-                content = wsAddress.value
-            ) {
-                dialogWsAddressInputState.show(
-                    confirm = {
-                        ShamrockConfig.setWsAddr(ctx, wsAddress.value)
-                        AppRuntime.log("设置被动WebSocket服务端地址为[${wsAddress.value}]。")
-                    },
-                    cancel = {
-                        scope.toast(ctx, "取消修改")
-                    }
-                )
-            }
+                error = "输入的地址不合法",
+                checker = {
+                    it.isNotBlank() && !it.startsWith("http://")
+                            && !it.startsWith("https://")
+                            && !it.startsWith("ws://")
+                },
+                confirm = {
+                    ShamrockConfig.setWsAddr(ctx, wsAddress.value)
+                    AppRuntime.log("设置主动WebSocket地址为[${wsAddress.value}]。")
+                }
+            )
 
             val authToken = remember { mutableStateOf(ShamrockConfig.getToken(ctx)) }
-            val dialogAuthTokenInputState = InputDialog(
-                openDialog = remember { mutableStateOf(false) },
+            TextItem(
                 title = "鉴权Token",
                 desc = "用于鉴权的Token。",
-                isError = remember { mutableStateOf(false) },
                 text = authToken,
                 hint = "12345678",
-                keyboardType = KeyboardType.Text,
-                errorText = "输入的参数不合法",
-            ) {
-                it.length in 0 .. 36
-            }
-            InfoItem(
-                title = "鉴权Token",
-                content = authToken.value
-            ) {
-                dialogAuthTokenInputState.show(
-                    confirm = {
-                        ShamrockConfig.setToken(ctx, authToken.value)
-                        AppRuntime.log("设置鉴权Token为[${authToken.value}]。")
-                    },
-                    cancel = {
-                        scope.toast(ctx, "取消修改")
-                    }
-                )
-            }
+                error = "输入的参数不合法",
+                checker = {
+                    it.length in 0 .. 36
+                },
+                confirm = {
+                    ShamrockConfig.setToken(ctx, authToken.value)
+                    AppRuntime.log("设置鉴权Token为[${authToken.value}]。")
+                }
+            )
 
             InfoItem(
                 title = "累计调用次数",
