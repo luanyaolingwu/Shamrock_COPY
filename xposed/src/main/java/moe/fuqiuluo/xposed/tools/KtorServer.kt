@@ -32,16 +32,17 @@ import moe.fuqiuluo.remote.entries.Status
 @MustBeDocumented
 annotation class ShamrockDsl
 
-suspend fun PipelineContext<Unit, ApplicationCall>.fetch(key: String): String {
-    val isPost = call.request.httpMethod == HttpMethod.Post
+suspend fun ApplicationCall.fetch(key: String): String {
+    val isPost = request.httpMethod == HttpMethod.Post
     return if (isPost) {
         fetchPost(key)
     } else {
         fetchGet(key)
     }
 }
-suspend fun PipelineContext<Unit, ApplicationCall>.fetchOrNull(key: String): String? {
-    val isPost = call.request.httpMethod == HttpMethod.Post
+
+suspend fun ApplicationCall.fetchOrNull(key: String): String? {
+    val isPost = request.httpMethod == HttpMethod.Post
     return if (isPost) {
         fetchPostOrNull(key)
     } else {
@@ -49,13 +50,73 @@ suspend fun PipelineContext<Unit, ApplicationCall>.fetchOrNull(key: String): Str
     }
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.fetchOrThrow(key: String): String {
-    val isPost = call.request.httpMethod == HttpMethod.Post
+suspend fun ApplicationCall.fetchOrThrow(key: String): String {
+    val isPost = request.httpMethod == HttpMethod.Post
     return if (isPost) {
         fetchPostOrThrow(key)
     } else {
         fetchGetOrThrow(key)
     }
+}
+
+fun ApplicationCall.fetchGet(key: String): String {
+    return parameters[key]!!
+}
+
+fun ApplicationCall.fetchGetOrNull(key: String): String? {
+    return parameters[key]
+}
+
+fun ApplicationCall.fetchGetOrThrow(key: String): String {
+    return parameters[key] ?: throw ParamsException(key)
+}
+
+suspend fun ApplicationCall.fetchPost(key: String): String {
+    return fetchPostOrNull(key)!!
+}
+
+suspend fun ApplicationCall.fetchPostOrThrow(key: String): String {
+    return fetchPostOrNull(key) ?: throw ParamsException(key)
+}
+
+fun ApplicationCall.isJsonData(): Boolean {
+    return ContentType.Application.Json == request.contentType()
+}
+
+suspend fun ApplicationCall.fetchPostOrNull(key: String): String? {
+    if (isJsonData()) {
+        val cacheKey = AttributeKey<JsonObject>("paramsJson")
+        val data = if (attributes.contains(cacheKey)) {
+            attributes[cacheKey]
+        } else {
+            Json.parseToJsonElement(receiveText()).jsonObject.also {
+                attributes.put(cacheKey, it)
+            }
+        }
+        return data[key].asStringOrNull
+    } else {
+        val cacheKey = AttributeKey<Parameters>("paramsParts")
+        val data = if (attributes.contains(cacheKey)) {
+            attributes[cacheKey]
+        } else {
+            receiveParameters().also {
+                attributes.put(cacheKey, it)
+            }
+        }
+        return data[key]
+    }
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.fetch(key: String): String {
+    return call.fetch(key)
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.fetchOrNull(key: String): String? {
+    return call.fetchOrNull(key)
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.fetchOrThrow(key: String): String {
+    return call.fetchOrThrow(key)
 }
 
 fun PipelineContext<Unit, ApplicationCall>.fetchGet(key: String): String {
@@ -121,27 +182,7 @@ suspend fun PipelineContext<Unit, ApplicationCall>.fetchPostJsonArray(key: Strin
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.fetchPostOrNull(key: String): String? {
-    if (isJsonData()) {
-        val cacheKey = AttributeKey<JsonObject>("paramsJson")
-        val data = if (call.attributes.contains(cacheKey)) {
-            call.attributes[cacheKey]
-        } else {
-            Json.parseToJsonElement(call.receiveText()).jsonObject.also {
-                call.attributes.put(cacheKey, it)
-            }
-        }
-        return data[key].asStringOrNull
-    } else {
-        val cacheKey = AttributeKey<Parameters>("paramsParts")
-        val data = if (call.attributes.contains(cacheKey)) {
-            call.attributes[cacheKey]
-        } else {
-            call.receiveParameters().also {
-                call.attributes.put(cacheKey, it)
-            }
-        }
-        return data[key]
-    }
+    return call.fetchPostOrNull(key)
 }
 
 @io.ktor.util.KtorDsl

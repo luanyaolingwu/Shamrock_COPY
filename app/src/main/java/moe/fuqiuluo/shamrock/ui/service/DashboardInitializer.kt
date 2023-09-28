@@ -3,6 +3,8 @@ package moe.fuqiuluo.shamrock.ui.service
 
 import android.content.Context
 import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -16,6 +18,7 @@ import moe.fuqiuluo.shamrock.ui.app.AppRuntime.AccountInfo
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime.log
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime.state
 import moe.fuqiuluo.shamrock.ui.app.Level
+import moe.fuqiuluo.shamrock.ui.app.ShamrockConfig
 import moe.fuqiuluo.shamrock.ui.service.internal.broadcastToModule
 import moe.fuqiuluo.xposed.tools.GlobalClient
 import java.net.ConnectException
@@ -46,7 +49,13 @@ object DashboardInitializer {
     private fun checkService(context: Context) {
         GlobalScope.launch {
             try {
-                GlobalClient.get("http://127.0.0.1:$servicePort/get_account_info").let {
+                GlobalClient.get {
+                    url("http://127.0.0.1:$servicePort/get_account_info")
+                    val token = ShamrockConfig.getToken(context)
+                    if (token.isNotBlank()) {
+                        header("Authorization", "Bearer $token")
+                    }
+                }.let {
                     if (it.status == HttpStatusCode.OK) {
                         val result: CommonResult<CurrentAccount> = Json.decodeFromString(it.bodyAsText())
                         state.isFined.value = result.retcode == 0
