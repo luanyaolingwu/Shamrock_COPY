@@ -47,7 +47,7 @@ internal object ShamrockConfig {
             putString(   "ssl_alias",      intent.getStringExtra("ssl_alias"))  // 证书别名
             putInt(      "ssl_port",    intent.getIntExtra("ssl_port", 5701))                         // 主动HTTP端口
 
-
+            putBoolean("auto_clear", intent.getBooleanExtra("auto_clear", false)) // 自动清理
 
             putBoolean("isInit", true)
         }

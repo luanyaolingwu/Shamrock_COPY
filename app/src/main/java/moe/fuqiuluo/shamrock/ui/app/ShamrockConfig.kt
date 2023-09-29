@@ -249,6 +249,7 @@ object ShamrockConfig {
             "ssl_pwd" to preferences.getString("ssl_pwd", ""),
             "inject_packet" to preferences.getBoolean("inject_packet", false),
             "debug" to preferences.getBoolean("debug", false),
+            "auto_clear" to preferences.getBoolean("auto_clear", false),
             "ssl_private_pwd" to preferences.getString("ssl_private_pwd", ""),
             "key_store" to preferences.getString("key_store", ""),
         )
