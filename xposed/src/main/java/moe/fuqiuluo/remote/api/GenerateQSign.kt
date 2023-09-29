@@ -1,6 +1,7 @@
 package moe.fuqiuluo.remote.api
 
 import com.tencent.mobileqq.qsec.qsecdandelionsdk.Dandelion
+import com.tencent.mobileqq.qsec.qsecurity.QSec
 import com.tencent.secprotocol.ByteData
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
@@ -14,6 +15,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
+import moe.fuqiuluo.remote.action.handlers.ModifyTroopName
 import moe.fuqiuluo.remote.entries.EmptyObject
 import moe.fuqiuluo.remote.entries.Status
 import moe.fuqiuluo.xposed.ipc.qsign.IQSigner
@@ -24,15 +26,40 @@ import moe.fuqiuluo.xposed.tools.fetchGetOrThrow
 import moe.fuqiuluo.xposed.tools.fetchOrNull
 import moe.fuqiuluo.xposed.tools.fetchOrThrow
 import moe.fuqiuluo.xposed.tools.fetchPostOrThrow
+import moe.fuqiuluo.xposed.tools.getOrPost
 import moe.fuqiuluo.xposed.tools.hex2ByteArray
 import moe.fuqiuluo.xposed.tools.respond
 import moe.fuqiuluo.xposed.tools.toHexString
+import mqq.app.MobileQQ
 import java.nio.ByteBuffer
 
 private var signer: IQSigner? = null
 private var byteData: IByteData? = null
 
 fun Routing.qsign() {
+    getOrPost("/get_xw_debug_id") {
+        if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
+            if (!initSigner()) {
+                respond(false, Status.InternalHandlerError)
+                return@getOrPost
+            }
+        }
+
+        val uin = fetchOrThrow("uin")
+        val data = fetchGetOrThrow("data")
+
+        lateinit var start: String
+        lateinit var end: String
+
+        data.split("_").let {
+            start = it[0]
+            end = it[1]
+        }
+        val xwDebugId = signer!!.xwDebugId(uin, start, end)
+
+        call.respond(OldApiResult(0, "success", xwDebugId.toHexString()))
+    }
+
     route("/sign") {
         get {
             val uin = fetchGetOrThrow("uin")
