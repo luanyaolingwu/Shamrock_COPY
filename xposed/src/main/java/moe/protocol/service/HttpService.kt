@@ -34,6 +34,7 @@ import moe.fuqiuluo.xposed.tools.asString
 import moe.fuqiuluo.xposed.tools.json
 import moe.fuqiuluo.xposed.tools.jsonArray
 import moe.protocol.service.api.HttpPushServlet
+import moe.protocol.service.data.push.PostType
 
 internal object HttpService: HttpPushServlet() {
     private val actionMsgTypes = arrayOf(
@@ -148,7 +149,7 @@ internal object HttpService: HttpPushServlet() {
             pushTo(PushNotice(
                 time = time,
                 selfId = app.longAccountUin,
-                postType = "notice",
+                postType = PostType.Notice,
                 type = type,
                 subType = subType,
                 operatorId = operation,
@@ -175,7 +176,7 @@ internal object HttpService: HttpPushServlet() {
             val respond = pushTo(PushMessage(
                 time = record.msgTime,
                 selfId = app.longAccountUin,
-                postType = "message",
+                postType = PostType.Msg,
                 messageType = msgType,
                 subType = subType,
                 messageId = msgHash,

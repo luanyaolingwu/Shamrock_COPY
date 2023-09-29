@@ -18,6 +18,7 @@ import moe.protocol.service.data.push.PushMessage
 import moe.protocol.service.data.push.PushNotice
 import moe.protocol.service.data.push.Sender
 import moe.protocol.service.config.ShamrockConfig
+import moe.protocol.service.data.push.PostType
 import moe.protocol.servlet.msg.toSegment
 import moe.protocol.servlet.GroupSvc
 
@@ -130,7 +131,7 @@ internal object WebSocketClientService: WebSocketClientServlet() {
             PushNotice(
                 time = time,
                 selfId = app.longAccountUin,
-                postType = "notice",
+                postType = PostType.Notice,
                 type = type,
                 subType = subType,
                 operatorId = operation,
@@ -158,7 +159,7 @@ internal object WebSocketClientService: WebSocketClientServlet() {
                 PushMessage(
                     time = record.msgTime,
                     selfId = app.longAccountUin,
-                    postType = "message",
+                    postType = PostType.Msg,
                     messageType = msgType,
                     subType = subType,
                     messageId = msgHash,

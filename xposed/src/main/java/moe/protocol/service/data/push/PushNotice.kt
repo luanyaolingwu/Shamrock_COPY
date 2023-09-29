@@ -31,11 +31,14 @@ internal enum class NoticeSubType {
     @SerialName("poke") Poke,
 }
 
+/**
+ * 不要使用继承的方式实现通用字段，那样会很难维护！
+ */
 @Serializable
 internal data class PushNotice(
     @SerialName("time") val time: Long,
     @SerialName("self_id") val selfId: Long,
-    @SerialName("post_type") val postType: String,
+    @SerialName("post_type") val postType: PostType,
     @SerialName("notice_type") val type: NoticeType,
     @SerialName("sub_type") val subType: NoticeSubType,
     @SerialName("group_id") val groupId: Long = 0,

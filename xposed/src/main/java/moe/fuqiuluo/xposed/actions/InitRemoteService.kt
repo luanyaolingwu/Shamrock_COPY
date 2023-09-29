@@ -8,8 +8,8 @@ import kotlinx.coroutines.launch
 import moe.fuqiuluo.remote.HTTPServer
 import moe.fuqiuluo.remote.InternalWebSocketClient
 import moe.fuqiuluo.remote.InternalWebSocketServer
-import moe.fuqiuluo.remote.WebSocketClient
-import moe.fuqiuluo.remote.WebSocketServer
+import moe.fuqiuluo.remote.ShamrockWebSocketClient
+import moe.fuqiuluo.remote.ShamrockWebSocketServer
 import moe.fuqiuluo.xposed.helper.Level
 import moe.fuqiuluo.xposed.helper.LogCenter
 import moe.protocol.service.config.ShamrockConfig
@@ -35,8 +35,9 @@ internal class InitRemoteService: IAction {
                     if (InternalWebSocketServer != null) {
                         InternalWebSocketServer?.stop()
                     }
-                    InternalWebSocketServer = WebSocketServer(ShamrockConfig.getWebSocketPort())
+                    InternalWebSocketServer = ShamrockWebSocketServer(ShamrockConfig.getWebSocketPort())
                     InternalWebSocketServer?.start()
+                    InternalWebSocketServer?.initHeartbeat()
                 } catch (e: Throwable) {
                     LogCenter.log(e.stackTraceToString(), Level.ERROR)
                 }
@@ -61,7 +62,7 @@ internal class InitRemoteService: IAction {
                 val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
                 val curUin = runtime.currentAccountUin
                 val wsHeaders =  mapOf("X-Self-ID" to curUin)
-                InternalWebSocketClient = WebSocketClient(ShamrockConfig.getWebSocketClientAddress(), wsHeaders)
+                InternalWebSocketClient = ShamrockWebSocketClient(ShamrockConfig.getWebSocketClientAddress(), wsHeaders)
                 InternalWebSocketClient?.connect()
             } catch (e: Throwable) {
                 LogCenter.log(e.stackTraceToString(), Level.ERROR)
