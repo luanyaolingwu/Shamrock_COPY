@@ -18,7 +18,7 @@ internal abstract class WebSocketPushServlet : BasePushServlet {
     protected inline fun <reified T> pushTo(body: T) {
         if(!allowPush()) return
         try {
-            InternalWebSocketServer?.broadcastEvent(GlobalJson.encodeToString(body))
+            InternalWebSocketServer?.broadcastTextEvent(GlobalJson.encodeToString(body))
         } catch (e: Throwable) {
             LogCenter.log("WS推送失败: ${e.stackTraceToString()}", Level.ERROR)
         }

@@ -18,10 +18,26 @@ import moe.protocol.service.data.push.PushMessage
 import moe.protocol.service.data.push.PushNotice
 import moe.protocol.service.data.push.Sender
 import moe.protocol.service.config.ShamrockConfig
+import moe.protocol.service.data.push.MetaEventType
+import moe.protocol.service.data.push.MetaSubType
+import moe.protocol.service.data.push.PostType
+import moe.protocol.service.data.push.PushMetaEvent
 import moe.protocol.servlet.msg.toSegment
 import moe.protocol.servlet.GroupSvc
 
 internal object WebSocketService: WebSocketPushServlet() {
+    fun pushMetaLifecycle() {
+        GlobalScope.launch {
+            pushTo(PushMetaEvent(
+                time = System.currentTimeMillis() / 1000,
+                selfId = app.longAccountUin,
+                postType = PostType.Meta,
+                type = MetaEventType.LifeCycle,
+                subType = MetaSubType.Connect,
+            ))
+        }
+    }
+
     override fun pushPrivateMsg(
         record: MsgRecord,
         elements: List<MsgElement>,
@@ -130,7 +146,7 @@ internal object WebSocketService: WebSocketPushServlet() {
             PushNotice(
                 time = time,
                 selfId = app.longAccountUin,
-                postType = "notice",
+                postType = PostType.Notice,
                 type = type,
                 subType = subType,
                 operatorId = operation,
@@ -157,7 +173,7 @@ internal object WebSocketService: WebSocketPushServlet() {
             pushTo(PushMessage(
                 time = record.msgTime,
                 selfId = app.longAccountUin,
-                postType = "message",
+                postType = PostType.Msg,
                 messageType = msgType,
                 subType = subType,
                 messageId = msgHash,

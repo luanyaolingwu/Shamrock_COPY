@@ -30,10 +30,21 @@ internal enum class MsgType {
 }
 
 @Serializable
+internal enum class PostType {
+    @SerialName("meta_event") Meta,
+    @SerialName("notice") Notice,
+    @SerialName("message") Msg,
+
+}
+
+/**
+ * 不要使用继承的方式实现通用字段，那样会很难维护！
+ */
+@Serializable
 internal data class PushMessage (
     @SerialName("time") val time: Long,
     @SerialName("self_id") val selfId: Long,
-    @SerialName("post_type") val postType: String,
+    @SerialName("post_type") val postType: PostType,
     @SerialName("message_type") val messageType: MsgType,
     @SerialName("sub_type") val subType: MsgSubType,
     @SerialName("message_id") val messageId: Int,
