@@ -10,7 +10,7 @@
 
 # 部署教程 / API文档
 
--> [点我直达](https://linxinrao.github.io/Shamrock/docs)
+-> [点我直达](https://linxinrao.github.io/Shamrock)
 
 # 权限声明
 
