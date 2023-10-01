@@ -19,10 +19,12 @@ import moe.fuqiuluo.xposed.tools.asJsonObject
 import moe.fuqiuluo.xposed.tools.asString
 import moe.fuqiuluo.xposed.tools.asStringOrNull
 import moe.protocol.service.WebSocketService
+import moe.protocol.service.config.ShamrockConfig
 import moe.protocol.service.data.push.MetaEventType
 import moe.protocol.service.data.push.MetaSubType
 import moe.protocol.service.data.push.PostType
 import moe.protocol.service.data.push.PushMetaEvent
+import moe.protocol.servlet.helper.ErrorTokenException
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
@@ -63,6 +65,21 @@ internal class ShamrockWebSocketServer(
     }
 
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
+        val token = ShamrockConfig.getToken()
+        if (token.isNotBlank()) {
+            var accessToken = handshake.getFieldValue("access_token")
+                ?: handshake.getFieldValue("ticket")
+                ?: handshake.getFieldValue("Authorization")
+                ?: throw ErrorTokenException
+            if (accessToken.startsWith("Bearer ")) {
+                accessToken = accessToken.substring(7)
+            }
+            if (token != accessToken) {
+                conn.close()
+                LogCenter.log({ "WSServer连接错误(${conn.remoteSocketAddress.address.hostAddress}:${conn.remoteSocketAddress.port}) 没有提供正确的token。" }, Level.DEBUG)
+                return
+            }
+        }
         val path = URI.create(handshake.resourceDescriptor).path
         if (path != "/api") {
             WebSocketService.pushMetaLifecycle()
