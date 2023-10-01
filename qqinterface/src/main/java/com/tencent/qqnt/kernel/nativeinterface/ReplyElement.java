@@ -3,8 +3,6 @@ package com.tencent.qqnt.kernel.nativeinterface;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-/* compiled from: P */
-/* loaded from: classes2.dex */
 public final class ReplyElement implements IKernelModel, Serializable {
     String anonymousNickName;
     Integer originalMsgState;
