@@ -61,7 +61,12 @@ internal class InitRemoteService: IAction {
                 }
                 val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
                 val curUin = runtime.currentAccountUin
-                val wsHeaders =  mapOf("X-Self-ID" to curUin)
+                val wsHeaders = hashMapOf("X-Self-ID" to curUin)
+                val token = ShamrockConfig.getToken()
+                if (token.isNotBlank()) {
+                    wsHeaders["token"] = token
+                    wsHeaders["bearer"] = token
+                }
                 InternalWebSocketClient = ShamrockWebSocketClient(ShamrockConfig.getWebSocketClientAddress(), wsHeaders)
                 InternalWebSocketClient?.connect()
             } catch (e: Throwable) {
