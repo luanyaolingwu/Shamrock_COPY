@@ -194,15 +194,15 @@ internal object HttpService: HttpPushServlet() {
                     level = "",
                 )
             )) ?: return@launch
-            handleQuicklyReply(record, respond.bodyAsText())
+            handleQuicklyReply(record, msgHash, respond.bodyAsText())
         }
     }
 
-    private suspend fun handleQuicklyReply(record: MsgRecord, jsonText: String) {
+    private suspend fun handleQuicklyReply(record: MsgRecord, msgHash: Int, jsonText: String) {
         try {
             val data = Json.parseToJsonElement(jsonText).asJsonObject
             if (data.containsKey("reply")) {
-                LogCenter.log("quickly reply successfully", Level.DEBUG)
+                LogCenter.log({ "quickly reply successfully" }, Level.DEBUG)
                 val autoEscape = data["auto_escape"].asBooleanOrNull ?: false
                 val atSender = data["at_sender"].asBooleanOrNull ?: false
                 val message = data["reply"]
@@ -215,13 +215,13 @@ internal object HttpService: HttpPushServlet() {
                                 "text" to message.asString
                             )
                         ).json)
-                        quicklyReply(record, msgList.jsonArray, atSender)
+                        quicklyReply(record, msgList.jsonArray, msgHash, atSender)
                     } else {
                         val messageArray = MessageHelper.decodeCQCode(message.asString)
-                        quicklyReply(record, messageArray, atSender)
+                        quicklyReply(record, messageArray, msgHash, atSender)
                     }
                 } else if (message is JsonArray) {
-                    quicklyReply(record, message, atSender)
+                    quicklyReply(record, message, msgHash, atSender)
                 }
             }
             if (data.containsKey("delete") && data["delete"].asBoolean) {
@@ -243,6 +243,7 @@ internal object HttpService: HttpPushServlet() {
     private suspend fun quicklyReply(
         record: MsgRecord,
         message: JsonArray,
+        msgHash: Int,
         atSender: Boolean,
     ) {
         val msgList = mutableSetOf<JsonElement>()
@@ -260,7 +261,7 @@ internal object HttpService: HttpPushServlet() {
         msgList.add(mapOf(
             "type" to "reply",
             "data" to mapOf(
-                "id" to record.msgId
+                "id" to msgHash
             )
         ).json) // 添加回复
         if (atSender) {

@@ -53,6 +53,7 @@ import moe.fuqiuluo.xposed.tools.asStringOrNull
 import moe.fuqiuluo.xposed.tools.ifNullOrEmpty
 import moe.protocol.servlet.ark.WeatherSvc
 import moe.protocol.servlet.helper.ActionMsgException
+import moe.protocol.servlet.helper.MessageHelper
 import mqq.app.MobileQQ
 import tencent.im.oidb.cmd0xb77.oidb_cmd0xb77
 import tencent.im.oidb.cmd0xdc2.oidb_cmd0xdc2
@@ -143,7 +144,8 @@ internal object MessageMaker {
         val element = MsgElement()
         element.elementType = MsgConstant.KELEMTYPEREPLY
         val reply = ReplyElement()
-        reply.replayMsgId = data["id"].asString.toLong()
+        val msgHash = data["id"].asString.toInt()
+        reply.replayMsgId = MessageHelper.getMsgIdByHashCode(msgHash)
         if(data.containsKey("text")) {
             data.checkAndThrow("qq", "time", "seq")
             reply.replayMsgSeq = data["seq"].asLong
