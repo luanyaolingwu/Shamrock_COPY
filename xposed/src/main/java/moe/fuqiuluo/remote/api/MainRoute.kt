@@ -22,6 +22,9 @@ import moe.fuqiuluo.remote.entries.Status
 import moe.fuqiuluo.xposed.tools.asJsonObject
 import moe.fuqiuluo.xposed.tools.asString
 import moe.fuqiuluo.xposed.tools.asStringOrNull
+import moe.fuqiuluo.xposed.tools.fetchOrNull
+import moe.fuqiuluo.xposed.tools.fetchOrThrow
+import moe.fuqiuluo.xposed.tools.fetchPostJsonObject
 import moe.fuqiuluo.xposed.tools.respond
 import mqq.app.MobileQQ
 
@@ -43,12 +46,16 @@ fun Routing.echoVersion() {
             )
         }
         post {
+            /*
             val jsonText = call.receiveText()
             val actionObject = Json.parseToJsonElement(jsonText).jsonObject
 
             val action = actionObject["action"].asString
             val echo = actionObject["echo"].asStringOrNull ?: ""
-            val params = actionObject["params"].asJsonObject
+            val params = actionObject["params"].asJsonObject*/
+            val action = fetchOrThrow("action")
+            val echo = fetchOrNull("echo") ?: ""
+            val params = fetchPostJsonObject("params")
 
             val handler = ActionManager[action]
             if (handler == null) {
