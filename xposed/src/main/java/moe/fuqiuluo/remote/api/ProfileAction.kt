@@ -7,6 +7,7 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import moe.fuqiuluo.remote.action.ActionManager
 import moe.fuqiuluo.remote.action.ActionSession
+import moe.fuqiuluo.remote.action.handlers.GetLoginInfo
 import moe.fuqiuluo.remote.entries.CommonResult
 import moe.fuqiuluo.remote.entries.CurrentAccount
 import moe.fuqiuluo.remote.entries.Status
@@ -74,17 +75,6 @@ fun Routing.profileRouter() {
     }
 
     getOrPost("/get_login_info") {
-        val accounts = MobileQQ.getMobileQQ().allAccounts
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
-        val curUin = runtime.currentAccountUin
-        val account = accounts.firstOrNull { it.uin == curUin }
-        if (account == null || !account.isLogined) {
-            respond(false, Status.BadParam, msg = "当前不处于已登录状态")
-        } else {
-            respond(true, Status.Ok, StdAccount(
-                curUin.toLong(),if (runtime is QQAppInterface) runtime.currentNickname else "unknown"
-            )
-            )
-        }
+        call.respondText(GetLoginInfo())
     }
 }
