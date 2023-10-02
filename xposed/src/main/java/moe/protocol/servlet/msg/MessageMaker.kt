@@ -144,8 +144,15 @@ internal object MessageMaker {
         val element = MsgElement()
         element.elementType = MsgConstant.KELEMTYPEREPLY
         val reply = ReplyElement()
+
         val msgHash = data["id"].asString.toInt()
-        reply.replayMsgId = MessageHelper.getMsgIdByHashCode(msgHash)
+        reply.replayMsgId = MessageHelper.getQMsgIdByMsgId(MessageHelper.getMsgIdByHashCode(msgHash))
+
+        if (reply.replayMsgId == 0L) {
+            // 貌似获取失败了，555
+            LogCenter.log("无法获取被回复消息", Level.ERROR)
+        }
+
         if(data.containsKey("text")) {
             data.checkAndThrow("qq", "time", "seq")
             reply.replayMsgSeq = data["seq"].asLong
