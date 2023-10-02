@@ -10,7 +10,8 @@ import moe.protocol.servlet.MsgSvc
 
 internal object GetMsg: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
-        val hashCode = session.getInt("message_id")
+        val hashCode = session.getIntOrNull("message_id")
+            ?: session.getInt("msg_id")
         return invoke(hashCode, session.echo)
     }
 
@@ -33,6 +34,8 @@ internal object GetMsg: IActionHandler() {
     }
 
     override val requiredParams: Array<String> = arrayOf("message_id")
+
+    override val alias: Array<String> = arrayOf("get_message")
 
     override fun path(): String = "get_msg"
 }
