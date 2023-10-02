@@ -12,9 +12,9 @@ private suspend fun ApplicationCall.checkToken() {
     if (token.isBlank()) {
         return
     }
-    var accessToken = fetchOrNull("access_token")
+    var accessToken = request.headers["Authorization"]
         ?: fetchOrNull("ticket")
-        ?: request.headers["Authorization"]
+        ?: fetchOrNull("access_token")
         ?: throw ErrorTokenException
     if (accessToken.startsWith("Bearer ")) {
         accessToken = accessToken.substring(7)
