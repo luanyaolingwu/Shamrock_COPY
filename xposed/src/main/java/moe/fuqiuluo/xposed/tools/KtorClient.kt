@@ -9,7 +9,7 @@ import kotlinx.serialization.json.Json
 
 val GlobalClient: HttpClient by lazy {
     HttpClient {
-        install(HttpCookies)
+        //install(HttpCookies)
         install(HttpTimeout) {
             requestTimeoutMillis = 15000
             connectTimeoutMillis = 15000

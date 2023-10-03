@@ -2,13 +2,17 @@ package moe.fuqiuluo.remote.action.handlers
 
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.encodeURLQueryComponent
+import io.ktor.client.statement.request
+import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import moe.fuqiuluo.remote.action.ActionSession
 import moe.fuqiuluo.remote.action.IActionHandler
+import moe.fuqiuluo.xposed.helper.Level
+import moe.fuqiuluo.xposed.helper.LogCenter
 import moe.fuqiuluo.xposed.tools.GlobalClient
 import moe.fuqiuluo.xposed.tools.GlobalJson
 import moe.fuqiuluo.xposed.tools.json
@@ -20,15 +24,14 @@ internal object GetModelShowList : IActionHandler() {
     }
 
     suspend operator fun invoke(model: String, echo: String = ""): String {
-
-        val ts = System.nanoTime() / 1e6
+        val ts = System.currentTimeMillis() / 1000
         val csrf = TicketSvc.getCSRF(TicketSvc.getUin(), "vip.qq.com")
 
         val req = mapOf(
             "13030" to mapOf(
                 "req" to mapOf(
                     "lUin" to TicketSvc.getUin().toLong(),
-                    "sModel" to model.encodeURLQueryComponent(),
+                    "sModel" to model.replace("+", "%20"),
                     "iAppType" to 0,
                     "sIMei" to "",
                     "bShowInfo" to true,
@@ -38,15 +41,28 @@ internal object GetModelShowList : IActionHandler() {
             )
         ).json.toString()
 
-        val resp = GlobalClient.get {
-            url("https://proxy.vip.qq.com/cgi-bin/srfentry.fcgi?ts=$ts&daid=18&g_tk=$csrf&pt4_token=&data=$req")
+        val resp = GlobalClient.get("https://proxy.vip.qq.com/cgi-bin/srfentry.fcgi") {
+            parameter("ts", ts)
+            parameter("daid", 18)
+            parameter("g_tk", csrf)
+            parameter("pt4_token", "")
+            parameter("data", req)
             val cookie = TicketSvc.getCookie("vip.qq.com")
             header("Cookie", cookie)
-        }.bodyAsText()
+        }
 
-        val json = GlobalJson.decodeFromString<ModelShowStruct>(resp)
+        if (resp.status != HttpStatusCode.OK) {
+            LogCenter.log({ "unable to fetch model show list: ${resp.request.url} => ${resp.status}" }, Level.DEBUG)
+            return error("unable to fetch model show list: ${resp.status}", echo)
+        }
 
-        if (json.resp == null) {
+        val json = kotlin.runCatching {
+            GlobalJson.decodeFromString<ModelShowStruct>(resp.bodyAsText())
+        }.onFailure {
+           it.printStackTrace()
+        }.getOrNull()
+
+        if (json?.resp == null) {
             return error("unable to fetch model show list", echo)
         }
 
