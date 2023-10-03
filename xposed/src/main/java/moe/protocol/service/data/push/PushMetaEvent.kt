@@ -2,6 +2,7 @@ package moe.protocol.service.data.push
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import moe.protocol.service.data.BotStatus
 
 @Serializable
 internal enum class MetaEventType {
@@ -26,4 +27,6 @@ internal data class PushMetaEvent(
     @SerialName("post_type") val postType: PostType,
     @SerialName("meta_event_type") val type: MetaEventType,
     @SerialName("sub_type") val subType: MetaSubType,
+    @SerialName("status") val status: BotStatus,
+    @SerialName("interval") val interval: Long = 0,
 )

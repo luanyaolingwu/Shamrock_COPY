@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 data class BotStatus(
     val self: Self,
     val online: Boolean,
+    val good: Boolean = true,
     @SerialName("qq.status")
     val status: String
 )

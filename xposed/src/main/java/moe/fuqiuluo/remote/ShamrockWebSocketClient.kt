@@ -18,10 +18,13 @@ import moe.fuqiuluo.xposed.tools.asJsonObject
 import moe.fuqiuluo.xposed.tools.asString
 import moe.fuqiuluo.xposed.tools.asStringOrNull
 import moe.protocol.service.WebSocketService
+import moe.protocol.service.data.BotStatus
+import moe.protocol.service.data.Self
 import moe.protocol.service.data.push.MetaEventType
 import moe.protocol.service.data.push.MetaSubType
 import moe.protocol.service.data.push.PostType
 import moe.protocol.service.data.push.PushMetaEvent
+import mqq.app.MobileQQ
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import java.lang.Exception
@@ -33,16 +36,22 @@ internal var InternalWebSocketClient: ShamrockWebSocketClient? = null
 class ShamrockWebSocketClient(url: String, wsHeaders: Map<String, String>): WebSocketClient(URI("ws://$url"), wsHeaders) {
     override fun onOpen(handshakedata: ServerHandshake?) {
         LogCenter.log("WebSocketClient onOpen: ${handshakedata?.httpStatus}, ${handshakedata?.httpStatusMessage}")
-        timer("heartbeat", true, 0, 1000L * 5) {
+        timer("heartbeat", true, 0, 1000L * 15) {
             if (InternalWebSocketClient == null) {
                 this.cancel()
             }
+            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val curUin = runtime.currentAccountUin
             send(GlobalJson.encodeToString(PushMetaEvent(
                 time = System.currentTimeMillis() / 1000,
                 selfId = WebSocketService.app.longAccountUin,
                 postType = PostType.Meta,
                 type = MetaEventType.Heartbeat,
                 subType = MetaSubType.Connect,
+                status = BotStatus(
+                    Self("qq", curUin), runtime.isLogin, status = "正常"
+                ),
+                interval = 15000
             )))
         }
     }

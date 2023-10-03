@@ -14,12 +14,10 @@ internal object GetStatus: IActionHandler() {
         val curUin = runtime.currentAccountUin
         return resultToString(true, Status.Ok, listOf(
             BotStatus(
-                Self("qq", curUin), runtime.isLogin, "正常"
+                Self("qq", curUin), runtime.isLogin, status = "正常"
             )
         ), echo = session.echo)
     }
 
     override fun path(): String = "get_status"
-
-
 }
