@@ -111,7 +111,7 @@ internal object CardSvc: BaseSvc() {
         val profileDataService = app
             .getRuntimeService(IProfileDataService::class.java, "all")
         val card = profileDataService.getProfileCard(uin, true)
-        return if (card == null) {
+        return if (card == null || card.strNick.isNullOrEmpty()) {
             Result.failure(Exception("unable to fetch profile card"))
         } else {
             Result.success(card)
@@ -122,7 +122,7 @@ internal object CardSvc: BaseSvc() {
         val dataService = app
             .getRuntimeService(IProfileDataService::class.java, "all")
         val card = refreshCardLock.withLock {
-            suspendCancellableCoroutine {
+            suspendCancellableCoroutine<Card?> {
                 app.addObserver(object: ProfileCardObserver() {
                     override fun onGetProfileCard(success: Boolean, obj: Any) {
                         app.removeObserver(this)
@@ -138,7 +138,7 @@ internal object CardSvc: BaseSvc() {
                     .requestProfileCard(app.currentUin, uin, 12, 0L, 0.toByte(), 0L, 0L, null, "", 0L, 10004, null, 0.toByte())
             }
         }
-        return if (card == null) {
+        return if (card == null || card.strNick.isNullOrEmpty()) {
             Result.failure(Exception("unable to fetch profile card"))
         } else {
             Result.success(card)
