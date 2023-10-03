@@ -55,7 +55,7 @@ internal object CardSvc: BaseSvc() {
         }
     }
 
-    suspend fun setModelShow(model: String, manu: String, modelshow: String? = "Android", imei: String, show: Boolean = true) {
+    suspend fun setModelShow(model: String, manu: String, modelshow: String, imei: String, show: Boolean) {
         val cookie = TicketSvc.getCookie("vip.qq.com")
         val csrf = TicketSvc.getCSRF(TicketSvc.getUin(), "vip.qq.com")
         val p4token = TicketSvc.getPt4Token(TicketSvc.getUin(), "vip.qq.com") ?: ""
