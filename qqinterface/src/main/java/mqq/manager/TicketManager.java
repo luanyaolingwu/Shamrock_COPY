@@ -2,12 +2,14 @@ package mqq.manager;
 
 import android.content.Context;
 
+import oicq.wlogin_sdk.request.Ticket;
+
 public interface TicketManager extends Manager {
     String getA2(String uin);
 
     byte[] getDA2(String uin);
 
-    //Ticket getLocalTicket(String uin, int i2);
+    Ticket getLocalTicket(String uin, int id);
 
     String getOpenSdkKey(String uin, int i2);
 
