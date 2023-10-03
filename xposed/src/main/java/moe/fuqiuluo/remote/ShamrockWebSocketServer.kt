@@ -21,11 +21,14 @@ import moe.fuqiuluo.xposed.tools.asStringOrNull
 import moe.fuqiuluo.xposed.tools.ifNullOrEmpty
 import moe.protocol.service.WebSocketService
 import moe.protocol.service.config.ShamrockConfig
+import moe.protocol.service.data.BotStatus
+import moe.protocol.service.data.Self
 import moe.protocol.service.data.push.MetaEventType
 import moe.protocol.service.data.push.MetaSubType
 import moe.protocol.service.data.push.PostType
 import moe.protocol.service.data.push.PushMetaEvent
 import moe.protocol.servlet.helper.ErrorTokenException
+import mqq.app.MobileQQ
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
@@ -47,12 +50,18 @@ internal class ShamrockWebSocketServer(
             if (InternalWebSocketServer == null) {
                 this.cancel()
             }
+            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val curUin = runtime.currentAccountUin
             broadcastAnyEvent(PushMetaEvent(
                 time = System.currentTimeMillis() / 1000,
                 selfId = WebSocketService.app.longAccountUin,
                 postType = PostType.Meta,
                 type = MetaEventType.Heartbeat,
                 subType = MetaSubType.Connect,
+                status = BotStatus(
+                    Self("qq", curUin), runtime.isLogin, status = "正常"
+                ),
+                interval = 15000
             ))
         }
     }

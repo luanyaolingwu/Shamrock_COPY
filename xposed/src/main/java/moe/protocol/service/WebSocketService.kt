@@ -18,22 +18,31 @@ import moe.protocol.service.data.push.PushMessage
 import moe.protocol.service.data.push.PushNotice
 import moe.protocol.service.data.push.Sender
 import moe.protocol.service.config.ShamrockConfig
+import moe.protocol.service.data.BotStatus
+import moe.protocol.service.data.Self
 import moe.protocol.service.data.push.MetaEventType
 import moe.protocol.service.data.push.MetaSubType
 import moe.protocol.service.data.push.PostType
 import moe.protocol.service.data.push.PushMetaEvent
 import moe.protocol.servlet.msg.toSegment
 import moe.protocol.servlet.GroupSvc
+import mqq.app.MobileQQ
 
 internal object WebSocketService: WebSocketPushServlet() {
     fun pushMetaLifecycle() {
         GlobalScope.launch {
+            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val curUin = runtime.currentAccountUin
             pushTo(PushMetaEvent(
                 time = System.currentTimeMillis() / 1000,
                 selfId = app.longAccountUin,
                 postType = PostType.Meta,
                 type = MetaEventType.LifeCycle,
                 subType = MetaSubType.Connect,
+                status = BotStatus(
+                    Self("qq", curUin), runtime.isLogin, status = "正常"
+                ),
+                interval = 15000
             ))
         }
     }
