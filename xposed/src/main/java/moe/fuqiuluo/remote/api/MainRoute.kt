@@ -26,6 +26,7 @@ import moe.fuqiuluo.xposed.tools.fetchOrNull
 import moe.fuqiuluo.xposed.tools.fetchOrThrow
 import moe.fuqiuluo.xposed.tools.fetchPostJsonObject
 import moe.fuqiuluo.xposed.tools.respond
+import moe.protocol.servlet.utils.PlatformUtils
 import mqq.app.MobileQQ
 
 @Serializable
@@ -42,7 +43,7 @@ fun Routing.echoVersion() {
             respond(
                 isOk = true,
                 code = Status.Ok,
-                data = IndexData(MobileQQ.getMobileQQ().qqProcessName, HTTPServer.startTime, call.request.httpVersion)
+                data = IndexData(PlatformUtils.getClientVersion(MobileQQ.getContext()), HTTPServer.startTime, call.request.httpVersion)
             )
         }
         post {
