@@ -40,7 +40,7 @@ internal object WebSocketService: WebSocketPushServlet() {
                 type = MetaEventType.LifeCycle,
                 subType = MetaSubType.Connect,
                 status = BotStatus(
-                    Self("qq", curUin), runtime.isLogin, status = "正常"
+                    Self("qq", curUin), runtime.isLogin, status = "正常", good = true
                 ),
                 interval = 15000
             ))
