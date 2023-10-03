@@ -59,7 +59,7 @@ internal class ShamrockWebSocketServer(
                 type = MetaEventType.Heartbeat,
                 subType = MetaSubType.Connect,
                 status = BotStatus(
-                    Self("qq", curUin), runtime.isLogin, status = "正常"
+                    Self("qq", curUin), runtime.isLogin, status = "正常", good = true
                 ),
                 interval = 15000
             ))
