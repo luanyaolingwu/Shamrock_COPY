@@ -91,8 +91,11 @@ internal object MsgSvc: BaseSvc() {
         val msgService = sessionService.msgService
 
         val contact = internalGenerateContact(msgId)
+
+        val qid = MessageHelper.getQMsgIdByMsgId(msgId)
+
         return suspendCancellableCoroutine { continuation ->
-            msgService.recallMsg(contact, arrayListOf(msgId)) { code, why ->
+            msgService.recallMsg(contact, arrayListOf(qid)) { code, why ->
                 continuation.resume(code to why)
             }
         }
