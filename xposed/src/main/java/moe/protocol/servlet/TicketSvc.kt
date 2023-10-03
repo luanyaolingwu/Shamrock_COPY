@@ -3,11 +3,11 @@ package moe.protocol.servlet
 import com.tencent.mobileqq.app.QQAppInterface
 import moe.fuqiuluo.proto.ProtoUtils
 import moe.fuqiuluo.proto.asUtf8String
-import moe.fuqiuluo.proto.protobufMapOf
 import moe.fuqiuluo.proto.protobufOf
 import moe.fuqiuluo.xposed.tools.slice
 import mqq.app.MobileQQ
 import mqq.manager.TicketManager
+import oicq.wlogin_sdk.request.Ticket
 import tencent.im.oidb.oidb_sso
 
 internal object TicketSvc: BaseSvc() {
@@ -71,6 +71,10 @@ internal object TicketSvc: BaseSvc() {
             v += (v shl 5 and 2147483647L) + element.code.toLong()
         }
         return (v and 2147483647L).toString()
+    }
+
+    fun getTicket(uin: String, id: Int): Ticket? {
+        return (app.getManager(QQAppInterface.TICKET_MANAGER) as TicketManager).getLocalTicket(uin, id)
     }
 
     fun getStWeb(uin: String): String {
