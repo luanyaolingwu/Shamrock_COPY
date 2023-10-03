@@ -29,9 +29,9 @@ fun Routing.userAction() {
     getOrPost("/_set_model_show") {
         val model = fetchOrThrow("model")
         val manu = fetchOrThrow("manu")
-        val modelshow = fetchOrThrow("modelshow")
+        val modelshow = fetchOrNull("modelshow")?: "Android"
         val imei = fetchOrThrow("imei")
-        val show = fetchOrThrow("show").toBoolean()
+        val show = fetchOrNull("show")?.toBooleanStrictOrNull()?: true
         call.respondText(SetModelShow(model, manu, modelshow, imei, show))
     }
 
