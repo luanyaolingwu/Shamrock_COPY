@@ -13,11 +13,14 @@ internal object DeleteMessage: IActionHandler() {
 
     suspend operator fun invoke(msgHash: Int, echo: String = ""): String {
         val msgId = MessageHelper.getMsgIdByHashCode(msgHash)
-        MsgSvc.recallMsg(msgId)
+        val qid = MessageHelper.getQMsgIdByMsgId(msgId)
+        MsgSvc.recallMsg(qid)
         return ok("成功", echo)
     }
 
     override fun path(): String = "delete_message"
+
+    override val alias: Array<String> = arrayOf("delete_msg")
 
     override val requiredParams: Array<String> = arrayOf("message_id")
 }
