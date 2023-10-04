@@ -55,31 +55,23 @@ internal object CardSvc: BaseSvc() {
         }
     }
 
-    /**
-     * TODO: 出现问题，无法设置
-     */
-    suspend fun setModelShow(model: String) {
+    suspend fun setModelShow(model: String, manu: String, modelshow: String, imei: String, show: Boolean) {
         val cookie = TicketSvc.getCookie("vip.qq.com")
         val csrf = TicketSvc.getCSRF(TicketSvc.getUin(), "vip.qq.com")
         val p4token = TicketSvc.getPt4Token(TicketSvc.getUin(), "vip.qq.com") ?: ""
         GlobalClient.post("https://club.vip.qq.com/srf-cgi-node?srfname=VIP.CustomOnlineStatusServer.CustomOnlineStatusObj.SetCustomOnlineStatus&ts=${System.currentTimeMillis()}&daid=18&g_tk=$csrf&pt4_token=$p4token") {
             header("Cookie", cookie)
-            //header("referer", "https://club.vip.qq.com/onlinestatus/set?_wv=67109895&_wvx=10&_proxy=1&src=1&systemName=android&model=&msfImei=&identifier=")
             contentType(Json)
             setBody(mapOf(
                 "servicesName" to "VIP.CustomOnlineStatusServer.CustomOnlineStatusObj",
                 "cmd" to "SetCustomOnlineStatus",
                 "args" to listOf(mapOf(
-                    "iAppType" to 3,
-                    "sIMei" to "",
-                    "sModel" to model.replace("+", "%20"),
-                    "sDeviceInfo" to "",
-                    "sVer" to PlatformUtils.getVersion(MobileQQ.getContext()),
-                    "sManu" to "undefined",
+                    "sIMei" to imei,
+                    "sModel" to model,
+                    "sManu" to manu,
                     "lUin" to app.currentUin.toLong(),
-                    "bShowInfo" to true,
-                    "sDesc" to "",
-                    "sModelShow" to model.replace("+", "%20"),
+                    "bShowInfo" to show,
+                    "sModelShow" to modelshow
                 ))
             ).json.toString())
         }.bodyAsText().let {
