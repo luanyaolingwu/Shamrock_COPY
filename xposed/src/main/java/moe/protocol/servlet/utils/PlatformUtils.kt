@@ -1,8 +1,11 @@
 package moe.protocol.servlet.utils
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageInfo
+import android.provider.Settings
 import mqq.app.MobileQQ
+import kotlin.random.Random
 
 internal object PlatformUtils {
     fun getVersion(context: Context): String {
@@ -42,4 +45,17 @@ internal object PlatformUtils {
     }
 
     external fun outCpuInfo(): String
+
+    @SuppressLint("HardwareIds")
+    fun getAndroidID(): String {
+        var androidId = Settings.Secure.getString(MobileQQ.getContext().contentResolver, "android_id")
+        if (androidId == null) {
+            val sb = StringBuilder()
+            for (i in 0..14) {
+                sb.append(Random.nextInt(10))
+            }
+            androidId = sb.toString()
+        }
+        return androidId
+    }
 }

@@ -3,14 +3,15 @@ package moe.fuqiuluo.remote.action.handlers
 import moe.fuqiuluo.remote.action.ActionSession
 import moe.fuqiuluo.remote.action.IActionHandler
 import moe.protocol.servlet.CardSvc
+import moe.protocol.servlet.utils.PlatformUtils
 
 internal object SetModelShow: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val model = session.getString("model")
         val manu = session.getString("manu")
-        val modelshow = session.getString("modelshow")
-        val imei = session.getString("imei")
-        val show = session.getBoolean("show")
+        val modelshow = session.getStringOrNull("modelshow") ?: "Android"
+        val imei = session.getStringOrNull("imei") ?: PlatformUtils.getAndroidID()
+        val show = session.getBooleanOrDefault("show", true)
         return invoke(model, manu, modelshow, imei, show, session.echo)
     }
 
@@ -19,7 +20,7 @@ internal object SetModelShow: IActionHandler() {
         return ok("成功", echo = echo)
     }
 
-    override val requiredParams: Array<String> = arrayOf("model", "manu", "modelshow", "imei", "show")
+    override val requiredParams: Array<String> = arrayOf("model", "manu")
 
     override fun path(): String = "_set_model_show"
 }
