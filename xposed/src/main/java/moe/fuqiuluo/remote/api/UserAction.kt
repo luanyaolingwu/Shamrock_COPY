@@ -10,6 +10,7 @@ import moe.fuqiuluo.remote.action.handlers.*
 import moe.fuqiuluo.xposed.tools.fetchOrNull
 import moe.fuqiuluo.xposed.tools.fetchOrThrow
 import moe.fuqiuluo.xposed.tools.getOrPost
+import moe.protocol.servlet.utils.PlatformUtils
 
 fun Routing.userAction() {
     getOrPost("/set_group_leave") {
@@ -29,8 +30,8 @@ fun Routing.userAction() {
     getOrPost("/_set_model_show") {
         val model = fetchOrThrow("model")
         val manu = fetchOrThrow("manu")
-        val modelshow = fetchOrNull("modelshow")?: "Android"
-        val imei = fetchOrThrow("imei")
+        val modelshow = fetchOrNull("modelshow") ?: "Android"
+        val imei = fetchOrNull("imei") ?: PlatformUtils.getAndroidID()
         val show = fetchOrNull("show")?.toBooleanStrictOrNull()?: true
         call.respondText(SetModelShow(model, manu, modelshow, imei, show))
     }
