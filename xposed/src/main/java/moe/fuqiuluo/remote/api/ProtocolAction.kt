@@ -12,6 +12,7 @@ import moe.fuqiuluo.xposed.tools.hex2ByteArray
 import moe.fuqiuluo.xposed.tools.respond
 import moe.fuqiuluo.xposed.tools.toHexString
 import moe.protocol.servlet.BaseSvc
+import moe.protocol.servlet.utils.PlatformUtils
 import mqq.app.MobileQQ
 import oicq.wlogin_sdk.tlv_type.tlv_t100
 import oicq.wlogin_sdk.tlv_type.tlv_t106
@@ -65,6 +66,7 @@ fun Routing.obtainProtocolData() {
                 mqq.msfConnectedNetType,
                 qimei,
                 util.getSvnVersion(),
+                PlatformUtils.getAndroidID(),
                 util.getGuidFromFile(ctx).toHexString(),
                 util.get_ksid(ctx).toHexString(),
                 util.get_network_type(ctx),

@@ -16,6 +16,7 @@ data class Protocol(
     var qimei: String,
     var svnVersion: String,
 
+    var androidId: String,
     var guid: String,
     var ksid: String,
     var netType: Int,
