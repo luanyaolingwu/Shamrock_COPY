@@ -51,7 +51,7 @@ internal object PlatformUtils {
         var androidId = Settings.Secure.getString(MobileQQ.getContext().contentResolver, "android_id")
         if (androidId == null) {
             val sb = StringBuilder()
-            for (i in 0..14) {
+            for (i in 0..15) {
                 sb.append(Random.nextInt(10))
             }
             androidId = sb.toString()
