@@ -1,6 +1,8 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    //id("io.realm.kotlin")
+
     kotlin("plugin.serialization") version "1.8.0"
 }
 
@@ -51,6 +53,10 @@ dependencies {
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.9.0")
+
+    // 业务场景不适配
+    //implementation("io.realm.kotlin:library-base:1.11.0")
+    //implementation("io.realm.kotlin:library-sync:1.11.0")
 
     val ktorVersion = "2.3.3"
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")

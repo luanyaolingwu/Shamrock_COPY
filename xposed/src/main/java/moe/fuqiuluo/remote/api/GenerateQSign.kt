@@ -14,6 +14,8 @@ import io.ktor.util.pipeline.PipelineContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.io.core.BytePacketBuilder
+import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
 import moe.fuqiuluo.remote.action.handlers.ModifyTroopName
 import moe.fuqiuluo.remote.entries.EmptyObject
@@ -154,6 +156,55 @@ fun Routing.qsign() {
 
         if (sign == null) {
             call.respond(OldApiResult(-2, "获取失败", null))
+        } else {
+            call.respond(OldApiResult(0, "success", sign.toHexString()))
+        }
+    }
+
+    get("/friend_sign") {
+        if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
+            if (!initSigner()) {
+                respond(false, Status.InternalHandlerError)
+                return@get
+            }
+        }
+
+        val addUin = fetchOrThrow("add_uin")
+        val source = fetchOrThrow("source")
+        val uin = fetchOrThrow("uin").toLong()
+
+        val sign = signer!!.energy("add_friend", BytePacketBuilder().also {
+            it.writeLong(uin)
+            it.writeLong(addUin.toLong())
+            it.writeInt(source.toInt())
+        }.build().readBytes())
+        if (sign == null) {
+            call.respond(OldApiResult(-1, "failed", null))
+        } else {
+            call.respond(OldApiResult(0, "success", sign.toHexString()))
+        }
+    }
+    get("/group_sign") {
+        if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
+            if (!initSigner()) {
+                respond(false, Status.InternalHandlerError)
+                return@get
+            }
+        }
+
+        val addUin = fetchOrThrow("group_uin")
+        val source = fetchOrThrow("source")
+        val subsource = fetchOrThrow("sub_source")
+        val uin = fetchOrThrow("uin")!!.toLong()
+
+        val sign = signer!!.energy("add_group", BytePacketBuilder().also {
+            it.writeLong(uin)
+            it.writeLong(addUin.toLong())
+            it.writeInt(source.toInt())
+            it.writeInt(subsource.toInt())
+        }.build().readBytes())
+        if (sign == null) {
+            call.respond(OldApiResult(-1, "failed", null))
         } else {
             call.respond(OldApiResult(0, "success", sign.toHexString()))
         }
