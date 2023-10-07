@@ -78,6 +78,10 @@ object ShamrockConfig {
     fun setPro(ctx: Context, v: Boolean) {
         val preferences = ctx.getSharedPreferences("config", 0)
         preferences.edit().putBoolean("pro_api", v).apply()
+        ctx.broadcastToModule {
+            putExtra("type", "restart")
+            putExtra("__cmd", "change_port")
+        }
         pushUpdate(ctx)
     }
 
