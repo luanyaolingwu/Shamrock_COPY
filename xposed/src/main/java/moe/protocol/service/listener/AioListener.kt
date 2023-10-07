@@ -29,10 +29,17 @@ internal object AioListener: IKernelMsgListener {
         try {
             val rawMsg = record.elements.toCQCode(record.chatType)
             if (rawMsg.isEmpty()) return
-            val msgId = MessageHelper.insertChatTypeToMsgId(record.msgId, record.chatType)
-            val msgHash = MessageHelper.convertMsgIdToMsgHash(record.chatType, msgId, record.peerUin)
-            MessageHelper.saveQMsgIdByMsgId(msgId, record.msgId)
-            MessageHelper.saveMsgSeqByMsgId(record.chatType, msgId, record.msgSeq)
+            val msgHash = MessageHelper.convertMsgIdToMsgHash(record.chatType, record.msgId)
+
+            MessageHelper.saveMsgMapping(
+                hash = msgHash,
+                qqMsgId = record.msgId,
+                chatType = record.chatType,
+                subChatType = record.chatType,
+                peerId = record.peerUin.toString(),
+                msgSeq = record.msgSeq.toInt(),
+                time = record.msgTime
+            )
 
             when (record.chatType) {
                 MsgConstant.KCHATTYPEGROUP -> {
@@ -67,6 +74,9 @@ internal object AioListener: IKernelMsgListener {
     override fun onAddSendMsg(record: MsgRecord) {
         GlobalScope.launch {
             LogCenter.log("发送消息: " + record.toCQCode())
+
+
+
         }
     }
 

@@ -45,7 +45,7 @@ internal data class PushNotice(
     @SerialName("operator_id") val operatorId: Long,
     @SerialName("user_id") val userId: Long,
     @SerialName("duration") val duration: Int,
-    @SerialName("message_id") val msgId: Long,
+    @SerialName("message_id") val msgId: Int,
     @SerialName("tip_text") val tip: String,
     @SerialName("target_id") val target: Long,
 )

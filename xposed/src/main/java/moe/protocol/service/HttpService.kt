@@ -41,6 +41,15 @@ internal object HttpService: HttpPushServlet() {
         "record", "voice", "video", "markdown"
     )
 
+    override fun pushSelfSentMsg(
+        record: MsgRecord,
+        elements: List<MsgElement>,
+        raw: String,
+        msgHash: Int
+    ) {
+        TODO("Not yet implemented")
+    }
+
     override fun pushPrivateMsg(
         record: MsgRecord,
         elements: List<MsgElement>,
@@ -78,7 +87,7 @@ internal object HttpService: HttpPushServlet() {
         )
     }
 
-    override fun pushPrivateMsgRecall(time: Long, operation: Long, msgHash: Long, tip: String) {
+    override fun pushPrivateMsgRecall(time: Long, operation: Long, msgHash: Int, tip: String) {
         pushNotice(
             time = time,
             type = NoticeType.FriendRecall,
@@ -94,7 +103,7 @@ internal object HttpService: HttpPushServlet() {
         operation: Long,
         userId: Long,
         groupId: Long,
-        msgHash: Long,
+        msgHash: Int,
         tip: String
     ) {
         pushNotice(
@@ -141,7 +150,7 @@ internal object HttpService: HttpPushServlet() {
         userId: Long,
         groupId: Long = 0,
         duration: Int = 0,
-        msgId: Long = 0,
+        msgId: Int = 0,
         target: Long = 0,
         tip: String = ""
     ) {
@@ -225,7 +234,7 @@ internal object HttpService: HttpPushServlet() {
                 }
             }
             if (data.containsKey("delete") && data["delete"].asBoolean) {
-                MsgSvc.recallMsg(record.msgId)
+                MsgSvc.recallMsg(msgHash)
             }
             if (data.containsKey("kick") && data["kick"].asBoolean) {
                 GroupSvc.kickMember(record.peerUin, false, record.senderUin)

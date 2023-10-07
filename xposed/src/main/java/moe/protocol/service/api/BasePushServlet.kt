@@ -12,6 +12,13 @@ internal interface BasePushServlet {
 
     fun allowPush(): Boolean
 
+    fun pushSelfSentMsg(
+        record: MsgRecord,
+        elements: List<MsgElement>,
+        raw: String,
+        msgHash: Int
+    )
+
     fun pushPrivateMsg(
         record: MsgRecord,
         elements: List<MsgElement>,
@@ -28,14 +35,14 @@ internal interface BasePushServlet {
 
     fun pushGroupPoke(time: Long, operation: Long, userId: Long, groupId: Long)
 
-    fun pushPrivateMsgRecall(time: Long, operation: Long, msgHash: Long, tip: String)
+    fun pushPrivateMsgRecall(time: Long, operation: Long, msgHash: Int, tip: String)
 
     fun pushGroupMsgRecall(
         time: Long,
         operation: Long,
         userId: Long,
         groupId: Long,
-        msgHash: Long,
+        msgHash: Int,
         tip: String
     )
 

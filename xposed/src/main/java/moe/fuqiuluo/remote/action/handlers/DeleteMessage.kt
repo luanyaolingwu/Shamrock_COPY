@@ -12,8 +12,7 @@ internal object DeleteMessage: IActionHandler() {
     }
 
     suspend operator fun invoke(msgHash: Int, echo: String = ""): String {
-        val msgId = MessageHelper.getMsgIdByHashCode(msgHash)
-        MsgSvc.recallMsg(msgId)
+        MsgSvc.recallMsg(msgHash)
         return ok("成功", echo)
     }
 
