@@ -57,6 +57,12 @@ class PullConfig: IAction {
                     "ws_port" -> {
                         ctx.toast("动态修改WS端口不支持。")
                     }
+                    "restart" -> {
+                        if(HTTPServer.isServiceStarted) {
+                            ctx.toast("重启HTTPServer完成。")
+                            HTTPServer.restart()
+                        }
+                    }
                 }
             })
 
