@@ -1,11 +1,8 @@
 package moe.protocol.servlet
 
 import com.tencent.mobileqq.qroute.QRoute
-import moe.protocol.servlet.helper.ContactHelper
 import moe.protocol.servlet.helper.MessageHelper
-import com.tencent.qqnt.kernel.nativeinterface.Contact
 import com.tencent.qqnt.kernel.nativeinterface.IOperateCallback
-import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import com.tencent.qqnt.kernel.nativeinterface.MsgRecord
 import com.tencent.qqnt.msg.api.IMsgService
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -13,7 +10,6 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonArray
 import moe.fuqiuluo.xposed.helper.LogCenter
-import moe.fuqiuluo.utils.MMKVFetcher
 import moe.fuqiuluo.xposed.helper.NTServiceFetcher
 import kotlin.coroutines.resume
 
@@ -25,17 +21,17 @@ internal object MsgSvc: BaseSvc() {
     /**
      * 正常获取
      */
-    suspend fun getMsg(msgId: Long): Result<MsgRecord> {
-        val chatType = MessageHelper.getChatType(msgId)
-        val peerId = MessageHelper.getPeerIdByMsgId(msgId)
-        val contact = MessageHelper.generateContact(chatType, peerId.toString())
+    suspend fun getMsg(hash: Int): Result<MsgRecord> {
+        val mapping = MessageHelper.getMsgMappingByHash(hash)
+            ?: return Result.failure(Exception("没有对应消息映射，消息获取失败"))
 
-        val qMsgId = MessageHelper.getQMsgIdByMsgId(msgId)
+        val peerId = mapping.peerId
+        val contact = MessageHelper.generateContact(mapping.chatType, peerId)
 
         val msg = withTimeout(5000) {
             val service = QRoute.api(IMsgService::class.java)
             suspendCancellableCoroutine { continuation ->
-                service.getMsgsByMsgId(contact, arrayListOf(qMsgId)) { code, _, msgRecords ->
+                service.getMsgsByMsgId(contact, arrayListOf(mapping.qqMsgId)) { code, _, msgRecords ->
                     if (code == 0 && msgRecords.isNotEmpty()) {
                         continuation.resume(msgRecords.first())
                     } else {
@@ -85,17 +81,18 @@ internal object MsgSvc: BaseSvc() {
     /**
      * 撤回消息 同步 HTTP API
      */
-    suspend fun recallMsg(msgId: Long): Pair<Int, String> {
+    suspend fun recallMsg(msgHash: Int): Pair<Int, String> {
         val kernelService = NTServiceFetcher.kernelService
         val sessionService = kernelService.wrapperSession
         val msgService = sessionService.msgService
 
-        val contact = internalGenerateContact(msgId)
+        val mapping = MessageHelper.getMsgMappingByHash(msgHash)
+            ?: return -1 to "无法找到消息映射"
 
-        val qid = MessageHelper.getQMsgIdByMsgId(msgId)
+        val contact = MessageHelper.generateContact(mapping.chatType, mapping.peerId)
 
         return suspendCancellableCoroutine { continuation ->
-            msgService.recallMsg(contact, arrayListOf(qid)) { code, why ->
+            msgService.recallMsg(contact, arrayListOf(mapping.qqMsgId)) { code, why ->
                 continuation.resume(code to why)
             }
         }
@@ -126,26 +123,6 @@ internal object MsgSvc: BaseSvc() {
                 5 -> LogCenter.log("消息发送: $peerId, 当前不支持该消息类型。")
                 else -> LogCenter.log("消息发送: $peerId, code: $code $reason")
             }
-        }
-    }
-
-    private suspend fun internalGenerateContact(msgId: Long): Contact {
-        val chatType = MessageHelper.getChatType(msgId)
-        val mmkv = MMKVFetcher.mmkvWithId("hash2id")
-        return when (chatType) {
-            MsgConstant.KCHATTYPEGROUP -> {
-                val key = "grp$msgId"
-                val groupId = mmkv.getLong(key, 0)
-                mmkv.remove(key)
-                MessageHelper.generateContact(chatType, groupId.toString())
-            }
-            MsgConstant.KCHATTYPEC2C -> {
-                val key = "c2c$msgId"
-                val friendId = mmkv.getLong(key, 0)
-                mmkv.remove(key)
-                MessageHelper.generateContact(chatType, ContactHelper.getUidByUinAsync(friendId))
-            }
-            else -> error("暂时不支持该类型消息: $chatType")
         }
     }
 }

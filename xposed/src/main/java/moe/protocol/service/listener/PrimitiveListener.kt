@@ -89,14 +89,17 @@ internal object PrimitiveListener {
         val operationUid = pb[1, 3, 2, 1, 1].asUtf8String
         val msgSeq = pb[1, 3, 2, 1, 20].asLong
         val tipText = if (pb.has(1, 3, 2, 1, 13)) pb[1, 3, 2, 1, 13, 2].asUtf8String else ""
-        val msgId = MessageHelper.getMsgIdByMsgSeq(MsgConstant.KCHATTYPEC2C, msgSeq)
-        val msgHash = if (msgId == 0L) msgSeq else MessageHelper.generateMsgIdHash(MsgConstant.KCHATTYPEC2C, msgId)
+        val mapping = MessageHelper.getMsgMappingBySeq(MsgConstant.KCHATTYPEC2C, msgSeq.toInt())
+        if (mapping == null) {
+            LogCenter.log("由于缺失消息映射关系，消息撤回事件无法推送！", Level.WARN)
+            return
+        }
         val operation = ContactHelper.getUinByUidAsync(operationUid).toLong()
 
-        LogCenter.log("私聊消息撤回: $operation, seq = $msgSeq, hash = $msgHash, tip = $tipText")
+        LogCenter.log("私聊消息撤回: $operation, seq = $msgSeq, hash = ${mapping.msgHashId}, tip = $tipText")
 
         GlobalPusher.forEach {
-            it.pushPrivateMsgRecall(time, operation, msgHash.toLong(), tipText)
+            it.pushPrivateMsgRecall(time, operation, mapping.msgHashId, tipText)
         }
     }
 
@@ -187,15 +190,19 @@ internal object PrimitiveListener {
             val targetUid = detail[11, 3, 6].asUtf8String
             val msgSeq = detail[11, 3, 1].asLong
             val tipText = if (detail.has(11, 9)) detail[11, 9, 2].asUtf8String else ""
-            val msgId = MessageHelper.getMsgIdByMsgSeq(MsgConstant.KCHATTYPEGROUP, msgSeq)
-            val msgHash = if (msgId == 0L) msgSeq else MessageHelper.generateMsgIdHash(MsgConstant.KCHATTYPEGROUP, msgId)
+            val mapping = MessageHelper.getMsgMappingBySeq(MsgConstant.KCHATTYPEGROUP, msgSeq.toInt())
+            if (mapping == null) {
+                LogCenter.log("由于缺失消息映射关系，消息撤回事件无法推送！", Level.WARN)
+                return
+            }
+            val msgHash = mapping.msgHashId
             val operator = ContactHelper.getUinByUidAsync(operatorUid).toLong()
             val target = ContactHelper.getUinByUidAsync(targetUid).toLong()
 
             LogCenter.log("群消息撤回($groupCode): $operator -> $target, seq = $msgSeq, hash = $msgHash, tip = $tipText")
 
             GlobalPusher.forEach {
-                it.pushGroupMsgRecall(time, operator, target, groupCode, msgHash.toLong(), tipText)
+                it.pushGroupMsgRecall(time, operator, target, groupCode, msgHash, tipText)
             }
         } finally {
             readPacket.release()

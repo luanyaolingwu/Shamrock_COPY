@@ -47,6 +47,15 @@ internal object WebSocketService: WebSocketPushServlet() {
         }
     }
 
+    override fun pushSelfSentMsg(
+        record: MsgRecord,
+        elements: List<MsgElement>,
+        raw: String,
+        msgHash: Int
+    ) {
+        TODO("Not yet implemented")
+    }
+
     override fun pushPrivateMsg(
         record: MsgRecord,
         elements: List<MsgElement>,
@@ -84,13 +93,13 @@ internal object WebSocketService: WebSocketPushServlet() {
         )
     }
 
-    override fun pushPrivateMsgRecall(time: Long, operation: Long, msgHash: Long, tip: String) {
+    override fun pushPrivateMsgRecall(time: Long, operation: Long, msgHash: Int, tip: String) {
         pushNotice(
             time = time,
             type = NoticeType.FriendRecall,
             operation = operation,
             userId = operation,
-            msgId = msgHash,
+            msgHash = msgHash,
             tip = tip
         )
     }
@@ -100,7 +109,7 @@ internal object WebSocketService: WebSocketPushServlet() {
         operation: Long,
         userId: Long,
         groupId: Long,
-        msgHash: Long,
+        msgHash: Int,
         tip: String
     ) {
         pushNotice(
@@ -109,7 +118,7 @@ internal object WebSocketService: WebSocketPushServlet() {
             operation = operation,
             userId = userId,
             groupId =  groupId,
-            msgId = msgHash,
+            msgHash = msgHash,
             tip = tip
         )
     }
@@ -147,7 +156,7 @@ internal object WebSocketService: WebSocketPushServlet() {
         userId: Long,
         groupId: Long = 0,
         duration: Int = 0,
-        msgId: Long = 0,
+        msgHash: Int = 0,
         target: Long = 0,
         tip: String = ""
     ) {
@@ -163,7 +172,7 @@ internal object WebSocketService: WebSocketPushServlet() {
                 groupId = groupId,
                 duration = duration,
                 target = target,
-                msgId = msgId,
+                msgId = msgHash,
                 tip = tip
             )
         )

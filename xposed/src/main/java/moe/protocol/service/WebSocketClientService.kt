@@ -23,6 +23,15 @@ import moe.protocol.servlet.msg.toSegment
 import moe.protocol.servlet.GroupSvc
 
 internal object WebSocketClientService: WebSocketClientServlet() {
+    override fun pushSelfSentMsg(
+        record: MsgRecord,
+        elements: List<MsgElement>,
+        raw: String,
+        msgHash: Int
+    ) {
+        TODO("Not yet implemented")
+    }
+
     override fun pushPrivateMsg(
         record: MsgRecord,
         elements: List<MsgElement>,
@@ -60,13 +69,13 @@ internal object WebSocketClientService: WebSocketClientServlet() {
         )
     }
 
-    override fun pushPrivateMsgRecall(time: Long, operation: Long, msgHash: Long, tip: String) {
+    override fun pushPrivateMsgRecall(time: Long, operation: Long, msgHash: Int, tip: String) {
         pushNotice(
             time = time,
             type = NoticeType.FriendRecall,
             operation = operation,
             userId = operation,
-            msgId = msgHash,
+            msgHash = msgHash,
             tip = tip
         )
     }
@@ -76,7 +85,7 @@ internal object WebSocketClientService: WebSocketClientServlet() {
         operation: Long,
         userId: Long,
         groupId: Long,
-        msgHash: Long,
+        msgHash: Int,
         tip: String
     ) {
         pushNotice(
@@ -85,7 +94,7 @@ internal object WebSocketClientService: WebSocketClientServlet() {
             operation = operation,
             userId = userId,
             groupId =  groupId,
-            msgId = msgHash,
+            msgHash = msgHash,
             tip = tip
         )
     }
@@ -123,7 +132,7 @@ internal object WebSocketClientService: WebSocketClientServlet() {
         userId: Long,
         groupId: Long = 0,
         duration: Int = 0,
-        msgId: Long = 0,
+        msgHash: Int = 0,
         target: Long = 0,
         tip: String = ""
     ) {
@@ -139,7 +148,7 @@ internal object WebSocketClientService: WebSocketClientServlet() {
                 groupId = groupId,
                 duration = duration,
                 target = target,
-                msgId = msgId,
+                msgId = msgHash,
                 tip = tip
             )
         )

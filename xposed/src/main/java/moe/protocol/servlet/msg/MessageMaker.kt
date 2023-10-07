@@ -146,7 +146,10 @@ internal object MessageMaker {
         val reply = ReplyElement()
 
         val msgHash = data["id"].asString.toInt()
-        reply.replayMsgId = MessageHelper.getQMsgIdByMsgId(MessageHelper.getMsgIdByHashCode(msgHash))
+        val mapping = MessageHelper.getMsgMappingByHash(msgHash)
+            ?: return Result.failure(Exception("不存在该消息映射，无法回复消息"))
+
+        reply.replayMsgId = mapping.qqMsgId
 
         if (reply.replayMsgId == 0L) {
             // 貌似获取失败了，555

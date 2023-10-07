@@ -13,19 +13,20 @@ import kotlinx.serialization.json.jsonObject
 import moe.protocol.servlet.msg.MessageMaker
 import moe.fuqiuluo.xposed.helper.Level
 import moe.fuqiuluo.xposed.helper.LogCenter
-import moe.fuqiuluo.utils.MMKVFetcher
 import moe.fuqiuluo.xposed.tools.EmptyJsonObject
 import moe.fuqiuluo.xposed.tools.asJsonObject
 import moe.fuqiuluo.xposed.tools.asJsonObjectOrNull
 import moe.fuqiuluo.xposed.tools.asString
 import moe.fuqiuluo.xposed.tools.json
 import moe.fuqiuluo.xposed.tools.jsonArray
+import moe.protocol.servlet.helper.db.MessageDB
+import moe.protocol.servlet.helper.db.MessageMapping
 import kotlin.math.abs
 
 internal object MessageHelper {
     suspend fun sendMessageWithoutMsgId(chatType: Int, peerId: String, message: JsonArray, callback: IOperateCallback): Pair<Long, Int> {
         val service = QRoute.api(IMsgService::class.java)
-        var uniseq = generateMsgId(chatType, peerId.toLong())
+        var uniseq = generateMsgId(chatType)
         var nonMsg: Boolean
         val msg = messageArrayToMessageElements(chatType, uniseq.second, peerId, message).also {
             if (it.isEmpty()) error("message is empty, unable to send")
@@ -84,6 +85,10 @@ internal object MessageHelper {
                     val data = msg["data"].asJsonObjectOrNull ?: EmptyJsonObject
                     maker(chatType, msgId, targetUin, data).onSuccess { msgElem ->
                         msgList.add(msgElem)
+                    }.onFailure {
+                        if (it.javaClass != ActionMsgException::class.java) {
+                            throw it
+                        }
                     }
                 }
             } catch (e: Throwable) {
@@ -102,74 +107,44 @@ internal object MessageHelper {
         return abs(key.hashCode())
     }
 
-    fun generateMsgId(chatType: Int, peerId: Long): Pair<Int, Long> {
+    fun generateMsgId(chatType: Int): Pair<Int, Long> {
         val msgId = createMessageUniseq(chatType, System.currentTimeMillis())
-        val hashCode: Int = convertMsgIdToMsgHash(chatType, msgId, peerId)
+        val hashCode: Int = convertMsgIdToMsgHash(chatType, msgId)
         return hashCode to msgId
     }
 
-    fun saveMsgSeqByMsgId(chatType: Int, msgId: Long, msgSeq: Long) {
-        val mmkv = MMKVFetcher.mmkvWithId("seq2id")
-        when (chatType) {
-            MsgConstant.KCHATTYPEGROUP -> mmkv.putLong("grp$msgSeq", msgId)
-            MsgConstant.KCHATTYPEC2C -> mmkv.putLong("c2c$msgSeq", msgId)
-            else -> error("不支持的消息来源类型: $chatType")
-        }
+    fun getMsgMappingByHash(hash: Int): MessageMapping? {
+        val db = MessageDB.getInstance()
+        return db.messageMappingDao().queryByMsgHashId(hash)
     }
 
-    fun getMsgIdByMsgSeq(chatType: Int, msgSeq: Long): Long {
-        val mmkv = MMKVFetcher.mmkvWithId("seq2id")
-        return when (chatType) {
-            MsgConstant.KCHATTYPEGROUP -> mmkv.getLong("grp$msgSeq", 0)
-            MsgConstant.KCHATTYPEC2C -> mmkv.getLong("c2c$msgSeq", 0)
-            else -> error("不支持的消息来源类型: $chatType")
-        }
+    fun getMsgMappingBySeq(chatType: Int, msgSeq: Int): MessageMapping? {
+        val db = MessageDB.getInstance()
+        return db.messageMappingDao().queryByMsgSeq(chatType, msgSeq)
     }
 
-    fun convertMsgIdToMsgHash(chatType: Int, msgId: Long, peerId: Long): Int {
-        val hashCode: Int = generateMsgIdHash(chatType, msgId)
-        val mmkv = MMKVFetcher.mmkvWithId("hash2id")
-        when (chatType) {
-            MsgConstant.KCHATTYPEGROUP -> {
-                mmkv.putLong("grp$msgId", peerId)
-                mmkv.putLong(hashCode.toString(), msgId)
-            }
-            MsgConstant.KCHATTYPEC2C -> {
-                mmkv.putLong("c2c$msgId", peerId)
-                mmkv.putLong(hashCode.toString(), msgId)
-            }
-            else -> {
-                error("不支持的消息来源类型: $chatType, $peerId")
-            }
-        }
-        return hashCode
+    inline fun convertMsgIdToMsgHash(chatType: Int, msgId: Long): Int {
+        return generateMsgIdHash(chatType, msgId)
     }
 
     fun removeMsgByHashCode(hashCode: Int) {
-        val msgId = getMsgIdByHashCode(hashCode)
-        val chatType = getChatType(msgId)
-        val mmkv = MMKVFetcher.mmkvWithId("hash2id")
-        mmkv.remove(hashCode.toString())
-        when (chatType) {
-            MsgConstant.KCHATTYPEGROUP -> mmkv.remove("grp$msgId")
-            MsgConstant.KCHATTYPEC2C -> mmkv.remove("c2c$msgId")
-            else -> error("暂时不支持该类型消息: $chatType")
-        }
+        MessageDB.getInstance()
+            .messageMappingDao()
+            .deleteByMsgHash(hashCode)
     }
 
-    fun getMsgIdByHashCode(hashCode: Int): Long {
-        val mmkv = MMKVFetcher.mmkvWithId("hash2id")
-        return mmkv.getLong(hashCode.toString(), 0)
-    }
-
-    fun saveQMsgIdByMsgId(msgId: Long, qmsgId: Long) {
-        val mmkv = MMKVFetcher.mmkvWithId("id2id")
-        mmkv.putLong(msgId.toString(), qmsgId)
-    }
-
-    fun getQMsgIdByMsgId(msgId: Long): Long {
-        val mmkv = MMKVFetcher.mmkvWithId("id2id")
-        return mmkv.getLong(msgId.toString(), msgId)
+    fun saveMsgMapping(
+        hash: Int,
+        qqMsgId: Long,
+        time: Long,
+        chatType: Int,
+        peerId: String,
+        msgSeq: Int,
+        subChatType: Int = chatType
+    ) {
+        val database = MessageDB.getInstance()
+        val mapping = MessageMapping(hash, qqMsgId, chatType, subChatType, peerId, time, msgSeq)
+        database.messageMappingDao().insert(mapping)
     }
 
     external fun createMessageUniseq(chatType: Int, time: Long): Long
@@ -209,20 +184,6 @@ internal object MessageHelper {
         })
     }
 
-    fun getPeerIdByMsgId(msgId: Long): Long {
-        val chatType = getChatType(msgId)
-        val mmkv = MMKVFetcher.mmkvWithId("hash2id")
-        return when (chatType) {
-            MsgConstant.KCHATTYPEGROUP -> mmkv.getLong("grp$msgId", 0)
-            MsgConstant.KCHATTYPEC2C -> mmkv.getLong("c2c$msgId", 0)
-            else -> error("暂时不支持该类型消息来源: $chatType")
-        }
-    }
-
     private external fun nativeDecodeCQCode(code: String): List<Map<String, String>>
     private external fun nativeEncodeCQCode(segment: List<Map<String, String>>): String
-
-    external fun getChatType(msgId: Long): Int
-
-    external fun insertChatTypeToMsgId(msgId: Long, chatType: Int): Long
 }
