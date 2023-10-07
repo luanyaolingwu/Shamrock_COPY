@@ -247,7 +247,7 @@ private fun APIInfoCard(
 
             val wsAddress = remember { mutableStateOf(ShamrockConfig.getWsAddr(ctx)) }
             TextItem(
-                title = "主动WebSocket地址",
+                title = "被动WebSocket地址",
                 desc = "无需携带‘ws://’，例如：shamrock.moe:81。",
                 text = wsAddress,
                 hint = "shamrock.moe:81",
@@ -259,7 +259,7 @@ private fun APIInfoCard(
                 },
                 confirm = {
                     ShamrockConfig.setWsAddr(ctx, wsAddress.value)
-                    AppRuntime.log("设置主动WebSocket地址为[${wsAddress.value}]。")
+                    AppRuntime.log("设置被动WebSocket地址为[${wsAddress.value}]。")
                 }
             )
 

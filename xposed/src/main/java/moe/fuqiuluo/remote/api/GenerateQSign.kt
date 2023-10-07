@@ -184,6 +184,7 @@ fun Routing.qsign() {
             call.respond(OldApiResult(0, "success", sign.toHexString()))
         }
     }
+
     get("/group_sign") {
         if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
             if (!initSigner()) {
