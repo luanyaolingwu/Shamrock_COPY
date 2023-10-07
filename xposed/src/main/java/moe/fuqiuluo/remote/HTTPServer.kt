@@ -1,6 +1,5 @@
 package moe.fuqiuluo.remote
 
-import android.R.attr.password
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.engine.ApplicationEngine
@@ -16,7 +15,20 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import moe.fuqiuluo.remote.api.*
+import moe.fuqiuluo.remote.api.echoVersion
+import moe.fuqiuluo.remote.api.fetchRes
+import moe.fuqiuluo.remote.api.friendAction
+import moe.fuqiuluo.remote.api.messageAction
+import moe.fuqiuluo.remote.api.obtainFrameworkInfo
+import moe.fuqiuluo.remote.api.obtainProtocolData
+import moe.fuqiuluo.remote.api.profileRouter
+import moe.fuqiuluo.remote.api.qsign
+import moe.fuqiuluo.remote.api.registerBDH
+import moe.fuqiuluo.remote.api.showLog
+import moe.fuqiuluo.remote.api.ticketActions
+import moe.fuqiuluo.remote.api.troopAction
+import moe.fuqiuluo.remote.api.userAction
+import moe.fuqiuluo.remote.api.weatherAction
 import moe.fuqiuluo.remote.config.contentNegotiation
 import moe.fuqiuluo.remote.config.statusPages
 import moe.fuqiuluo.remote.plugin.Auth
@@ -26,8 +38,6 @@ import moe.fuqiuluo.xposed.helper.internal.DataRequester
 import moe.fuqiuluo.xposed.loader.NativeLoader
 import moe.protocol.service.config.ShamrockConfig
 import org.slf4j.LoggerFactory
-import java.io.FileInputStream
-import java.lang.Exception
 import java.security.KeyStore
 
 
@@ -155,6 +165,15 @@ internal object HTTPServer {
         actionMutex.withLock {
             server.stop()
             isServiceStarted = false
+        }
+    }
+    
+    fun restart() {
+        if(!isServiceStarted) return
+        val post = this.currServerPort
+        GlobalScope.launch {
+            stop()
+            start(post)
         }
     }
 }
