@@ -119,6 +119,16 @@ fun LabFragment() {
                     ShamrockConfig.pushUpdate(ctx)
                     return@Function true
                 }
+
+                Function(
+                    title = "自动唤醒QQ",
+                    desc = "QQ进程死亡时重新打开QQ进程，前提本进程存活。",
+                    descColor = it,
+                    isSwitch = ShamrockConfig.enableAutoStart(ctx)
+                ) {
+                    ShamrockConfig.setAutoStart(ctx, it)
+                    return@Function true
+                }
             }
 
         }
