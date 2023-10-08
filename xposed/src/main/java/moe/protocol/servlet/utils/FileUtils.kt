@@ -39,18 +39,22 @@ internal object FileUtils {
             File(file.substring(8)).inputStream().use {
                 saveFileToCache( it )
             }
-        } else {
+        } else if (file.startsWith("http://") || file.startsWith("https://")) {
             kotlin.run {
                 val tmp = getTmpFile()
-                DownloadUtils.download(file, tmp)
-                tmp.inputStream().use {
-                    saveFileToCache(it)
-                }.also {
+                if(DownloadUtils.download(file, tmp)) {
+                    tmp.inputStream().use {
+                        saveFileToCache(it)
+                    }.also {
+                        tmp.delete()
+                        LogCenter.log({ "文件下载完成: ${it.absolutePath}, 地址: $file" }, Level.DEBUG)
+                    }
+                } else {
                     tmp.delete()
-                    LogCenter.log({ "文件下载完成: ${it.absolutePath}, 地址: $file" }, Level.DEBUG)
+                    error("文件下载失败: $file")
                 }
             }
-        }
+        } else error("不支持的文件地址: $file")
     }
 
     fun renameByMd5(file: File): File {

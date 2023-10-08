@@ -244,6 +244,16 @@ object ShamrockConfig {
         preferences.edit().putBoolean("enable_auto_start", v).apply()
     }
 
+    fun enableSelfMsg(ctx: Context): Boolean {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getBoolean("enable_self_msg", false)
+    }
+
+    fun setEnableSelfMsg(ctx: Context, v: Boolean) {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        preferences.edit().putBoolean("enable_self_msg", v).apply()
+    }
+
     fun getConfigMap(ctx: Context): Map<String, Any?> {
         val preferences = ctx.getSharedPreferences("config", 0)
         return mapOf(
@@ -266,6 +276,7 @@ object ShamrockConfig {
             "auto_clear" to preferences.getBoolean("auto_clear", false),
             "ssl_private_pwd" to preferences.getString("ssl_private_pwd", ""),
             "key_store" to preferences.getString("key_store", ""),
+            "enable_self_msg" to preferences.getBoolean("enable_self_msg", false),
         )
     }
 

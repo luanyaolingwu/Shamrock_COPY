@@ -19,7 +19,7 @@ import kotlin.math.roundToInt
 object DownloadUtils {
     private const val MAX_THREAD = 4
 
-    suspend fun download(urlAdr: String, dest: File) {
+    suspend fun download(urlAdr: String, dest: File): Boolean {
         val url = URL(urlAdr)
         val connection = withContext(Dispatchers.IO) { url.openConnection() } as HttpURLConnection
         connection.requestMethod = "GET"
@@ -60,7 +60,9 @@ object DownloadUtils {
                 }
                 return@withTimeoutOrNull true
             } ?: dest.delete()
+            return true
         }
+        return false
     }
 
     private suspend fun reallyDownload(url: URL, start: Int, end: Int, dest: File, channel: Channel<Int>) {

@@ -69,7 +69,6 @@ object DashboardInitializer {
                         } else if (result.retcode != 0) {
                             log("尝试从接口获取账号信息失败，未知错误。", Level.ERROR)
                         } else {
-                            log("心跳请求发送已发送。")
                             AccountInfo.let { account ->
                                 account.uin.value = result.data.uin.toString()
                                 account.nick.value = result.data.nick
@@ -82,18 +81,19 @@ object DashboardInitializer {
                 }
             } catch (e: ConnectException) {
                 state.isFined.value = false
-                log("检测到Service死亡，正在尝试重新启动！")
                 context.broadcastToModule {
                     putExtra("__cmd", "checkAndStartService")
                 }
 
                 if (ShamrockConfig.enableAutoStart(context)) {
+                    log("检测到Service死亡，正在尝试重新启动！")
                     GlobalScope.launch(Dispatchers.Main) {
                         val packageName = "com.tencent.mobileqq"
                         val className = "com.tencent.mobileqq.activity.SplashActivity"
 
                         val intent = Intent()
                         intent.component = ComponentName(packageName, className)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                         intent.putExtra("from", "shamrock")
                         startActivity(context, intent, Bundle.EMPTY)
                     }
