@@ -1,13 +1,18 @@
 @file:OptIn(DelicateCoroutinesApi::class)
 package moe.fuqiuluo.shamrock.ui.service
 
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.os.Bundle
+import androidx.core.content.ContextCompat.startActivity
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.url
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -80,6 +85,18 @@ object DashboardInitializer {
                 log("检测到Service死亡，正在尝试重新启动！")
                 context.broadcastToModule {
                     putExtra("__cmd", "checkAndStartService")
+                }
+
+                if (ShamrockConfig.enableAutoStart(context)) {
+                    GlobalScope.launch(Dispatchers.Main) {
+                        val packageName = "com.tencent.mobileqq"
+                        val className = "com.tencent.mobileqq.activity.SplashActivity"
+
+                        val intent = Intent()
+                        intent.component = ComponentName(packageName, className)
+                        intent.putExtra("from", "shamrock")
+                        startActivity(context, intent, Bundle.EMPTY)
+                    }
                 }
             } catch (e: Throwable) {
                 state.isFined.value = false

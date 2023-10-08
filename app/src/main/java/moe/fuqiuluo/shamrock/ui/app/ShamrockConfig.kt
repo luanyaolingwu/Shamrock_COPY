@@ -234,6 +234,16 @@ object ShamrockConfig {
         preferences.edit().putBoolean("inject_packet", v).apply()
     }
 
+    fun enableAutoStart(ctx: Context): Boolean {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getBoolean("enable_auto_start", false)
+    }
+
+    fun setAutoStart(ctx: Context, v: Boolean) {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        preferences.edit().putBoolean("enable_auto_start", v).apply()
+    }
+
     fun getConfigMap(ctx: Context): Map<String, Any?> {
         val preferences = ctx.getSharedPreferences("config", 0)
         return mapOf(
