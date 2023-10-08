@@ -12,7 +12,14 @@ internal interface BasePushServlet {
 
     fun allowPush(): Boolean
 
-    fun pushSelfSentMsg(
+    fun pushSelfPrivateSentMsg(
+        record: MsgRecord,
+        elements: List<MsgElement>,
+        raw: String,
+        msgHash: Int
+    )
+
+    fun pushSelfGroupSentMsg(
         record: MsgRecord,
         elements: List<MsgElement>,
         raw: String,
