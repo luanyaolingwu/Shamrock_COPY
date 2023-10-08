@@ -155,7 +155,31 @@ fun LabFragment() {
                     return@Function false
                 }
             }
+        }
 
+        ActionBox(
+            modifier = Modifier.padding(top = 12.dp),
+            painter = painterResource(id = R.drawable.round_logo_dev_24),
+            title = "消息相关"
+        ) {
+            Column {
+                Divider(
+                    modifier = Modifier,
+                    color = GlobalColor.Divider,
+                    thickness = 0.2.dp
+                )
+
+                Function(
+                    title = "自发消息推送",
+                    desc = "推送Bot发送的消息，未做特殊处理请勿打开。",
+                    descColor = it,
+                    isSwitch = ShamrockConfig.enableSelfMsg(ctx)
+                ) {
+                    ShamrockConfig.setEnableSelfMsg(ctx, it)
+                    ShamrockConfig.pushUpdate(ctx)
+                    return@Function true
+                }
+            }
         }
     }
 }

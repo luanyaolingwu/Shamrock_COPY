@@ -29,7 +29,7 @@ internal object MessageHelper {
         var uniseq = generateMsgId(chatType)
         var nonMsg: Boolean
         val msg = messageArrayToMessageElements(chatType, uniseq.second, peerId, message).also {
-            if (it.isEmpty()) error("message is empty, unable to send")
+            if (it.isEmpty()) error("消息合成失败，请查看日志或者检查输入。")
         }.filter {
             it.elementType != -1
         }.also {

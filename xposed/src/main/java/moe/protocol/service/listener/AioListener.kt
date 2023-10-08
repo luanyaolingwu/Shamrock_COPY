@@ -89,6 +89,9 @@ internal object AioListener: IKernelMsgListener {
                     time = record.msgTime
                 )
 
+                if (!ShamrockConfig.enableSelfMsg())
+                    return@launch
+
                 when (record.chatType) {
                     MsgConstant.KCHATTYPEGROUP -> {
                         GlobalPusher.forEach {
