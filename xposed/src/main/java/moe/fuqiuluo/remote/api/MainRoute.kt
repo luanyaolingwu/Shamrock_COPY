@@ -9,6 +9,7 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import io.ktor.util.AttributeKey
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -56,6 +57,9 @@ fun Routing.echoVersion() {
             val params = actionObject["params"].asJsonObject*/
             val action = fetchOrThrow("action")
             val echo = fetchOrNull("echo") ?: ""
+
+            call.attributes.put(AttributeKey("echo"), echo)
+
             val params = fetchPostJsonObject("params")
 
             val handler = ActionManager[action]
