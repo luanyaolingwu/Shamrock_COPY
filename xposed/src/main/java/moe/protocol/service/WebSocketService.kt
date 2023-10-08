@@ -47,13 +47,38 @@ internal object WebSocketService: WebSocketPushServlet() {
         }
     }
 
-    override fun pushSelfSentMsg(
+    override fun pushSelfPrivateSentMsg(
         record: MsgRecord,
         elements: List<MsgElement>,
         raw: String,
         msgHash: Int
     ) {
-        TODO("Not yet implemented")
+        pushMsg(
+            record,
+            elements,
+            raw,
+            msgHash,
+            MsgType.Private,
+            MsgSubType.Friend,
+            postType = PostType.MsgSent
+        )
+    }
+
+    override fun pushSelfGroupSentMsg(
+        record: MsgRecord,
+        elements: List<MsgElement>,
+        raw: String,
+        msgHash: Int
+    ) {
+        pushMsg(
+            record,
+            elements,
+            raw,
+            msgHash,
+            MsgType.Group,
+            MsgSubType.NORMAL,
+            postType = PostType.MsgSent
+        )
     }
 
     override fun pushPrivateMsg(
@@ -185,13 +210,14 @@ internal object WebSocketService: WebSocketPushServlet() {
         msgHash: Int,
         msgType: MsgType,
         subType: MsgSubType,
-        role: MemberRole = MemberRole.Member
+        role: MemberRole = MemberRole.Member,
+        postType: PostType = PostType.Msg
     ) {
         GlobalScope.launch {
             pushTo(PushMessage(
                 time = record.msgTime,
                 selfId = app.longAccountUin,
-                postType = PostType.Msg,
+                postType = postType,
                 messageType = msgType,
                 subType = subType,
                 messageId = msgHash,

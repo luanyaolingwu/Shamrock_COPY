@@ -73,10 +73,38 @@ internal object AioListener: IKernelMsgListener {
 
     override fun onAddSendMsg(record: MsgRecord) {
         GlobalScope.launch {
-            LogCenter.log("发送消息: " + record.toCQCode())
+            try {
+                val rawMsg = record.elements.toCQCode(record.chatType)
+                if (rawMsg.isEmpty()) return@launch
+                LogCenter.log("发送消息: $rawMsg")
 
+                val msgHash = MessageHelper.convertMsgIdToMsgHash(record.chatType, record.msgId)
+                MessageHelper.saveMsgMapping(
+                    hash = msgHash,
+                    qqMsgId = record.msgId,
+                    chatType = record.chatType,
+                    subChatType = record.chatType,
+                    peerId = record.peerUin.toString(),
+                    msgSeq = record.msgSeq.toInt(),
+                    time = record.msgTime
+                )
 
-
+                when (record.chatType) {
+                    MsgConstant.KCHATTYPEGROUP -> {
+                        GlobalPusher.forEach {
+                            it.pushSelfGroupSentMsg(record, record.elements, rawMsg, msgHash)
+                        }
+                    }
+                    MsgConstant.KCHATTYPEC2C -> {
+                        GlobalPusher.forEach {
+                            it.pushSelfPrivateSentMsg(record, record.elements, rawMsg, msgHash)
+                        }
+                    }
+                    else -> LogCenter.log("不支持SELF PUSH事件: ${record.chatType}")
+                }
+            } catch (e: Throwable) {
+                LogCenter.log(e.stackTraceToString(), Level.WARN)
+            }
         }
     }
 

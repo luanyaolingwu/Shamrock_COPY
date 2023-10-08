@@ -28,7 +28,7 @@ internal object MsgSvc: BaseSvc() {
         val peerId = mapping.peerId
         val contact = MessageHelper.generateContact(mapping.chatType, peerId)
 
-        val msg = withTimeout(5000) {
+        val msg = withTimeoutOrNull(5000) {
             val service = QRoute.api(IMsgService::class.java)
             suspendCancellableCoroutine { continuation ->
                 service.getMsgsByMsgId(contact, arrayListOf(mapping.qqMsgId)) { code, _, msgRecords ->
@@ -40,7 +40,7 @@ internal object MsgSvc: BaseSvc() {
                 }
                 continuation.invokeOnCancellation {
                     continuation.resume(null)
-                }
+                } // 貌似不会被取消，写了也没什么鸟用啊？
             }
         }
 
