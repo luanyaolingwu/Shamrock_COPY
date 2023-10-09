@@ -8,6 +8,10 @@
 
 > 学习交流群：758533243
 
+# Go-CqHttp无缝衔接性
+
+本项目基于Go-CqHttp的文档进行开发实现，未来也将允许在docker运行本项目(现在也可以)，但在qsign死亡(报废)情况下在qsign死亡(报废)情况下Shamrock支持作为NTR提供sign api服务。
+
 # 部署教程 / API文档
 
 -> [点我直达](https://linxinrao.github.io/Shamrock)
