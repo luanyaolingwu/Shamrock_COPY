@@ -8,7 +8,7 @@
 
 ![][onebot-11]
 ![][onebot-12]
-[![][license]](LICENSE).
+[![][license]](LICENSE)
 
 [下载][download-link] | [部署][deploy-link] | [接口][api-link] | [文档][docs-link] | [加群][group-link]
 
