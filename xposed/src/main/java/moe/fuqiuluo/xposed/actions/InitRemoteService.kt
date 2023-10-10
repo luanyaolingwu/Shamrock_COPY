@@ -66,8 +66,7 @@ internal class InitRemoteService: IAction {
                 )
                 val token = ShamrockConfig.getToken()
                 if (token.isNotBlank()) {
-                    wsHeaders["token"] = token
-                    wsHeaders["authorization"] = token
+                    wsHeaders["authorization"] = "bearer $token"
                     //wsHeaders["bearer"] = token
                 }
                 InternalWebSocketClient = ShamrockWebSocketClient(ShamrockConfig.getWebSocketClientAddress(), wsHeaders)
