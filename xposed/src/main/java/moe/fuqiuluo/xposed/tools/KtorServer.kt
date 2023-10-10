@@ -32,6 +32,9 @@ import moe.fuqiuluo.remote.entries.Status
 @MustBeDocumented
 annotation class ShamrockDsl
 
+private val jsonKey = AttributeKey<JsonObject>("paramsJson")
+private val partsKey = AttributeKey<Parameters>("paramsParts")
+
 suspend fun ApplicationCall.fetch(key: String): String {
     val isPost = request.httpMethod == HttpMethod.Post
     return if (isPost) {
@@ -85,22 +88,20 @@ fun ApplicationCall.isJsonData(): Boolean {
 
 suspend fun ApplicationCall.fetchPostOrNull(key: String): String? {
     if (isJsonData()) {
-        val cacheKey = AttributeKey<JsonObject>("paramsJson")
-        val data = if (attributes.contains(cacheKey)) {
-            attributes[cacheKey]
+        val data = if (attributes.contains(jsonKey)) {
+            attributes[jsonKey]
         } else {
             Json.parseToJsonElement(receiveText()).jsonObject.also {
-                attributes.put(cacheKey, it)
+                attributes.put(jsonKey, it)
             }
         }
         return data[key].asStringOrNull
     } else {
-        val cacheKey = AttributeKey<Parameters>("paramsParts")
-        val data = if (attributes.contains(cacheKey)) {
-            attributes[cacheKey]
+        val data = if (attributes.contains(partsKey)) {
+            attributes[partsKey]
         } else {
             receiveParameters().also {
-                attributes.put(cacheKey, it)
+                attributes.put(partsKey, it)
             }
         }
         return data[key]
@@ -146,36 +147,33 @@ fun PipelineContext<Unit, ApplicationCall>.isJsonData(): Boolean {
 
 suspend fun PipelineContext<Unit, ApplicationCall>.isString(key: String): Boolean {
     if (!isJsonData()) return true
-    val cacheKey = AttributeKey<JsonObject>("paramsJson")
-    val data = if (call.attributes.contains(cacheKey)) {
-        call.attributes[cacheKey]
+    val data = if (call.attributes.contains(jsonKey)) {
+        call.attributes[jsonKey]
     } else {
         Json.parseToJsonElement(call.receiveText()).jsonObject.also {
-            call.attributes.put(cacheKey, it)
+            call.attributes.put(jsonKey, it)
         }
     }
     return data[key] is JsonPrimitive
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.fetchPostJsonObject(key: String): JsonObject {
-    val cacheKey = AttributeKey<JsonObject>("paramsJson")
-    val data = if (call.attributes.contains(cacheKey)) {
-        call.attributes[cacheKey]
+    val data = if (call.attributes.contains(jsonKey)) {
+        call.attributes[jsonKey]
     } else {
         Json.parseToJsonElement(call.receiveText()).jsonObject.also {
-            call.attributes.put(cacheKey, it)
+            call.attributes.put(jsonKey, it)
         }
     }
     return data[key].asJsonObject
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.fetchPostJsonArray(key: String): JsonArray {
-    val cacheKey = AttributeKey<JsonObject>("paramsJson")
-    val data = if (call.attributes.contains(cacheKey)) {
-        call.attributes[cacheKey]
+    val data = if (call.attributes.contains(jsonKey)) {
+        call.attributes[jsonKey]
     } else {
         Json.parseToJsonElement(call.receiveText()).jsonObject.also {
-            call.attributes.put(cacheKey, it)
+            call.attributes.put(jsonKey, it)
         }
     }
     return data[key].asJsonArray

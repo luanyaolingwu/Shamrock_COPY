@@ -17,6 +17,7 @@ import kotlinx.serialization.json.jsonObject
 import moe.fuqiuluo.remote.HTTPServer
 import moe.fuqiuluo.remote.action.ActionManager
 import moe.fuqiuluo.remote.action.ActionSession
+import moe.fuqiuluo.remote.config.ECHO_KEY
 import moe.fuqiuluo.remote.entries.EmptyObject
 import moe.fuqiuluo.remote.entries.IndexData
 import moe.fuqiuluo.remote.entries.Status
@@ -58,7 +59,7 @@ fun Routing.echoVersion() {
             val action = fetchOrThrow("action")
             val echo = fetchOrNull("echo") ?: ""
 
-            call.attributes.put(AttributeKey("echo"), echo)
+            call.attributes.put(ECHO_KEY, echo)
 
             val params = fetchPostJsonObject("params")
 

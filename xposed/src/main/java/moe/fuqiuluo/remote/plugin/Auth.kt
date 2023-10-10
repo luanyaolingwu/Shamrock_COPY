@@ -5,6 +5,7 @@ import moe.protocol.service.config.ShamrockConfig
 import moe.protocol.servlet.helper.ErrorTokenException
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.request.httpMethod
+import io.ktor.util.AttributeKey
 import moe.fuqiuluo.xposed.tools.fetchOrNull
 
 private suspend fun ApplicationCall.checkToken() {

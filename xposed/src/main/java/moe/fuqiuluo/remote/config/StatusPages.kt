@@ -13,10 +13,14 @@ import moe.fuqiuluo.remote.entries.CommonResult
 import moe.fuqiuluo.remote.entries.ErrorCatch
 import moe.fuqiuluo.remote.entries.Status
 
+val ECHO_KEY = AttributeKey<String>("echo")
+
 fun Application.statusPages() {
     install(StatusPages) {
         exception<ParamsException> { call, cause ->
-            val echo = call.attributes[AttributeKey("echo")] as? String ?: ""
+            val echo = if (call.attributes.contains(ECHO_KEY)) {
+                call.attributes[ECHO_KEY]
+            } else ""
             call.respond(CommonResult(
                 status = "failed",
                 retcode = Status.BadParam.code,
@@ -25,7 +29,9 @@ fun Application.statusPages() {
             ))
         }
         exception<LogicException> { call, cause ->
-            val echo = call.attributes[AttributeKey("echo")] as? String ?: ""
+            val echo = if (call.attributes.contains(ECHO_KEY)) {
+                call.attributes[ECHO_KEY]
+            } else ""
             call.respond(CommonResult(
                 status = "failed",
                 retcode = Status.LogicError.code,
@@ -34,7 +40,9 @@ fun Application.statusPages() {
             ))
         }
         exception<ErrorTokenException> { call, cause ->
-            val echo = call.attributes[AttributeKey("echo")] as? String ?: ""
+            val echo = if (call.attributes.contains(ECHO_KEY)) {
+                call.attributes[ECHO_KEY]
+            } else ""
             call.respond(CommonResult(
                 status = "failed",
                 retcode = Status.ErrorToken.code,
@@ -43,7 +51,9 @@ fun Application.statusPages() {
             ))
         }
         exception<Throwable> { call, cause ->
-            val echo = call.attributes[AttributeKey("echo")] as? String ?: ""
+            val echo = if (call.attributes.contains(ECHO_KEY)) {
+                call.attributes[ECHO_KEY]
+            } else ""
             call.respond(CommonResult(
                 status = "failed",
                 retcode = Status.InternalHandlerError.code,
