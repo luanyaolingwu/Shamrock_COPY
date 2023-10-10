@@ -15,7 +15,7 @@ import java.net.SocketException
 
 internal abstract class HttpPushServlet: BasePushServlet {
      override val address: String
-         get() = "http://" + ShamrockConfig.getWebHookAddress()
+         get() = ShamrockConfig.getWebHookAddress()
 
      override fun allowPush(): Boolean {
          return ShamrockConfig.allowWebHook()
@@ -24,9 +24,13 @@ internal abstract class HttpPushServlet: BasePushServlet {
     protected suspend inline fun <reified T> pushTo(body: T): HttpResponse? {
         if(!allowPush()) return null
         try {
-            return GlobalClient.post(address) {
-                contentType(ContentType.Application.Json)
-                setBody(body)
+            if (address.startsWith("http://") || address.startsWith("https://")) {
+                return GlobalClient.post(address) {
+                    contentType(ContentType.Application.Json)
+                    setBody(body)
+                }
+            } else {
+                LogCenter.log("HTTP推送地址错误: ${address}。", Level.ERROR)
             }
         } catch (e: ConnectTimeoutException) {
             LogCenter.log("HTTP推送失败: 请检查你的推送服务器。", Level.ERROR)

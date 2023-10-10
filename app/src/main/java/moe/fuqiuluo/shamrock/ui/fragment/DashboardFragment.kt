@@ -230,14 +230,12 @@ private fun APIInfoCard(
             val webHookAddress = remember { mutableStateOf(ShamrockConfig.getHttpAddr(ctx)) }
             TextItem(
                 title = "回调HTTP地址",
-                desc = "无需携带’http://‘，例如：shamrock.moe:80。",
+                desc = "例如：http://shamrock.moe:80。",
                 text = webHookAddress,
                 hint = "请输入回调地址",
                 error = "输入的地址不合法",
                 checker = {
-                    it.isNotBlank() && !it.startsWith("http://")
-                            && !it.startsWith("https://")
-                            && !it.startsWith("ws://")
+                    it.isNotBlank() && (it.startsWith("http://") || it.startsWith("https://")) && !it.startsWith("ws://")
                 },
                 confirm = {
                     ShamrockConfig.setHttpAddr(ctx, webHookAddress.value)
@@ -248,14 +246,12 @@ private fun APIInfoCard(
             val wsAddress = remember { mutableStateOf(ShamrockConfig.getWsAddr(ctx)) }
             TextItem(
                 title = "被动WebSocket地址",
-                desc = "无需携带‘ws://’，例如：shamrock.moe:81，多个使用逗号分隔。",
+                desc = "例如：ws://shamrock.moe:81，多个使用逗号分隔。",
                 text = wsAddress,
                 hint = "请输入被动地址",
                 error = "输入的地址不合法",
                 checker = {
-                    it.isNotBlank() && !it.startsWith("http://")
-                            && !it.startsWith("https://")
-                            && !it.startsWith("ws://")
+                    it.isNotBlank() && !it.startsWith("http://") && !it.startsWith("https://") && it.startsWith("ws://")
                 },
                 confirm = {
                     ShamrockConfig.setWsAddr(ctx, wsAddress.value)
