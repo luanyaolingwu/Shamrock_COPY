@@ -49,7 +49,7 @@ fun Routing.troopAction() {
     }
 
     getOrPost("/get_group_list") {
-        val refresh = fetchOrNull("refresh")?.toBooleanStrict() ?: false
+        val refresh = fetchOrNull("refresh")?.toBooleanStrict() ?: true
         call.respondText(GetTroopList(refresh))
     }
 

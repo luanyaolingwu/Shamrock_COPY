@@ -24,6 +24,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import moe.fuqiuluo.proto.protobufOf
 import moe.fuqiuluo.xposed.helper.NTServiceFetcher
+import moe.fuqiuluo.xposed.tools.ifNullOrEmpty
 import moe.fuqiuluo.xposed.tools.slice
 import mqq.app.MobileQQ
 import tencent.im.oidb.cmd0x89a.oidb_0x89a
@@ -184,14 +185,14 @@ internal object GroupSvc: BaseSvc() {
         withOwner: Boolean = false
     ): List<Long> {
         val groupInfo = getGroupInfo(groupId)
-        return groupInfo.Administrator
+        return (groupInfo.Administrator ?: "")
             .split("|", ",")
             .also {
                 if (withOwner && it is ArrayList<String>) {
                     it.add(0, groupInfo.troopowneruin)
                 }
             }
-            .map { it.ifBlank { "0" }.toLong() }
+            .map { (it.ifNullOrEmpty("0")!!).toLong() }
             .filter { it != 0L }
     }
 
