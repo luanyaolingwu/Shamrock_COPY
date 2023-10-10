@@ -61,7 +61,7 @@ object ShamrockConfig {
 
     fun getHttpAddr(ctx: Context): String {
         val preferences = ctx.getSharedPreferences("config", 0)
-        return preferences.getString("http_addr", "shamrock.moe:80")!!
+        return preferences.getString("http_addr", "")!!
     }
 
     fun setHttpAddr(ctx: Context, v: String) {
@@ -153,7 +153,7 @@ object ShamrockConfig {
 
     fun getWsAddr(ctx: Context): String {
         val preferences = ctx.getSharedPreferences("config", 0)
-        return preferences.getString("ws_addr", "shamrock.moe:81")!!
+        return preferences.getString("ws_addr", "")!!
     }
 
     fun setWsAddr(ctx: Context, v: String) {

@@ -7,6 +7,8 @@ import com.tencent.qqnt.kernel.nativeinterface.MsgRecord
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import moe.fuqiuluo.xposed.tools.GlobalJson
 import moe.fuqiuluo.xposed.tools.json
 import moe.protocol.service.api.WebSocketClientServlet
 import moe.protocol.service.data.push.MemberRole
@@ -18,11 +20,43 @@ import moe.protocol.service.data.push.PushMessage
 import moe.protocol.service.data.push.PushNotice
 import moe.protocol.service.data.push.Sender
 import moe.protocol.service.config.ShamrockConfig
+import moe.protocol.service.data.BotStatus
+import moe.protocol.service.data.Self
+import moe.protocol.service.data.push.MetaEventType
+import moe.protocol.service.data.push.MetaSubType
 import moe.protocol.service.data.push.PostType
+import moe.protocol.service.data.push.PushMetaEvent
 import moe.protocol.servlet.msg.toSegment
 import moe.protocol.servlet.GroupSvc
+import mqq.app.MobileQQ
+import kotlin.concurrent.timer
 
-internal object WebSocketClientService: WebSocketClientServlet() {
+internal class WebSocketClientService(
+    url: String,
+    wsHeaders: Map<String, String>
+): WebSocketClientServlet(url, wsHeaders) {
+    init {
+        timer("heartbeat", true, 0, 1000L * 15) {
+            if (isClosed || isClosing || !isOpen) {
+                cancel()
+                return@timer
+            }
+            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val curUin = runtime.currentAccountUin
+            send(GlobalJson.encodeToString(PushMetaEvent(
+                time = System.currentTimeMillis() / 1000,
+                selfId = app.longAccountUin,
+                postType = PostType.Meta,
+                type = MetaEventType.Heartbeat,
+                subType = MetaSubType.Connect,
+                status = BotStatus(
+                    Self("qq", curUin), runtime.isLogin, status = "正常", good = true
+                ),
+                interval = 15000
+            )))
+        }
+    }
+
     override fun pushSelfPrivateSentMsg(
         record: MsgRecord,
         elements: List<MsgElement>,

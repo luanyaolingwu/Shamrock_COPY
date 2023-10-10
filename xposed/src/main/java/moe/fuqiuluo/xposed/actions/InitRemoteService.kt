@@ -6,12 +6,12 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import moe.fuqiuluo.remote.HTTPServer
-import moe.fuqiuluo.remote.InternalWebSocketClient
-import moe.fuqiuluo.remote.InternalWebSocketServer
-import moe.fuqiuluo.remote.ShamrockWebSocketClient
-import moe.fuqiuluo.remote.ShamrockWebSocketServer
 import moe.fuqiuluo.xposed.helper.Level
 import moe.fuqiuluo.xposed.helper.LogCenter
+import moe.protocol.service.HttpService
+import moe.protocol.service.WebSocketClientService
+import moe.protocol.service.WebSocketService
+import moe.protocol.service.api.GlobalPusher
 import moe.protocol.service.config.ShamrockConfig
 import moe.protocol.servlet.utils.PlatformUtils
 import mqq.app.MobileQQ
@@ -29,36 +29,36 @@ internal class InitRemoteService: IAction {
             }
         }
 
+        if (ShamrockConfig.allowWebHook()) {
+            GlobalPusher.register(HttpService)
+        }
+
         if (ShamrockConfig.openWebSocket()) {
-            GlobalScope.launch {
-                try {
-                    if (InternalWebSocketServer != null) {
-                        InternalWebSocketServer?.stop()
-                    }
-                    InternalWebSocketServer = ShamrockWebSocketServer(ShamrockConfig.getWebSocketPort())
-                    InternalWebSocketServer?.start()
-                    InternalWebSocketServer?.initHeartbeat()
-                } catch (e: Throwable) {
-                    LogCenter.log(e.stackTraceToString(), Level.ERROR)
-                }
-            }
+            startWebSocketServer()
         }
 
         if (ShamrockConfig.openWebSocketClient()) {
-            timer(initialDelay = 0L, period = 5000L) {
-                if (InternalWebSocketClient == null) {
-                    startWebSocketClient()
-                }
+            ShamrockConfig.getWebSocketClientAddress().split(",", "|", "，").forEach {  url ->
+                startWebSocketClient(url)
             }
         }
     }
 
-    private fun startWebSocketClient() {
+    private fun startWebSocketServer() {
         GlobalScope.launch {
             try {
-                if (InternalWebSocketClient != null) {
-                    InternalWebSocketClient?.close()
-                }
+                val server = WebSocketService(ShamrockConfig.getWebSocketPort())
+                server.start()
+                GlobalPusher.register(server)
+            } catch (e: Throwable) {
+                LogCenter.log(e.stackTraceToString(), Level.ERROR)
+            }
+        }
+    }
+
+    private fun startWebSocketClient(url: String) {
+        GlobalScope.launch {
+            try {
                 val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
                 val curUin = runtime.currentAccountUin
                 val wsHeaders = hashMapOf(
@@ -69,8 +69,17 @@ internal class InitRemoteService: IAction {
                     wsHeaders["authorization"] = "bearer $token"
                     //wsHeaders["bearer"] = token
                 }
-                InternalWebSocketClient = ShamrockWebSocketClient(ShamrockConfig.getWebSocketClientAddress(), wsHeaders)
-                InternalWebSocketClient?.connect()
+
+                var wsClient = WebSocketClientService(url, wsHeaders)
+                wsClient.connect()
+                timer(initialDelay = 5000L, period = 5000L) {
+                    if (wsClient.isClosed || wsClient.isClosing) {
+                        GlobalPusher.unregister(wsClient)
+                        wsClient = WebSocketClientService(url, wsHeaders)
+                        wsClient.connect()
+                    }
+                    GlobalPusher.register(wsClient)
+                }
             } catch (e: Throwable) {
                 LogCenter.log(e.stackTraceToString(), Level.ERROR)
             }

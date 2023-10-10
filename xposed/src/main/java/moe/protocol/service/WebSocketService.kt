@@ -7,6 +7,9 @@ import com.tencent.qqnt.kernel.nativeinterface.MsgRecord
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import moe.fuqiuluo.xposed.helper.Level
+import moe.fuqiuluo.xposed.helper.LogCenter
+import moe.fuqiuluo.xposed.tools.ifNullOrEmpty
 import moe.fuqiuluo.xposed.tools.json
 import moe.protocol.service.api.WebSocketPushServlet
 import moe.protocol.service.data.push.MemberRole
@@ -26,9 +29,13 @@ import moe.protocol.service.data.push.PostType
 import moe.protocol.service.data.push.PushMetaEvent
 import moe.protocol.servlet.msg.toSegment
 import moe.protocol.servlet.GroupSvc
+import moe.protocol.servlet.helper.ErrorTokenException
 import mqq.app.MobileQQ
+import org.java_websocket.WebSocket
+import org.java_websocket.handshake.ClientHandshake
+import java.net.URI
 
-internal object WebSocketService: WebSocketPushServlet() {
+internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
     fun pushMetaLifecycle() {
         GlobalScope.launch {
             val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
@@ -236,5 +243,29 @@ internal object WebSocketService: WebSocketPushServlet() {
                 )
             ))
         }
+    }
+
+    override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
+        val token = ShamrockConfig.getToken()
+        if (token.isNotBlank()) {
+            var accessToken = handshake.getFieldValue("access_token")
+                .ifNullOrEmpty(handshake.getFieldValue("ticket"))
+                .ifNullOrEmpty(handshake.getFieldValue("Authorization"))
+                ?: throw ErrorTokenException
+            if (accessToken.startsWith("Bearer ")) {
+                accessToken = accessToken.substring(7)
+            }
+            if (token != accessToken) {
+                conn.close()
+                LogCenter.log({ "WSServer连接错误(${conn.remoteSocketAddress.address.hostAddress}:${conn.remoteSocketAddress.port}) 没有提供正确的token, $accessToken。" }, Level.ERROR)
+                return
+            }
+        }
+        val path = URI.create(handshake.resourceDescriptor).path
+        if (path != "/api") {
+            pushMetaLifecycle()
+            eventReceivers.add(conn)
+        }
+        LogCenter.log({ "WSServer连接(${conn.remoteSocketAddress.address.hostAddress}:${conn.remoteSocketAddress.port}$path)" }, Level.DEBUG)
     }
 }
