@@ -233,7 +233,10 @@ internal object MsgConvert {
             }
             MsgConstant.KELEMTYPEREPLY -> {
                 val reply = element.replyElement
-                val msgId = reply.replayMsgId
+                var msgId = reply.replayMsgId
+                if (msgId == 0L) {
+                    msgId = reply.sourceMsgIdInRecords
+                }
 
                 return hashMapOf(
                     "type" to "reply".json,

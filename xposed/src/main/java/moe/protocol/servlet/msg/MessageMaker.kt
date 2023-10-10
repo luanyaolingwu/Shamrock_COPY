@@ -150,6 +150,7 @@ internal object MessageMaker {
             ?: return Result.failure(Exception("不存在该消息映射，无法回复消息"))
 
         reply.replayMsgId = mapping.qqMsgId
+        reply.sourceMsgIdInRecords = mapping.qqMsgId
 
         if (reply.replayMsgId == 0L) {
             // 貌似获取失败了，555
