@@ -7,7 +7,7 @@ import moe.protocol.servlet.GroupSvc
 
 internal object GetTroopList: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
-        val refresh = session.getBooleanOrDefault("refresh", false)
+        val refresh = session.getBooleanOrDefault("refresh", true)
         return invoke(refresh, session.echo)
     }
 

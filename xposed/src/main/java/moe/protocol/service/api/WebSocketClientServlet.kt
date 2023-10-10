@@ -74,7 +74,7 @@ internal abstract class WebSocketClientServlet(
     }
 
     protected inline fun <reified T> pushTo(body: T) {
-        if(!allowPush()) return
+        if(!allowPush() || isClosed || isClosing) return
         try {
             send(GlobalJson.encodeToString(body))
         } catch (e: Throwable) {
