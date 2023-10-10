@@ -26,7 +26,7 @@ import java.net.URI
 internal abstract class WebSocketClientServlet(
     url: String,
     wsHeaders: Map<String, String>
-) : BasePushServlet, WebSocketClient(URI("ws://$url"), wsHeaders) {
+) : BasePushServlet, WebSocketClient(URI(url), wsHeaders) {
     override val address: String
         get() = ShamrockConfig.getWebSocketClientAddress()
 

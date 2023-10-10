@@ -70,15 +70,19 @@ internal class InitRemoteService: IAction {
                     //wsHeaders["bearer"] = token
                 }
 
-                var wsClient = WebSocketClientService(url, wsHeaders)
-                wsClient.connect()
-                timer(initialDelay = 5000L, period = 5000L) {
-                    if (wsClient.isClosed || wsClient.isClosing) {
-                        GlobalPusher.unregister(wsClient)
-                        wsClient = WebSocketClientService(url, wsHeaders)
-                        wsClient.connect()
+                if (url.startsWith("ws://") || url.startsWith("wss://")) {
+                    var wsClient = WebSocketClientService(url, wsHeaders)
+                    wsClient.connect()
+                    timer(initialDelay = 5000L, period = 5000L) {
+                        if (wsClient.isClosed || wsClient.isClosing) {
+                            GlobalPusher.unregister(wsClient)
+                            wsClient = WebSocketClientService(url, wsHeaders)
+                            wsClient.connect()
+                        }
+                        GlobalPusher.register(wsClient)
                     }
-                    GlobalPusher.register(wsClient)
+                } else {
+                    LogCenter.log("被动WebSocket地址不合法: $url", Level.ERROR)
                 }
             } catch (e: Throwable) {
                 LogCenter.log(e.stackTraceToString(), Level.ERROR)
