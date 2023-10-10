@@ -12,6 +12,7 @@ internal enum class NoticeType {
     @SerialName("group_recall") GroupRecall,
     @SerialName("friend_recall") FriendRecall,
     @SerialName("notify") Notify,
+    @SerialName("group_upload") GroupUpload
 }
 
 @Serializable

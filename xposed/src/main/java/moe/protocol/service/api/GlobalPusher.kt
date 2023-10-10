@@ -1,14 +1,27 @@
 package moe.protocol.service.api
 
-import moe.protocol.service.HttpService
-import moe.protocol.service.WebSocketClientService
-import moe.protocol.service.WebSocketService
 import moe.protocol.service.config.ShamrockConfig
+import java.util.Collections
 
-internal val GlobalPusher: Array<BasePushServlet>
-    // isIgnoreAllEvent 忽略所有事件 不推送
-    get() = if (ShamrockConfig.isIgnoreAllEvent()) arrayOf() else arrayOf(
-        WebSocketService, HttpService, WebSocketClientService
-    )
+internal object GlobalPusher {
+    private val list = Collections.synchronizedList(arrayListOf<BasePushServlet>())
+
+    fun register(servlet: BasePushServlet){
+        if (ShamrockConfig.isIgnoreAllEvent()) {
+            return
+        }
+        list.add(servlet)
+    }
+
+    fun unregister(servlet: BasePushServlet){
+        if (list.contains(servlet))
+            list.remove(servlet)
+    }
+
+    operator fun invoke(): List<BasePushServlet> {
+        return list
+    }
+}
+
 
 

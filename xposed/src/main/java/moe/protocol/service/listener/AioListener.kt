@@ -49,7 +49,7 @@ internal object AioListener: IKernelMsgListener {
                         if (rule.white?.contains(record.peerUin) == false) return
                     }
 
-                    GlobalPusher.forEach {
+                    GlobalPusher().forEach {
                         it.pushGroupMsg(record, record.elements, rawMsg, msgHash)
                     }
                 }
@@ -60,7 +60,7 @@ internal object AioListener: IKernelMsgListener {
                         if (rule.white?.contains(record.peerUin) == false) return
                     }
 
-                    GlobalPusher.forEach {
+                    GlobalPusher().forEach {
                         it.pushPrivateMsg(record, record.elements, rawMsg, msgHash)
                     }
                 }
@@ -94,12 +94,12 @@ internal object AioListener: IKernelMsgListener {
 
                 when (record.chatType) {
                     MsgConstant.KCHATTYPEGROUP -> {
-                        GlobalPusher.forEach {
+                        GlobalPusher().forEach {
                             it.pushSelfGroupSentMsg(record, record.elements, rawMsg, msgHash)
                         }
                     }
                     MsgConstant.KCHATTYPEC2C -> {
-                        GlobalPusher.forEach {
+                        GlobalPusher().forEach {
                             it.pushSelfPrivateSentMsg(record, record.elements, rawMsg, msgHash)
                         }
                     }
@@ -120,10 +120,6 @@ internal object AioListener: IKernelMsgListener {
         bArr: ByteArray?
     ) {
         LogCenter.log("onRecvMsgSvrRspTransInfo($j2, $contact, $i2, $i3, $str)", Level.DEBUG)
-    }
-
-    override fun onRecvOnlineFileMsg(arrayList: ArrayList<MsgRecord>?) {
-        LogCenter.log(("onRecvOnlineFileMsg" + arrayList?.joinToString { ", " }), Level.DEBUG)
     }
 
     override fun onRecvS2CMsg(arrayList: ArrayList<Byte>?) {
@@ -170,10 +166,6 @@ internal object AioListener: IKernelMsgListener {
 
     }
 
-    override fun onFileMsgCome(arrayList: ArrayList<MsgRecord>?) {
-        LogCenter.log("onFileMsgCome: " + arrayList.toString(), Level.DEBUG)
-    }
-
     override fun onFirstViewDirectMsgUpdate(firstViewDirectMsgNotifyInfo: FirstViewDirectMsgNotifyInfo?) {
 
     }
@@ -190,6 +182,52 @@ internal object AioListener: IKernelMsgListener {
         msgRecord: MsgRecord?
     ) {
 
+    }
+
+    override fun onKickedOffLine(kickedInfo: KickedInfo?) {
+        LogCenter.log("onKickedOffLine($kickedInfo)")
+    }
+
+    override fun onFileMsgCome(arrayList: ArrayList<MsgRecord>?) {
+        arrayList?.forEach { record ->
+            when(record.chatType) {
+                MsgConstant.KCHATTYPEGROUP -> onGroupFileMsg(record)
+                else -> LogCenter.log("不支持该来源的文件上传事件：${record.chatType}", Level.WARN)
+            }
+
+        }
+    }
+
+    private fun onGroupFileMsg(record: MsgRecord) {
+        val groupId = record.peerUin
+        val userId = record.senderUin
+        val fileMsg = record.elements.firstOrNull {
+            it.elementType == MsgConstant.KELEMTYPEFILE
+        } ?: kotlin.run {
+            LogCenter.log("消息为文件消息但不包含文件消息，来自：${record.peerUin}", Level.WARN)
+            return
+        }
+
+    }
+
+    override fun onRecvOnlineFileMsg(arrayList: ArrayList<MsgRecord>?) {
+        LogCenter.log(("onRecvOnlineFileMsg" + arrayList?.joinToString { ", " }), Level.DEBUG)
+    }
+
+    override fun onRichMediaDownloadComplete(fileTransNotifyInfo: FileTransNotifyInfo?) {
+        LogCenter.log("onRichMediaDownloadComplete($fileTransNotifyInfo)", Level.DEBUG)
+    }
+
+    override fun onRichMediaProgerssUpdate(fileTransNotifyInfo: FileTransNotifyInfo?) {
+        LogCenter.log(("onRichMediaProgerssUpdate" + fileTransNotifyInfo.toString()), Level.DEBUG)
+    }
+
+    override fun onRichMediaUploadComplete(fileTransNotifyInfo: FileTransNotifyInfo?) {
+        LogCenter.log("onRichMediaUploadComplete($fileTransNotifyInfo)", Level.DEBUG)
+    }
+
+    override fun onSearchGroupFileInfoUpdate(searchGroupFileResult: SearchGroupFileResult?) {
+        LogCenter.log("onSearchGroupFileInfoUpdate($searchGroupFileResult)", Level.DEBUG)
     }
 
     override fun onGroupFileInfoAdd(groupItem: GroupItem?) {
@@ -230,10 +268,6 @@ internal object AioListener: IKernelMsgListener {
 
     override fun onInputStatusPush(inputStatusInfo: InputStatusInfo?) {
 
-    }
-
-    override fun onKickedOffLine(kickedInfo: KickedInfo?) {
-        LogCenter.log("onKickedOffLine($kickedInfo)")
     }
 
     override fun onLineDev(devList: ArrayList<DevInfo>?) {
@@ -306,22 +340,6 @@ internal object AioListener: IKernelMsgListener {
 
     override fun onRecvUDCFlag(i2: Int) {
         LogCenter.log("onRecvUDCFlag($i2)", Level.DEBUG)
-    }
-
-    override fun onRichMediaDownloadComplete(fileTransNotifyInfo: FileTransNotifyInfo?) {
-        LogCenter.log("onRichMediaDownloadComplete($fileTransNotifyInfo)", Level.DEBUG)
-    }
-
-    override fun onRichMediaProgerssUpdate(fileTransNotifyInfo: FileTransNotifyInfo?) {
-
-    }
-
-    override fun onRichMediaUploadComplete(fileTransNotifyInfo: FileTransNotifyInfo?) {
-
-    }
-
-    override fun onSearchGroupFileInfoUpdate(searchGroupFileResult: SearchGroupFileResult?) {
-
     }
 
     override fun onSendMsgError(j2: Long, contact: Contact?, i2: Int, str: String?) {

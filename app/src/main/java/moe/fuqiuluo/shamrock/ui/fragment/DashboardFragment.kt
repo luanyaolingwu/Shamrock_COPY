@@ -232,7 +232,7 @@ private fun APIInfoCard(
                 title = "回调HTTP地址",
                 desc = "无需携带’http://‘，例如：shamrock.moe:80。",
                 text = webHookAddress,
-                hint = "shamrock.moe:80",
+                hint = "请输入回调地址",
                 error = "输入的地址不合法",
                 checker = {
                     it.isNotBlank() && !it.startsWith("http://")
@@ -248,9 +248,9 @@ private fun APIInfoCard(
             val wsAddress = remember { mutableStateOf(ShamrockConfig.getWsAddr(ctx)) }
             TextItem(
                 title = "被动WebSocket地址",
-                desc = "无需携带‘ws://’，例如：shamrock.moe:81。",
+                desc = "无需携带‘ws://’，例如：shamrock.moe:81，多个使用逗号分隔。",
                 text = wsAddress,
-                hint = "shamrock.moe:81",
+                hint = "请输入被动地址",
                 error = "输入的地址不合法",
                 checker = {
                     it.isNotBlank() && !it.startsWith("http://")

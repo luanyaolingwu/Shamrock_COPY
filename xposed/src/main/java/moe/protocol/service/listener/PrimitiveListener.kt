@@ -82,7 +82,7 @@ internal object PrimitiveListener {
         }
         LogCenter.log("群戳一戳($groupCode): $operation -> $target")
 
-        GlobalPusher.forEach { it.pushGroupPoke(time, operation.toLong(), target.toLong(), groupCode) }
+        GlobalPusher().forEach { it.pushGroupPoke(time, operation.toLong(), target.toLong(), groupCode) }
     }
 
     private suspend fun onC2CRecall(time: Long, pb: ProtoMap) {
@@ -98,7 +98,7 @@ internal object PrimitiveListener {
 
         LogCenter.log("私聊消息撤回: $operation, seq = $msgSeq, hash = ${mapping.msgHashId}, tip = $tipText")
 
-        GlobalPusher.forEach {
+        GlobalPusher().forEach {
             it.pushPrivateMsgRecall(time, operation, mapping.msgHashId, tipText)
         }
     }
@@ -112,7 +112,7 @@ internal object PrimitiveListener {
 
         LogCenter.log("群成员增加($groupCode): $target, type = $type")
 
-        GlobalPusher.forEach {
+        GlobalPusher().forEach {
             it.pushGroupMemberDecreased(time, target, groupCode, operation, NoticeType.GroupMemIncrease, when(type) {
                 130 -> NoticeSubType.Approve
                 131 -> NoticeSubType.Invite
@@ -131,7 +131,7 @@ internal object PrimitiveListener {
         val target = ContactHelper.getUinByUidAsync(targetUid).toLong()
         LogCenter.log("群成员减少($groupCode): $target, type = $type")
 
-        GlobalPusher.forEach {
+        GlobalPusher().forEach {
             it.pushGroupMemberDecreased(time, target, groupCode, operation, NoticeType.GroupMemDecrease, when(type) {
                 130 -> NoticeSubType.Kick
                 131 -> NoticeSubType.Leave
@@ -155,7 +155,7 @@ internal object PrimitiveListener {
         val target = ContactHelper.getUinByUidAsync(targetUid).toLong()
         LogCenter.log("群管理员变动($groupCode): $target, isSetAdmin = $isSetAdmin")
 
-        GlobalPusher.forEach {
+        GlobalPusher().forEach {
             it.pushGroupAdminChange(msgTime, target, groupCode, isSetAdmin)
         }
     }
@@ -169,7 +169,7 @@ internal object PrimitiveListener {
         val target = ContactHelper.getUinByUidAsync(targetUid).toLong()
         LogCenter.log("群禁言($groupCode): $operation -> $target, 时长 = ${duration}s")
 
-        GlobalPusher.forEach {
+        GlobalPusher().forEach {
             it.pushGroupBan(msgTime, operation, target, groupCode, duration)
         }
     }
@@ -201,7 +201,7 @@ internal object PrimitiveListener {
 
             LogCenter.log("群消息撤回($groupCode): $operator -> $target, seq = $msgSeq, hash = $msgHash, tip = $tipText")
 
-            GlobalPusher.forEach {
+            GlobalPusher().forEach {
                 it.pushGroupMsgRecall(time, operator, target, groupCode, msgHash, tipText)
             }
         } finally {
