@@ -1,36 +1,99 @@
-![logo](logo.png)
+<div align="center">
 
-☘ 基于Xposed实现的Onebot11/12标准即时通讯Bot框架（OneBot12未完全实现）
+![][banner]
 
-> 本项目仅提供学习与交流用途，请在24小时内删除，本项目目的是研究Xposed和Lsposed框架的使用，以及Epic框架开发相关知识，如有违反法律，请联系删除。
+[![][actions]][actions-link]
+[![][releases]][releases-link]
+[![][downloads]][releases-link]
 
-> 学习交流群：758533243（二次元）| 333425831（正常人）
+![][onebot-11]
+![][onebot-12]
+[![][license]](LICENSE)
 
-# Go-CqHttp无缝衔接性
+[下载][download-link] | [部署][deploy-link] | [接口][api-link] | [文档][docs-link] | [加群][group-link]
 
-本项目基于Go-CqHttp的文档进行开发实现，未来也将允许在docker运行本项目(现在也可以)，但在qsign死亡(报废)情况下在qsign死亡(报废)情况下Shamrock支持作为NTR提供sign api服务。
+</div>
 
-# 部署教程 / API文档
+## 简介
 
--> [点我直达](https://linxinrao.github.io/Shamrock)
+☘ 基于 Xposed 实现 OneBot 标准的 QQ 机器人框架
 
-# 权限声明
+> 本项目仅提供学习与交流用途，请在24小时内删除。   
+> 本项目目的是研究 Xposed 和 LSPosed 框架的使用。 Epic 框架开发相关知识。  
+> 如有违反法律，请联系删除。
 
-未在此处声明的权限，请警惕是否为正版Shamrock。
+## 兼容说明
 
-- 联网权限: 为了让Shamrock进程使用HTTP API进行一些操作。
-- [Hook**系统框架**](https://github.com/fuqiuluo/Shamrock/wiki/perm_hook_android): 为了保证息屏状态下仍能维持服务后台运行。
-- 后台启动Activity，自动唤醒QQ需要。
+本项目基于 go-cqhttp 的文档进行开发实现，未来将会支持 Docker 部署(现在也可以)。  
+在 qsign 死亡(报废)的情况下，Shamrock 支持作为 NTR 提供 sign API 服务。
 
-# 语音解码器支持
+## 权限声明
 
-语音转换器已经模块化，如果不加入指定的模块，则无法发送mp3/flac/wav/ogg等格式的语音。
+如出现未在此处声明的权限，请警惕 Shamrock 是否被修改/植入恶意代码
 
-为了完整支持，您需要下载[AudioLibrary](https://raw.githubusercontent.com/fuqiuluo/Shamrock/master/AudioLibrary.zip)并将里面的`so文件`全部解压到`目标应用数据目录/Tencent/Shamrock/lib`文件夹。
+- 网络访问权限: Shamrock 进程需要使用 HTTP API 来进行一些操作
+- [Hook 系统框架][hook-system]: 为了保证息屏状态下服务不被杀死，Shamrock 需要 Hook 系统框架
+- 后台启动 Activity: 自动唤醒 QQ 时需要使用
 
-**目标应用数据目录**一般在`/storage/emulated/0/Android/data/com.tencent.mobileqq`
+## 语音解码
 
-如果没有`lib`文件夹，则创建一个，`lib`文件夹内只能有格式为`*.so`文件，不能有目录存在，否则无法正常加载。
+请参考文档中 [语音支持][voice-support] 部分
 
+## 开源协议
 
+本项目使用 [GPL-3.0](LICENSE) 协议开放源代码
 
+```text
+Shamrock - OneBot standard QQ robot framework based on Xposed implementation
+Copyright (C) 2023 Shamrock Team
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+```
+
+## 贡献者
+
+[![][contrib-image]][contrib-link]
+
+[banner]: https://socialify.git.ci/linxinrao/Shamrock/image?description=1&forks=1&issues=1&language=1&logo=https%3A%2F%2Flinxinrao.github.io%2FShamrock%2Fshamrock.png&pattern=Plus&pulls=1&stargazers=1&theme=Auto
+
+[actions]: https://img.shields.io/github/actions/workflow/status/linxinrao/Shamrock/build-apk.yml?style=for-the-badge
+
+[actions-link]: https://github.com/linxinrao/Shamrock/actions/workflows/build-apk.yml
+
+[releases]: https://img.shields.io/github/v/release/linxinrao/Shamrock?style=for-the-badge
+
+[releases-link]: https://github.com/linxinrao/Shamrock/releases
+
+[downloads]: https://img.shields.io/github/downloads/linxinrao/Shamrock/total?style=for-the-badge
+
+[license]: https://img.shields.io/github/license/linxinrao/Shamrock?style=for-the-badge
+
+[onebot-11]: https://img.shields.io/badge/OneBot-11-black?style=for-the-badge
+
+[onebot-12]: https://img.shields.io/badge/OneBot-12-black?style=for-the-badge
+
+[download-link]: https://linxinrao.github.io/Shamrock/guide/getting-started.html#%E4%B8%8B%E8%BD%BD
+
+[deploy-link]: https://linxinrao.github.io/Shamrock/guide/getting-started.html#%E9%83%A8%E7%BD%B2
+
+[api-link]: https://linxinrao.github.io/Shamrock/api
+
+[docs-link]: https://linxinrao.github.io/Shamrock/
+
+[group-link]: https://linxinrao.github.io/Shamrock/group.html
+
+[hook-system]: https://github.com/linxinrao/Shamrock/wiki/perm_hook_android
+
+[voice-support]: https://linxinrao.github.io/Shamrock/advanced/voice.html
+
+[contrib-image]: https://contrib.rocks/image?repo=linxinrao/Shamrock
+
+[contrib-link]: https://github.com/linxinrao/Shamrock/graphs/contributors
