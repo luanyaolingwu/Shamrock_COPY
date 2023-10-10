@@ -6,8 +6,10 @@ import io.ktor.server.application.call
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
+import kotlinx.coroutines.withTimeoutOrNull
 import moe.fuqiuluo.remote.action.handlers.GetFriendList
 import moe.fuqiuluo.remote.action.handlers.GetStrangerInfo
+import moe.fuqiuluo.remote.action.handlers.IsBlackListUin
 import moe.fuqiuluo.remote.entries.Status
 import moe.fuqiuluo.xposed.tools.fetchGetOrThrow
 import moe.fuqiuluo.xposed.tools.fetchOrNull
@@ -29,13 +31,7 @@ fun Routing.friendAction() {
     }
 
     get("/is_blacklist_uin") {
-        val uin = fetchGetOrThrow("uin")
-        val blacklistApi = QRoute.api(IProfileCardBlacklistApi::class.java)
-        val isBlack = suspendCoroutine { continuation ->
-            blacklistApi.isBlackOrBlackedUin(uin) {
-                continuation.resume(it)
-            }
-        }
-        respond(true, Status.Ok, isBlack)
+        val uin = fetchGetOrThrow("user_id")
+        call.respondText(IsBlackListUin(uin))
     }
 }
