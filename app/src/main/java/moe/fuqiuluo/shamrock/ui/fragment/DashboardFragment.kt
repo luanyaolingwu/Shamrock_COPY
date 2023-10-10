@@ -96,7 +96,7 @@ private fun SSLCard(ctx: Context) {
                 hint = "请输入端口号",
                 error = "端口范围应在0~65565",
                 checker = {
-                    it.isNotBlank() && it.toInt() in 0 .. 65565
+                    it.isNotBlank() && kotlin.runCatching { it.toInt() in 0..65565 }.getOrDefault(false)
                 },
                 confirm = {
                     val newPort = sslPort.value.toInt()
@@ -202,7 +202,7 @@ private fun APIInfoCard(
                 hint = "请输入端口号",
                 error = "端口范围应在0~65565",
                 checker = {
-                    it.isNotBlank() && it.toInt() in 0 .. 65565 && wsPort.value != it
+                    it.isNotBlank() && kotlin.runCatching { it.toInt() in 0..65565 }.getOrDefault(false) && wsPort.value != it
                 },
                 confirm = {
                     val newPort = port.value.toInt()
@@ -218,7 +218,7 @@ private fun APIInfoCard(
                 hint = "请输入端口号",
                 error = "端口范围应在0~65565",
                 checker = {
-                    it.isNotBlank() && it.toInt() in 0 .. 65565 && it != port.value
+                    it.isNotBlank() && kotlin.runCatching { it.toInt() in 0..65565 }.getOrDefault(false) && it != port.value
                 },
                 confirm = {
                     val newPort = wsPort.value.toInt()

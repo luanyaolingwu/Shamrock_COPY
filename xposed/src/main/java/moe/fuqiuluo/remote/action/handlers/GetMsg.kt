@@ -19,11 +19,12 @@ internal object GetMsg: IActionHandler() {
         val msg = MsgSvc.getMsg(msgHash).onFailure {
             return logic("Obtain msg failed, please check your msg_id.", echo)
         }.getOrThrow()
+        val seq = msg.clientSeq.toInt()
         return ok(MessageDetail(
             msg.msgTime.toInt(),
             MessageHelper.obtainDetailTypeByMsgType(msg.chatType),
             msgHash,
-            msg.clientSeq.toInt(),
+            seq,
             MessageSender(
                 msg.senderUin, msg.sendNickName, "unknown", 0, msg.senderUid
             ),
