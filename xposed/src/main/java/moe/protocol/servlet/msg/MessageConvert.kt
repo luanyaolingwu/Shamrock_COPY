@@ -13,6 +13,9 @@ import moe.fuqiuluo.xposed.helper.LogCenter
 import moe.fuqiuluo.xposed.tools.asJsonObject
 import moe.fuqiuluo.xposed.tools.asString
 import moe.fuqiuluo.xposed.tools.json
+import moe.protocol.servlet.helper.db.ImageDB
+import moe.protocol.servlet.helper.db.ImageMapping
+import moe.protocol.servlet.helper.db.ImageMappingDao
 
 internal typealias MsgSegment = ArrayList<HashMap<String, JsonElement>>
 
@@ -104,7 +107,15 @@ internal object MsgConvert {
             }
             MsgConstant.KELEMTYPEPIC -> {
                 val image = element.picElement
-                val md5 = image.md5HexStr
+                val md5 = image.md5HexStr ?: image.fileName
+                    .replace("{", "")
+                    .replace("}", "")
+                    .replace("-", "").split(".")[0]
+
+                ImageDB.getInstance().imageMappingDao().insert(
+                    ImageMapping(md5.uppercase(), chatType, image.fileSize)
+                )
+
                 return hashMapOf(
                     "type" to "image".json,
                     "data" to JsonObject(mapOf(

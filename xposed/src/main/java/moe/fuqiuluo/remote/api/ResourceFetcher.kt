@@ -10,19 +10,27 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
+import moe.fuqiuluo.remote.action.handlers.GetImage
 import moe.fuqiuluo.remote.action.handlers.GetRecord
 import moe.fuqiuluo.xposed.tools.fetchGetOrThrow
 import moe.fuqiuluo.xposed.tools.fetchOrThrow
 import moe.fuqiuluo.xposed.tools.getOrPost
 
+private fun formatFileName(file: String): String = file
+    .replace(regex = "[{}\\-]".toRegex(), replacement = "")
+    .replace(" ", "")
+    .split(".")[0].lowercase()
+
 fun Routing.fetchRes() {
     getOrPost("/get_record") {
-        val file = fetchGetOrThrow("file")
-            .replace(regex = "[{}\\-]".toRegex(), replacement = "")
-            .replace(" ", "")
-            .split(".")[0].lowercase()
+        val file = formatFileName( fetchGetOrThrow("file") )
         val format = fetchOrThrow("out_format")
         call.respondText(GetRecord(file, format))
+    }
+
+    getOrPost("/get_image") {
+        val file = formatFileName( fetchGetOrThrow("file") )
+        call.respondText(GetImage(file))
     }
 
     route("/res/[a-fA-F0-9]{32}".toRegex()) {
