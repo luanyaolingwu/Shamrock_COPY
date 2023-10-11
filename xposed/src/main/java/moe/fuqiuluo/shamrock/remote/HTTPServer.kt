@@ -60,6 +60,7 @@ internal object HTTPServer {
             showLog()
             profileRouter()
             weatherAction()
+            otherAction()
             if (ShamrockConfig.isPro()) {
                 qsign()
                 obtainProtocolData()
