@@ -51,8 +51,15 @@ internal object ShamrockConfig {
 
             putBoolean("enable_self_msg", intent.getBooleanExtra("enable_self_msg", false)) // 推送自己发的消息
 
+            putBoolean("echo_number", intent.getBooleanExtra("echo_number", false)) // 将echo格式化为数字输出
+
             putBoolean("isInit", true)
         }
+    }
+
+    fun isEchoNumber(): Boolean {
+        val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
+        return mmkv.getBoolean("echo_number", false)
     }
 
     /**
