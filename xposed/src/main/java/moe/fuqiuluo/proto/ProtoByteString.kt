@@ -3,8 +3,8 @@ package moe.fuqiuluo.proto
 import com.google.protobuf.ByteString
 import com.google.protobuf.CodedOutputStream
 import kotlinx.serialization.json.JsonElement
-import moe.fuqiuluo.xposed.tools.json
-import moe.fuqiuluo.xposed.tools.toHexString
+import moe.fuqiuluo.shamrock.tools.json
+import moe.fuqiuluo.shamrock.tools.toHexString
 
 class ProtoByteString(
     val value: ByteString

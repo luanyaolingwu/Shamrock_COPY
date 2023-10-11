@@ -2,7 +2,7 @@ package moe.fuqiuluo.proto
 
 import com.google.protobuf.CodedOutputStream
 import kotlinx.serialization.json.JsonElement
-import moe.fuqiuluo.xposed.tools.jsonArray
+import moe.fuqiuluo.shamrock.tools.jsonArray
 
 class ProtoList(
     val value: ArrayList<ProtoValue>
