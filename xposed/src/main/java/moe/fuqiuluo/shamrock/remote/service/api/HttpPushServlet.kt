@@ -2,6 +2,7 @@ package moe.fuqiuluo.shamrock.remote.service.api
 
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -11,6 +12,8 @@ import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.tools.GlobalClient
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.utils.PlatformUtils
+import mqq.app.MobileQQ
 import java.net.SocketException
 
 internal abstract class HttpPushServlet: BasePushServlet {
@@ -28,6 +31,16 @@ internal abstract class HttpPushServlet: BasePushServlet {
                 return GlobalClient.post(address) {
                     contentType(ContentType.Application.Json)
                     setBody(body)
+
+                    header("User-Agent", "Shamrock")
+                    header("X-QQ-Version", PlatformUtils.getClientVersion(MobileQQ.getContext()))
+                    val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+                    val curUin = runtime.currentAccountUin
+                    header("X-Self-ID", curUin)
+                    header("X-OneBot-Version", "11")
+                    header("X-Impl", "Shamrock")
+                    header("X-Client-Role", "Universal")
+                    header("Sec-WebSocket-Protocol", "11.Shamrock")
                 }
             } else {
                 LogCenter.log("HTTP推送地址错误: ${address}。", Level.ERROR)
