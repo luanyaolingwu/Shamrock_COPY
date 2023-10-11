@@ -36,9 +36,25 @@ internal class InitRemoteService: IAction {
         }
 
         if (ShamrockConfig.openWebSocketClient()) {
+            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val curUin = runtime.currentAccountUin
+            val wsHeaders = hashMapOf(
+                "X-Client-Role" to "Universal",
+                "X-Self-ID" to curUin,
+                "User-Agent" to "Shamrock",
+                "X-QQ-Version" to PlatformUtils.getClientVersion(MobileQQ.getContext()),
+                "X-OneBot-Version" to "11",
+                "X-Impl" to "Shamrock",
+                "Sec-WebSocket-Protocol" to "11.Shamrock"
+            )
+            val token = ShamrockConfig.getToken()
+            if (token.isNotBlank()) {
+                wsHeaders["authorization"] = "bearer $token"
+                //wsHeaders["bearer"] = token
+            }
             ShamrockConfig.getWebSocketClientAddress().split(",", "|", "，").forEach { url ->
                 if (url.isNotBlank())
-                    startWebSocketClient(url)
+                    startWebSocketClient(url, wsHeaders)
             }
         }
     }
@@ -54,21 +70,9 @@ internal class InitRemoteService: IAction {
         }
     }
 
-    private fun startWebSocketClient(url: String) {
+    private fun startWebSocketClient(url: String, wsHeaders: HashMap<String, String>) {
         GlobalScope.launch {
             try {
-                val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
-                val curUin = runtime.currentAccountUin
-                val wsHeaders = hashMapOf(
-                    "X-Client-Role" to "Universal",
-                    "X-Self-ID" to curUin
-                )
-                val token = ShamrockConfig.getToken()
-                if (token.isNotBlank()) {
-                    wsHeaders["authorization"] = "bearer $token"
-                    //wsHeaders["bearer"] = token
-                }
-
                 if (url.startsWith("ws://") || url.startsWith("wss://")) {
                     var wsClient = WebSocketClientService(url, wsHeaders)
                     wsClient.connect()
