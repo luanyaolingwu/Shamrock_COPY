@@ -4,6 +4,7 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 
 enum class Status(
     val code: Int
@@ -40,6 +41,16 @@ data class CommonResult<T>(
 )
 
 @Serializable
+data class CommonResultForEchoNumber<T>(
+    var status: String,
+    var retcode: Int,
+    @Contextual
+    var data: T,
+    var message: String = "",
+    var echo: Long = 0L
+)
+
+@Serializable
 object EmptyObject
 
 internal inline fun <reified T: Any> resultToString(
@@ -49,33 +60,14 @@ internal inline fun <reified T: Any> resultToString(
     msg: String = "",
     echo: String = ""
 ): String {
+    if (ShamrockConfig.isEchoNumber()) runCatching {
+        echo.toLong()
+    }.onSuccess {
+        return Json.encodeToString(
+            CommonResultForEchoNumber(if (isOk) "ok" else "failed", code.code, data, msg, it)
+        )
+    }
     return Json.encodeToString(
         CommonResult(if (isOk) "ok" else "failed", code.code, data, msg, echo)
-    )
-}
-
-internal inline fun <reified T> result(
-    isOk: Boolean,
-    code: Status,
-    data: T,
-    msg: String = "",
-    echo: String = ""
-): CommonResult<T?> {
-    return result(isOk, code.code, data, msg, echo)
-}
-
-internal inline fun <reified T> result(
-    isOk: Boolean,
-    code: Int,
-    data: T,
-    msg: String = "",
-    echo: String = ""
-): CommonResult<T?> {
-    return CommonResult(
-        if (isOk) "ok" else "failed",
-        code,
-        data,
-        msg,
-        echo
     )
 }

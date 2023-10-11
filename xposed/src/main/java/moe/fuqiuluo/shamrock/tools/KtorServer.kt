@@ -22,9 +22,12 @@ import moe.fuqiuluo.shamrock.helper.ParamsException
 import io.ktor.http.HttpMethod
 import io.ktor.server.request.httpMethod
 import io.ktor.server.routing.route
+import kotlinx.serialization.encodeToString
 import moe.fuqiuluo.shamrock.remote.entries.CommonResult
+import moe.fuqiuluo.shamrock.remote.entries.CommonResultForEchoNumber
 import moe.fuqiuluo.shamrock.remote.entries.EmptyObject
 import moe.fuqiuluo.shamrock.remote.entries.Status
+import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 
 @DslMarker
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS, AnnotationTarget.TYPEALIAS, AnnotationTarget.TYPE)
@@ -200,31 +203,43 @@ fun Routing.getOrPost(path: Regex, body: suspend PipelineContext<Unit, Applicati
 }
 
 @ShamrockDsl
-suspend inline fun PipelineContext<Unit, ApplicationCall>.respond(
+internal suspend inline fun PipelineContext<Unit, ApplicationCall>.respond(
     isOk: Boolean,
     code: Status,
     msg: String = "",
     echo: String = ""
 ) {
-    call.respond(
-        CommonResult(
+    if (ShamrockConfig.isEchoNumber()) runCatching {
+        echo.toLong()
+    }.onSuccess {
+        return call.respond(
+            CommonResultForEchoNumber(if (isOk) "ok" else "failed", code.code, EmptyObject, msg, it)
+        )
+    }
+    call.respond(CommonResult(
         if (isOk) "ok" else "failed",
         code.code,
         EmptyObject,
         msg,
         echo
-    )
-    )
+    ))
 }
 
 @ShamrockDsl
-suspend inline fun <reified T : Any> PipelineContext<Unit, ApplicationCall>.respond(
+internal suspend inline fun <reified T : Any> PipelineContext<Unit, ApplicationCall>.respond(
     isOk: Boolean,
     code: Status,
     data: T,
     msg: String = "",
     echo: String = ""
 ) {
+    if (ShamrockConfig.isEchoNumber()) runCatching {
+        echo.toLong()
+    }.onSuccess {
+        return call.respond(
+            CommonResultForEchoNumber(if (isOk) "ok" else "failed", code.code, data, msg, it)
+        )
+    }
     call.respond(CommonResult(
         if (isOk) "ok" else "failed",
         code.code,
@@ -234,13 +249,21 @@ suspend inline fun <reified T : Any> PipelineContext<Unit, ApplicationCall>.resp
     ))
 }
 
-suspend inline fun <reified T : Any> PipelineContext<Unit, ApplicationCall>.respond(
+@ShamrockDsl
+internal suspend inline fun <reified T : Any> PipelineContext<Unit, ApplicationCall>.respond(
     isOk: Boolean,
     code: Int,
     data: T,
     msg: String = "",
     echo: String = ""
 ) {
+    if (ShamrockConfig.isEchoNumber()) runCatching {
+        echo.toLong()
+    }.onSuccess {
+        return call.respond(
+            CommonResultForEchoNumber(if (isOk) "ok" else "failed", code, data, msg, it)
+        )
+    }
     call.respond(CommonResult(
         if (isOk) "ok" else "failed",
         code,
