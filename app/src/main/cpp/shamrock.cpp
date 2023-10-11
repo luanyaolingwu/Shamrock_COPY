@@ -18,7 +18,7 @@ Java_moe_fuqiuluo_shamrock_xposed_actions_PullConfig_testNativeLibrary(JNIEnv *e
 
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_moe_fuqiuluo_utils_MD5_genFileMd5Hex(JNIEnv *env, jobject thiz, jstring file_path) {
+Java_moe_fuqiuluo_shamrock_utils_MD5_genFileMd5Hex(JNIEnv *env, jobject thiz, jstring file_path) {
     auto cPathStr = env->GetStringUTFChars(file_path, nullptr);
     std::filesystem::path filePath(cPathStr);
     if (!std::filesystem::exists(filePath)) {
@@ -39,7 +39,7 @@ Java_moe_fuqiuluo_utils_MD5_genFileMd5Hex(JNIEnv *env, jobject thiz, jstring fil
 
 extern "C"
 JNIEXPORT jstring JNICALL
-Java_moe_fuqiuluo_utils_MD5_getMd5Hex(JNIEnv *env, jobject thiz, jbyteArray bytes) {
+Java_moe_fuqiuluo_shamrock_utils_MD5_getMd5Hex(JNIEnv *env, jobject thiz, jbyteArray bytes) {
     auto len = env->GetArrayLength(bytes);
     auto *cBytes = new unsigned char[len];
     env->GetByteArrayRegion(bytes, 0, len, reinterpret_cast<jbyte *>(cBytes));
