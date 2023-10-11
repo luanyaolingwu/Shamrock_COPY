@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -235,11 +236,16 @@ private fun APIInfoCard(
                 hint = "请输入回调地址",
                 error = "输入的地址不合法",
                 checker = {
-                    it.isNotBlank() && (it.startsWith("http://") || it.startsWith("https://")) && !it.startsWith("ws://")
+                    it.isNotBlank()
                 },
                 confirm = {
-                    ShamrockConfig.setHttpAddr(ctx, webHookAddress.value)
-                    AppRuntime.log("设置回调HTTP地址为[${webHookAddress.value}]。")
+                    if (it.startsWith("http://") || it.startsWith("https://")) {
+                        ShamrockConfig.setHttpAddr(ctx, webHookAddress.value)
+                        AppRuntime.log("设置回调HTTP地址为[${webHookAddress.value}]。")
+                    } else {
+                        Toast.makeText(ctx, "回调地址不合法", Toast.LENGTH_SHORT).show()
+                        webHookAddress.value = ""
+                    }
                 }
             )
 
@@ -251,11 +257,16 @@ private fun APIInfoCard(
                 hint = "请输入被动地址",
                 error = "输入的地址不合法",
                 checker = {
-                    it.isNotBlank() && !it.startsWith("http://") && !it.startsWith("https://") && it.startsWith("ws://")
+                    it.isNotBlank()
                 },
                 confirm = {
-                    ShamrockConfig.setWsAddr(ctx, wsAddress.value)
-                    AppRuntime.log("设置被动WebSocket地址为[${wsAddress.value}]。")
+                    if (it.startsWith("ws://") || it.startsWith("wss://")) {
+                        ShamrockConfig.setWsAddr(ctx, wsAddress.value)
+                        AppRuntime.log("设置被动WebSocket地址为[${wsAddress.value}]。")
+                    } else {
+                        Toast.makeText(ctx, "被动WebSocket地址不合法", Toast.LENGTH_SHORT).show()
+                        wsAddress.value = ""
+                    }
                 }
             )
 
@@ -536,7 +547,8 @@ private inline fun TextItem(
     hint: String,
     error: String,
     noinline checker: (String) -> Boolean,
-    crossinline confirm: (String) -> Unit,
+    crossinline
+    confirm: (String) -> Unit,
     crossinline cancel: () -> Unit = {
 
     }
@@ -548,7 +560,7 @@ private inline fun TextItem(
         isError = remember { mutableStateOf(false) },
         text = text,
         hint = hint,
-        keyboardType = KeyboardType.Number,
+        keyboardType = KeyboardType.Text,
         errorText = error,
         checker = checker
     )
@@ -560,7 +572,7 @@ private inline fun TextItem(
     ) {
         dialogPortInputState.show(
             confirm = {
-                confirm(it)
+                confirm(text.value)
             },
             cancel = {
                 cancel()

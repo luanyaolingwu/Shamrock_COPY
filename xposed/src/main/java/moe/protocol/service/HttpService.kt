@@ -1,6 +1,7 @@
 @file:OptIn(DelicateCoroutinesApi::class)
 package moe.protocol.service
 
+import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import moe.protocol.service.data.push.MemberRole
 import moe.protocol.service.data.push.MsgSubType
 import moe.protocol.service.data.push.MsgType
@@ -243,13 +244,13 @@ internal object HttpService: HttpPushServlet() {
                     quicklyReply(record, message, msgHash, atSender)
                 }
             }
-            if (data.containsKey("delete") && data["delete"].asBoolean) {
+            if (MsgConstant.KCHATTYPEGROUP == record.chatType && data.containsKey("delete") && data["delete"].asBoolean) {
                 MsgSvc.recallMsg(msgHash)
             }
-            if (data.containsKey("kick") && data["kick"].asBoolean) {
+            if (MsgConstant.KCHATTYPEGROUP == record.chatType && data.containsKey("kick") && data["kick"].asBoolean) {
                 GroupSvc.kickMember(record.peerUin, false, record.senderUin)
             }
-            if (data.containsKey("ban") && data["ban"].asBoolean) {
+            if (MsgConstant.KCHATTYPEGROUP == record.chatType && data.containsKey("ban") && data["ban"].asBoolean) {
                 val banTime = data["ban_duration"].asIntOrNull ?: (30 * 60)
                 if (banTime <= 0) return
                 GroupSvc.banMember(record.peerUin, record.senderUin, banTime)
@@ -283,7 +284,7 @@ internal object HttpService: HttpPushServlet() {
                 "id" to msgHash
             )
         ).json) // 添加回复
-        if (atSender) {
+        if (MsgConstant.KCHATTYPEGROUP == record.chatType && atSender) {
             msgList.add(mapOf(
                 "type" to "at",
                 "data" to mapOf(
