@@ -56,8 +56,7 @@ internal object SendMessage: IActionHandler() {
                 MsgSvc.sendToAio(chatType, peerId, msg)
             }
         }
-        return ok(
-            MessageResult(
+        return ok(MessageResult(
             msgId = result.second,
             time = result.first * 0.001
         ), echo)
