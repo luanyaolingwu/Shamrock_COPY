@@ -231,7 +231,7 @@ internal object HttpService: HttpPushServlet() {
                 messageType = msgType,
                 subType = subType,
                 messageId = msgHash,
-                groupId = if(subType == MsgSubType.Friend) 0 else record.peerUin,
+                groupId = if(msgType == MsgType.Private) 0 else record.peerUin,
                 userId = record.senderUin,
                 message = if(ShamrockConfig.useCQ()) raw.json else elements.toSegment(record.chatType).json,
                 rawMessage = raw,
@@ -270,7 +270,7 @@ internal object HttpService: HttpPushServlet() {
                                 "text" to message.asString
                             )
                         ).json)
-                        moe.fuqiuluo.shamrock.remote.service.HttpService.quicklyReply(
+                        quicklyReply(
                             record,
                             msgList.jsonArray,
                             msgHash,
@@ -278,7 +278,7 @@ internal object HttpService: HttpPushServlet() {
                         )
                     } else {
                         val messageArray = MessageHelper.decodeCQCode(message.asString)
-                        moe.fuqiuluo.shamrock.remote.service.HttpService.quicklyReply(
+                        quicklyReply(
                             record,
                             messageArray,
                             msgHash,
@@ -286,7 +286,7 @@ internal object HttpService: HttpPushServlet() {
                         )
                     }
                 } else if (message is JsonArray) {
-                    moe.fuqiuluo.shamrock.remote.service.HttpService.quicklyReply(
+                    quicklyReply(
                         record,
                         message,
                         msgHash,
