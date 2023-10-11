@@ -79,7 +79,7 @@ int silk_encode(int rate, char type, const char* inputFile, const char* outPutFi
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_moe_fuqiuluo_utils_AudioUtils_pcmToSilk(JNIEnv *env, jobject thiz,
+Java_moe_fuqiuluo_shamrock_utils_AudioUtils_pcmToSilk(JNIEnv *env, jobject thiz,
                                              jint rate,
                                              jbyte type,
                                              jstring pcm_file,
@@ -254,7 +254,7 @@ int silk_encode(int rate, char type, const char* inputFile, const char* outPutFi
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_moe_fuqiuluo_utils_AudioUtils_silkToPcm(JNIEnv *env, jobject thiz, jint rate, jbyte type,
+Java_moe_fuqiuluo_shamrock_utils_AudioUtils_silkToPcm(JNIEnv *env, jobject thiz, jint rate, jbyte type,
                                              jstring pcm_file, jstring silk_file) {
     auto pcm = env->GetStringUTFChars(pcm_file, nullptr);
     auto silk = env->GetStringUTFChars(silk_file, nullptr);

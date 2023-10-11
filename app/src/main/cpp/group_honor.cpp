@@ -17,7 +17,7 @@ jobject make_honor_object(JNIEnv *env, jobject user_id, const Honor& honor);
 
 extern "C"
 JNIEXPORT jobject JNICALL
-Java_moe_fuqiuluo_remote_action_handlers_GetTroopHonor_nativeDecodeHonor(JNIEnv *env, jobject thiz,
+Java_moe_fuqiuluo_shamrock_remote_action_handlers_GetTroopHonor_nativeDecodeHonor(JNIEnv *env, jobject thiz,
                                                                          jstring user_id,
                                                                          jint honor_id,
                                                                          jbyte honor_flag) {
@@ -69,7 +69,7 @@ int calc_honor_flag(int honor_id, char honor_flag) {
 }
 
 jobject make_honor_object(JNIEnv *env, jobject user_id, const Honor& honor) {
-    jclass GroupMemberHonor = env->FindClass("moe/protocol/service/data/GroupMemberHonor");
+    jclass GroupMemberHonor = env->FindClass("moe/qqinterface/service/data/GroupMemberHonor");
     jmethodID GroupMemberHonor_init = env->GetMethodID(GroupMemberHonor, "<init>",
                                                        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;)V");
     auto user_id_str = (jstring) user_id;
