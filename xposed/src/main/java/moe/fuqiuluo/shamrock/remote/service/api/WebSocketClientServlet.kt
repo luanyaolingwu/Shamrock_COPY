@@ -33,6 +33,7 @@ internal abstract class WebSocketClientServlet(
 
     override fun onOpen(handshakedata: ServerHandshake?) {
         LogCenter.log("WebSocketClient onOpen: ${handshakedata?.httpStatus}, ${handshakedata?.httpStatusMessage}")
+        GlobalPusher.register(this)
     }
 
     override fun onMessage(message: String) {

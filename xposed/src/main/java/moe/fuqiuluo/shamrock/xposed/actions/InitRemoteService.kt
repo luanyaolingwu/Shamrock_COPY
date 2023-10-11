@@ -36,8 +36,9 @@ internal class InitRemoteService: IAction {
         }
 
         if (ShamrockConfig.openWebSocketClient()) {
-            ShamrockConfig.getWebSocketClientAddress().split(",", "|", "，").forEach {  url ->
-                startWebSocketClient(url)
+            ShamrockConfig.getWebSocketClientAddress().split(",", "|", "，").forEach { url ->
+                if (url.isNotBlank())
+                    startWebSocketClient(url)
             }
         }
     }
@@ -47,7 +48,6 @@ internal class InitRemoteService: IAction {
             try {
                 val server = WebSocketService(ShamrockConfig.getWebSocketPort())
                 server.start()
-                GlobalPusher.register(server)
             } catch (e: Throwable) {
                 LogCenter.log(e.stackTraceToString(), Level.ERROR)
             }
@@ -78,7 +78,6 @@ internal class InitRemoteService: IAction {
                             wsClient = WebSocketClientService(url, wsHeaders)
                             wsClient.connect()
                         }
-                        GlobalPusher.register(wsClient)
                     }
                 } else {
                     LogCenter.log("被动WebSocket地址不合法: $url", Level.ERROR)
