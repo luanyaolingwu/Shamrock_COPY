@@ -62,6 +62,7 @@ internal class InitRemoteService: IAction {
                 val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
                 val curUin = runtime.currentAccountUin
                 val wsHeaders = hashMapOf(
+                    "X-Client-Role" to "Universal",
                     "X-Self-ID" to curUin
                 )
                 val token = ShamrockConfig.getToken()
