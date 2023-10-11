@@ -38,7 +38,10 @@ internal object ActionManager {
             GetRecord, GetImage,
 
             // WEATHER
-            GetWeatherCityCode, GetWeather
+            GetWeatherCityCode, GetWeather,
+
+            // OTHER
+            GetDeviceBattery
         ).forEach {
             it.alias.forEach { name ->
                 actionMap[name] = it
