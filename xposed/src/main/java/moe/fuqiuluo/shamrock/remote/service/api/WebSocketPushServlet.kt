@@ -52,8 +52,7 @@ internal abstract class WebSocketPushServlet(
         timer("heartbeat", true, 0, 1000L * 5) {
             val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
             val curUin = runtime.currentAccountUin
-            broadcastAnyEvent(
-                PushMetaEvent(
+            broadcastAnyEvent(PushMetaEvent(
                 time = System.currentTimeMillis() / 1000,
                 selfId = app.longAccountUin,
                 postType = PostType.Meta,
@@ -63,8 +62,7 @@ internal abstract class WebSocketPushServlet(
                     Self("qq", curUin), runtime.isLogin, status = "正常", good = true
                 ),
                 interval = 15000
-            )
-            )
+            ))
         }
     }
 
@@ -103,10 +101,12 @@ internal abstract class WebSocketPushServlet(
 
     override fun onError(conn: WebSocket, ex: Exception?) {
         LogCenter.log("WSServer Error: " + ex?.stackTraceToString(), Level.ERROR)
+        GlobalPusher.unregister(this)
     }
 
     override fun onStart() {
         LogCenter.log("WSServer start running on ws://0.0.0.0:$port!")
+        GlobalPusher.register(this)
     }
 
     protected inline fun <reified T> pushTo(body: T) {

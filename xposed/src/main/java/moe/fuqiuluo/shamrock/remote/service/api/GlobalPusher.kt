@@ -10,7 +10,8 @@ internal object GlobalPusher {
         if (ShamrockConfig.isIgnoreAllEvent()) {
             return
         }
-        list.add(servlet)
+        if (!list.contains(servlet))
+            list.add(servlet)
     }
 
     fun unregister(servlet: BasePushServlet){
