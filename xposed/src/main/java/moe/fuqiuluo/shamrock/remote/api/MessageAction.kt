@@ -54,7 +54,7 @@ fun Routing.messageAction() {
         }
     }
 
-    route("/send_group_msg") {
+    route("/send_group_(msg|message)".toRegex()) {
         get {
             val groupId = fetchGetOrThrow("group_id")
             val message = fetchGetOrThrow("message")
@@ -80,7 +80,7 @@ fun Routing.messageAction() {
         }
     }
 
-    route("/send_private_msg") {
+    route("/send_private_(msg|message)".toRegex()) {
         get {
             val userId = fetchGetOrThrow("user_id")
             val message = fetchGetOrThrow("message")
