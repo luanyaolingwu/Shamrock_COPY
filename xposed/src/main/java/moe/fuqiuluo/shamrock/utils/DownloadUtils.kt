@@ -19,9 +19,18 @@ import kotlin.math.roundToInt
 object DownloadUtils {
     private const val MAX_THREAD = 4
 
-    suspend fun download(urlAdr: String, dest: File): Boolean {
+    suspend fun download(
+        urlAdr: String,
+        dest: File,
+        threadCount: Int = MAX_THREAD,
+        headers: Map<String, String> = mapOf()
+    ): Boolean {
+        var threadCnt = threadCount
         val url = URL(urlAdr)
         val connection = withContext(Dispatchers.IO) { url.openConnection() } as HttpURLConnection
+        headers.forEach { (k, v) ->
+            connection.setRequestProperty(k, v)
+        }
         connection.requestMethod = "GET"
         connection.connectTimeout = 5000
         val responseCode = connection.responseCode
@@ -32,7 +41,6 @@ object DownloadUtils {
                 raf.setLength(contentLength.toLong())
                 raf.close()
             }
-            var threadCnt = MAX_THREAD
             if (contentLength <= 1024 * 1024) {
                 threadCnt = 1
             }
