@@ -103,7 +103,9 @@ suspend fun ApplicationCall.fetchPostOrNull(key: String): String? {
             Json.parseToJsonElement(receiveText()).jsonObject.also {
                 attributes.put(jsonKey, it)
             }[key].asStringOrNull
-        } else if (ContentType.Application.FormUrlEncoded == request.contentType()) {
+        } else if (
+            ContentType.Application.FormUrlEncoded == request.contentType()
+        ) {
             receiveParameters().also {
                 attributes.put(partsKey, it)
             }[key]

@@ -6,6 +6,7 @@ import com.tencent.qqnt.kernel.nativeinterface.MsgRecord
 import moe.fuqiuluo.shamrock.remote.service.data.push.NoticeSubType
 import moe.fuqiuluo.shamrock.remote.service.data.push.NoticeType
 import mqq.app.MobileQQ
+import oicq.wlogin_sdk.tools.MD5
 
 internal interface BasePushServlet {
     val address: String
@@ -84,4 +85,7 @@ internal interface BasePushServlet {
 
     val app: QQAppInterface
         get() = MobileQQ.getMobileQQ().waitAppRuntime() as QQAppInterface
+
+    val id: String
+        get() = MD5.getMD5String(address.toByteArray())
 }
