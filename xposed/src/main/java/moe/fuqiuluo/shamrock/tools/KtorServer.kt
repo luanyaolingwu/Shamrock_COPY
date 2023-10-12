@@ -160,6 +160,17 @@ suspend fun PipelineContext<Unit, ApplicationCall>.isString(key: String): Boolea
     return data[key] is JsonPrimitive
 }
 
+suspend fun PipelineContext<Unit, ApplicationCall>.fetchPostJsonString(key: String): String {
+    val data = if (call.attributes.contains(jsonKey)) {
+        call.attributes[jsonKey]
+    } else {
+        Json.parseToJsonElement(call.receiveText()).jsonObject.also {
+            call.attributes.put(jsonKey, it)
+        }
+    }
+    return data[key].asString
+}
+
 suspend fun PipelineContext<Unit, ApplicationCall>.fetchPostJsonObject(key: String): JsonObject {
     val data = if (call.attributes.contains(jsonKey)) {
         call.attributes[jsonKey]

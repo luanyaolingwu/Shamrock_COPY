@@ -13,6 +13,8 @@ import moe.fuqiuluo.shamrock.tools.fetchGetOrNull
 import moe.fuqiuluo.shamrock.tools.fetchGetOrThrow
 import moe.fuqiuluo.shamrock.tools.fetchOrThrow
 import moe.fuqiuluo.shamrock.tools.fetchPostJsonArray
+import moe.fuqiuluo.shamrock.tools.fetchPostJsonObject
+import moe.fuqiuluo.shamrock.tools.fetchPostJsonString
 import moe.fuqiuluo.shamrock.tools.fetchPostOrNull
 import moe.fuqiuluo.shamrock.tools.fetchPostOrThrow
 import moe.fuqiuluo.shamrock.tools.getOrPost
@@ -61,12 +63,20 @@ fun Routing.messageAction() {
         }
         post {
             val groupId = fetchPostOrThrow("group_id")
-            call.respondText(if (isJsonData() && !isString("message")) {
-                SendMessage(MsgConstant.KCHATTYPEGROUP, groupId, fetchPostJsonArray("message"))
+
+            val autoEscape = fetchPostOrNull("auto_escape")?.toBooleanStrict() ?: false
+
+            val result = if (isJsonData()) {
+                if (isString("message")) {
+                    SendMessage(MsgConstant.KCHATTYPEGROUP, groupId, fetchPostJsonString("message"), autoEscape)
+                } else {
+                    SendMessage(MsgConstant.KCHATTYPEGROUP, groupId, fetchPostJsonArray("message"))
+                }
             } else {
-                val autoEscape = fetchPostOrNull("auto_escape")?.toBooleanStrict() ?: false
                 SendMessage(MsgConstant.KCHATTYPEGROUP, groupId, fetchPostOrThrow("message"), autoEscape)
-            })
+            }
+
+            call.respondText(result)
         }
     }
 
@@ -79,12 +89,19 @@ fun Routing.messageAction() {
         }
         post {
             val userId = fetchPostOrThrow("user_id")
-            call.respondText(if (isJsonData() && !isString("message")) {
-                SendMessage(MsgConstant.KCHATTYPEC2C, userId, fetchPostJsonArray("message"))
+            val autoEscape = fetchPostOrNull("auto_escape")?.toBooleanStrict() ?: false
+
+            val result = if (isJsonData()) {
+                if (isString("message")) {
+                    SendMessage(MsgConstant.KCHATTYPEC2C, userId, fetchPostJsonString("message"), autoEscape)
+                } else {
+                    SendMessage(MsgConstant.KCHATTYPEC2C, userId, fetchPostJsonArray("message"))
+                }
             } else {
-                val autoEscape = fetchPostOrNull("auto_escape")?.toBooleanStrict() ?: false
                 SendMessage(MsgConstant.KCHATTYPEC2C, userId, fetchPostOrThrow("message"), autoEscape)
-            })
+            }
+
+            call.respondText(result)
         }
     }
 }
