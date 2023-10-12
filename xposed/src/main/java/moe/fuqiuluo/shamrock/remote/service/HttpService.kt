@@ -112,7 +112,7 @@ internal object HttpService: HttpPushServlet() {
             type = NoticeType.FriendRecall,
             operation = operation,
             userId = operation,
-            msgId = msgHash,
+            msgHash = msgHash,
             tip = tip
         )
     }
@@ -131,7 +131,7 @@ internal object HttpService: HttpPushServlet() {
             operation = operation,
             userId = userId,
             groupId = groupId,
-            msgId = msgHash,
+            msgHash = msgHash,
             tip = tip
         )
     }
@@ -183,17 +183,42 @@ internal object HttpService: HttpPushServlet() {
         )
     }
 
+    override fun pushGroupFileCome(
+        time: Long,
+        userId: Long,
+        groupId: Long,
+        fileId: String,
+        fileName: String,
+        fileSize: Long,
+        bizId: Int
+    ) {
+        pushNotice(
+            time = time,
+            type = NoticeType.GroupUpload,
+            groupId = groupId,
+            operation = userId,
+            userId = userId,
+            fileMsg = FileMsg(
+                id = fileId,
+                name = fileName,
+                size = fileSize,
+                busid = bizId.toLong()
+            )
+        )
+    }
+
     private fun pushNotice(
         time: Long,
         type: NoticeType,
-        subType: NoticeSubType = NoticeSubType.Set,
+        subType: NoticeSubType = NoticeSubType.None,
         operation: Long,
         userId: Long,
         groupId: Long = 0,
         duration: Int = 0,
-        msgId: Int = 0,
+        msgHash: Int = 0,
         target: Long = 0,
-        tip: String = ""
+        tip: String = "",
+        fileMsg: FileMsg? = null
     ) {
         GlobalScope.launch {
             pushTo(PushNotice(
@@ -207,8 +232,9 @@ internal object HttpService: HttpPushServlet() {
                 groupId = groupId,
                 duration = duration,
                 target = target,
-                msgId = msgId,
-                tip = tip
+                msgId = msgHash,
+                tip = tip,
+                file = fileMsg
             ))
         }
     }

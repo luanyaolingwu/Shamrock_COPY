@@ -203,11 +203,19 @@ internal object AioListener: IKernelMsgListener {
         val userId = record.senderUin
         val fileMsg = record.elements.firstOrNull {
             it.elementType == MsgConstant.KELEMTYPEFILE
-        } ?: kotlin.run {
+        }?.fileElement ?: kotlin.run {
             LogCenter.log("消息为文件消息但不包含文件消息，来自：${record.peerUin}", Level.WARN)
             return
         }
+        val fileMd5 = fileMsg.fileMd5
+        val fileName = fileMsg.fileName
+        val fileSize = fileMsg.fileSize
+        val uuid = fileMsg.fileUuid
+        val bizId = fileMsg.fileBizId
 
+        GlobalPusher().forEach {
+            it.pushGroupFileCome(record.msgTime, userId, groupId, uuid, fileName, fileSize, bizId)
+        }
     }
 
     override fun onRecvOnlineFileMsg(arrayList: ArrayList<MsgRecord>?) {
