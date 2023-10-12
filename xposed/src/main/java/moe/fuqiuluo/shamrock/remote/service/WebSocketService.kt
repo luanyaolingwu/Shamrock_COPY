@@ -172,34 +172,62 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
         pushNotice(time, NoticeType.GroupAdminChange, if (setAdmin) NoticeSubType.Set else NoticeSubType.UnSet, 0, target, groupId)
     }
 
+    override fun pushGroupFileCome(
+        time: Long,
+        userId: Long,
+        groupId: Long,
+        fileId: String,
+        fileName: String,
+        fileSize: Long,
+        bizId: Int
+    ) {
+        pushNotice(
+            time = time,
+            type = NoticeType.GroupUpload,
+            groupId = groupId,
+            operation = userId,
+            userId = userId,
+            fileMsg = FileMsg(
+                id = fileId,
+                name = fileName,
+                size = fileSize,
+                busid = bizId.toLong()
+            )
+        )
+    }
+
     private fun pushNotice(
         time: Long,
         type: NoticeType,
-        subType: NoticeSubType = NoticeSubType.Set,
+        subType: NoticeSubType = NoticeSubType.None,
         operation: Long,
         userId: Long,
         groupId: Long = 0,
         duration: Int = 0,
         msgHash: Int = 0,
         target: Long = 0,
-        tip: String = ""
+        tip: String = "",
+        fileMsg: FileMsg? = null
     ) {
-        pushTo(
-            PushNotice(
-                time = time,
-                selfId = app.longAccountUin,
-                postType = PostType.Notice,
-                type = type,
-                subType = subType,
-                operatorId = operation,
-                userId = userId,
-                groupId = groupId,
-                duration = duration,
-                target = target,
-                msgId = msgHash,
-                tip = tip
+        GlobalScope.launch {
+            pushTo(
+                PushNotice(
+                    time = time,
+                    selfId = app.longAccountUin,
+                    postType = PostType.Notice,
+                    type = type,
+                    subType = subType,
+                    operatorId = operation,
+                    userId = userId,
+                    groupId = groupId,
+                    duration = duration,
+                    target = target,
+                    msgId = msgHash,
+                    tip = tip,
+                    file = fileMsg
+                )
             )
-        )
+        }
     }
 
     private fun pushMsg(

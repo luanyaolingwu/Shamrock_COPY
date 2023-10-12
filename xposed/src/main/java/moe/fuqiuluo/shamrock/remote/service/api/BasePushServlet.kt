@@ -72,6 +72,16 @@ internal interface BasePushServlet {
 
     fun pushGroupAdminChange(time: Long, target: Long, groupId: Long, setAdmin: Boolean)
 
+    fun pushGroupFileCome(
+        time: Long,
+        userId: Long,
+        groupId: Long,
+        fileId: String,
+        fileName: String,
+        fileSize: Long,
+        bizId: Int
+    )
+
     val app: QQAppInterface
         get() = MobileQQ.getMobileQQ().waitAppRuntime() as QQAppInterface
 }
