@@ -1,9 +1,11 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.helper.LocalCacheHelper
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.remote.service.data.OutResource
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import moe.fuqiuluo.shamrock.utils.AudioUtils
 
 internal object GetRecord: IActionHandler() {
@@ -16,7 +18,7 @@ internal object GetRecord: IActionHandler() {
         return invoke(file, format, session.echo)
     }
 
-    operator fun invoke(file: String, format: String, echo: String = ""): String {
+    operator fun invoke(file: String, format: String, echo: JsonElement = EmptyJsonString): String {
         val pttFile = LocalCacheHelper.getCachePttFile(file)
         return if(pttFile.exists()) {
             val isSilk = AudioUtils.isSilk(pttFile)

@@ -1,8 +1,10 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object SetGroupWholeBan: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -11,7 +13,7 @@ internal object SetGroupWholeBan: IActionHandler() {
         return invoke(groupId, enable, session.echo)
     }
 
-    operator fun invoke(groupId: Long, enable: Boolean, echo: String = ""): String {
+    operator fun invoke(groupId: Long, enable: Boolean, echo: JsonElement = EmptyJsonString): String {
         GroupSvc.setGroupWholeBan(groupId, enable)
         return ok("成功", echo)
     }

@@ -1,8 +1,10 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object ModifyTroopMemberName: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -12,7 +14,7 @@ internal object ModifyTroopMemberName: IActionHandler() {
         return invoke(groupId, userId, name, session.echo)
     }
 
-    operator fun invoke(groupId: String, userId: String, card: String, echo: String = ""): String {
+    operator fun invoke(groupId: String, userId: String, card: String, echo: JsonElement = EmptyJsonString): String {
         if (!GroupSvc.isAdmin(groupId)) {
             return logic("you are not admin", echo)
         }

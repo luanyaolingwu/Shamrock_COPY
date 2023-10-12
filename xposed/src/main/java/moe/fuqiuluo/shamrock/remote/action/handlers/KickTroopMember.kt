@@ -1,8 +1,10 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object KickTroopMember: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -13,7 +15,7 @@ internal object KickTroopMember: IActionHandler() {
         return invoke(groupId, userId, rejectAddRequest, session.echo)
     }
 
-    operator fun invoke(groupId: Long, userId: Long, rejectAddRequest: Boolean = false, echo: String = ""): String {
+    operator fun invoke(groupId: Long, userId: Long, rejectAddRequest: Boolean = false, echo: JsonElement = EmptyJsonString): String {
         GroupSvc.kickMember(groupId, rejectAddRequest, userId)
         return ok("成功", echo)
     }

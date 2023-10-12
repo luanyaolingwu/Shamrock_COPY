@@ -3,10 +3,12 @@ package moe.fuqiuluo.shamrock.remote.action.handlers
 import com.tencent.mobileqq.data.Card
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.tools.toHexString
 import moe.fuqiuluo.qqinterface.servlet.CardSvc
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object GetStrangerInfo: IActionHandler() {
     override fun path(): String = "_get_stranger_info"
@@ -18,7 +20,7 @@ internal object GetStrangerInfo: IActionHandler() {
         return invoke(uid, session.echo)
     }
 
-    suspend operator fun invoke(userId: String, echo: String = ""): String {
+    suspend operator fun invoke(userId: String, echo: JsonElement = EmptyJsonString): String {
         val info = CardSvc.refreshAndGetProfileCard(userId).onFailure {
             return logic("unable to fetch stranger info", echo)
         }.getOrThrow()

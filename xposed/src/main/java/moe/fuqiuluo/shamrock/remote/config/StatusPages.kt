@@ -9,31 +9,30 @@ import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.uri
 import io.ktor.server.response.respond
 import io.ktor.util.AttributeKey
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.entries.CommonResult
 import moe.fuqiuluo.shamrock.remote.entries.ErrorCatch
 import moe.fuqiuluo.shamrock.remote.entries.Status
 
-val ECHO_KEY = AttributeKey<String>("echo")
+val ECHO_KEY = AttributeKey<JsonElement>("echo")
 
 fun Application.statusPages() {
     install(StatusPages) {
         exception<ParamsException> { call, cause ->
             val echo = if (call.attributes.contains(ECHO_KEY)) {
                 call.attributes[ECHO_KEY]
-            } else ""
-            call.respond(
-                CommonResult(
+            } else null
+            call.respond(CommonResult(
                 status = "failed",
                 retcode = Status.BadParam.code,
                 data = ErrorCatch(call.request.uri, cause.message ?: ""),
                 echo = echo
-            )
-            )
+            ))
         }
         exception<LogicException> { call, cause ->
             val echo = if (call.attributes.contains(ECHO_KEY)) {
                 call.attributes[ECHO_KEY]
-            } else ""
+            } else null
             call.respond(CommonResult(
                 status = "failed",
                 retcode = Status.LogicError.code,
@@ -44,7 +43,7 @@ fun Application.statusPages() {
         exception<ErrorTokenException> { call, cause ->
             val echo = if (call.attributes.contains(ECHO_KEY)) {
                 call.attributes[ECHO_KEY]
-            } else ""
+            } else null
             call.respond(CommonResult(
                 status = "failed",
                 retcode = Status.ErrorToken.code,
@@ -55,7 +54,7 @@ fun Application.statusPages() {
         exception<Throwable> { call, cause ->
             val echo = if (call.attributes.contains(ECHO_KEY)) {
                 call.attributes[ECHO_KEY]
-            } else ""
+            } else null
             call.respond(CommonResult(
                 status = "failed",
                 retcode = Status.InternalHandlerError.code,

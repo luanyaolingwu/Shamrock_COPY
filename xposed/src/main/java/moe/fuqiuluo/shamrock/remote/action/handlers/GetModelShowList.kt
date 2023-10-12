@@ -8,6 +8,7 @@ import io.ktor.client.statement.request
 import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.tools.GlobalClient
@@ -16,13 +17,14 @@ import moe.fuqiuluo.shamrock.tools.json
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object GetModelShowList : IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         return invoke(session.getString("model"), session.echo)
     }
 
-    suspend operator fun invoke(model: String, echo: String = ""): String {
+    suspend operator fun invoke(model: String, echo: JsonElement = EmptyJsonString): String {
         val ts = System.currentTimeMillis() / 1000
         val csrf = TicketSvc.getCSRF(TicketSvc.getUin(), "vip.qq.com")
 

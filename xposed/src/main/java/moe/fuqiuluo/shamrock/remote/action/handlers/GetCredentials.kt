@@ -1,9 +1,11 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.remote.service.data.Credentials
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object GetCredentials: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -12,7 +14,7 @@ internal object GetCredentials: IActionHandler() {
         return invoke(domain, session.echo)
     }
 
-    operator fun invoke(echo: String = ""): String {
+    operator fun invoke(echo: JsonElement = EmptyJsonString): String {
         val uin = TicketSvc.getUin()
         val skey = TicketSvc.getSKey(uin)
         val pskey = TicketSvc.getPSKey(uin)
@@ -23,7 +25,7 @@ internal object GetCredentials: IActionHandler() {
         ), echo)
     }
 
-    suspend operator fun invoke(domain: String, echo: String = ""): String {
+    suspend operator fun invoke(domain: String, echo: JsonElement = EmptyJsonString): String {
         val uin = TicketSvc.getUin()
         val skey = TicketSvc.getSKey(uin)
         val pskey = TicketSvc.getPSKey(uin, domain) ?: ""

@@ -1,5 +1,6 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
@@ -10,6 +11,7 @@ import moe.fuqiuluo.shamrock.remote.service.data.HONOR_GROUP_FLAME
 import moe.fuqiuluo.shamrock.remote.service.data.HONOR_HAPPY
 import moe.fuqiuluo.shamrock.remote.service.data.HONOR_NEWBIE
 import moe.fuqiuluo.shamrock.remote.service.data.HONOR_TALKATIVE
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object GetTroopHonor: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -18,7 +20,7 @@ internal object GetTroopHonor: IActionHandler() {
         return invoke(groupId, refresh, session.echo)
     }
 
-    suspend operator fun invoke(groupId: String, refresh: Boolean, echo: String = ""): String {
+    suspend operator fun invoke(groupId: String, refresh: Boolean, echo: JsonElement = EmptyJsonString): String {
         val honorInfo = ArrayList<GroupMemberHonor>()
 
         GroupSvc.getGroupMemberList(groupId, refresh).onFailure {

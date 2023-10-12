@@ -19,7 +19,12 @@ import moe.fuqiuluo.shamrock.remote.entries.IndexData
 import moe.fuqiuluo.shamrock.remote.entries.Status
 import moe.fuqiuluo.shamrock.tools.fetchOrNull
 import moe.fuqiuluo.shamrock.tools.fetchOrThrow
+import moe.fuqiuluo.shamrock.tools.fetchPostJsonElement
 import moe.fuqiuluo.shamrock.tools.fetchPostJsonObject
+import moe.fuqiuluo.shamrock.tools.isJsonArray
+import moe.fuqiuluo.shamrock.tools.isJsonObject
+import moe.fuqiuluo.shamrock.tools.isJsonString
+import moe.fuqiuluo.shamrock.tools.json
 import moe.fuqiuluo.shamrock.tools.respond
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
 import mqq.app.MobileQQ
@@ -42,16 +47,12 @@ fun Routing.echoVersion() {
             )
         }
         post {
-            /*
-            val jsonText = call.receiveText()
-            val actionObject = Json.parseToJsonElement(jsonText).jsonObject
-
-            val action = actionObject["action"].asString
-            val echo = actionObject["echo"].asStringOrNull ?: ""
-            val params = actionObject["params"].asJsonObject*/
             val action = fetchOrThrow("action")
-            val echo = fetchOrNull("echo") ?: ""
-
+            val echo = if (isJsonObject("echo") || isJsonArray("echo")) {
+                fetchPostJsonElement("echo")
+            } else {
+                (fetchOrNull("echo") ?: "").json
+            }
             call.attributes.put(ECHO_KEY, echo)
 
             val params = fetchPostJsonObject("params")

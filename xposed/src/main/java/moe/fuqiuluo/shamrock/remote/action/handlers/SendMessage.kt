@@ -7,10 +7,12 @@ import moe.fuqiuluo.shamrock.helper.MessageHelper
 import moe.fuqiuluo.shamrock.helper.ParamsException
 import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.service.data.MessageResult
 import moe.fuqiuluo.shamrock.tools.json
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object SendMessage: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -43,7 +45,7 @@ internal object SendMessage: IActionHandler() {
         peerId: String,
         message: String,
         autoEscape: Boolean,
-        echo: String = ""
+        echo: JsonElement = EmptyJsonString
     ): String {
         val result = if (autoEscape) {
             MsgSvc.sendToAio(chatType, peerId, arrayListOf(message).json)
@@ -64,7 +66,7 @@ internal object SendMessage: IActionHandler() {
 
     // 消息段格式消息
     suspend operator fun invoke(
-        chatType: Int, peerId: String, message: JsonArray, echo: String = ""
+        chatType: Int, peerId: String, message: JsonArray, echo: JsonElement = EmptyJsonString
     ): String {
         val result = MsgSvc.sendToAio(chatType, peerId, message)
         return ok(MessageResult(
