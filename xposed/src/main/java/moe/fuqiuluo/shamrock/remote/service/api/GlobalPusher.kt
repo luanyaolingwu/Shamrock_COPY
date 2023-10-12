@@ -4,23 +4,23 @@ import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import java.util.Collections
 
 internal object GlobalPusher {
-    private val list = Collections.synchronizedList(arrayListOf<BasePushServlet>())
+    private val cacheConn = Collections.synchronizedMap(mutableMapOf<String, BasePushServlet>())
 
     fun register(servlet: BasePushServlet){
         if (ShamrockConfig.isIgnoreAllEvent()) {
             return
         }
-        if (!list.contains(servlet))
-            list.add(servlet)
+        if (!cacheConn.containsKey(servlet.id) && !cacheConn.containsValue(servlet))
+            cacheConn[servlet.id] = servlet
     }
 
     fun unregister(servlet: BasePushServlet){
-        if (list.contains(servlet))
-            list.remove(servlet)
+        if (cacheConn.containsKey(servlet.id) || cacheConn.containsValue(servlet))
+            cacheConn.remove(servlet.id)
     }
 
     operator fun invoke(): List<BasePushServlet> {
-        return list
+        return cacheConn.map { it.value }
     }
 }
 
