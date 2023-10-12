@@ -1,9 +1,11 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
 import com.tencent.mobileqq.app.QQAppInterface
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.remote.entries.StdAccount
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import mqq.app.MobileQQ
 
 internal object GetLoginInfo: IActionHandler() {
@@ -11,7 +13,7 @@ internal object GetLoginInfo: IActionHandler() {
         return invoke(session.echo)
     }
 
-    operator fun invoke(echo: String = ""): String {
+    operator fun invoke(echo: JsonElement = EmptyJsonString): String {
         val accounts = MobileQQ.getMobileQQ().allAccounts
         val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
         val curUin = runtime.currentAccountUin

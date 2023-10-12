@@ -1,9 +1,11 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.remote.service.data.SimpleTroopInfo
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object GetTroopList: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -11,7 +13,7 @@ internal object GetTroopList: IActionHandler() {
         return invoke(refresh, session.echo)
     }
 
-    suspend operator fun invoke(refresh: Boolean, echo: String = ""): String {
+    suspend operator fun invoke(refresh: Boolean, echo: JsonElement = EmptyJsonString): String {
         val troopList = arrayListOf<SimpleTroopInfo>()
         GroupSvc.getGroupList(refresh).onFailure {
             return error(it.message ?: "unknown error", echo)

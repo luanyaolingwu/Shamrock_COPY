@@ -14,6 +14,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 
 val EmptyJsonObject = JsonObject(mapOf())
+val EmptyJsonString = "".json
 val GlobalJson = Json {
     ignoreUnknownKeys = true // 忽略未知key
     isLenient = true // 宽松模式

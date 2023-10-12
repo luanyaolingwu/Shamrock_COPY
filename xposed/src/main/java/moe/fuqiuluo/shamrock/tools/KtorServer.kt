@@ -22,12 +22,10 @@ import moe.fuqiuluo.shamrock.helper.ParamsException
 import io.ktor.http.HttpMethod
 import io.ktor.server.request.httpMethod
 import io.ktor.server.routing.route
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.entries.CommonResult
-import moe.fuqiuluo.shamrock.remote.entries.CommonResultForEchoNumber
 import moe.fuqiuluo.shamrock.remote.entries.EmptyObject
 import moe.fuqiuluo.shamrock.remote.entries.Status
-import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 
 @DslMarker
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS, AnnotationTarget.TYPEALIAS, AnnotationTarget.TYPE)
@@ -148,7 +146,7 @@ fun PipelineContext<Unit, ApplicationCall>.isJsonData(): Boolean {
     return ContentType.Application.Json == call.request.contentType()
 }
 
-suspend fun PipelineContext<Unit, ApplicationCall>.isString(key: String): Boolean {
+suspend fun PipelineContext<Unit, ApplicationCall>.isJsonString(key: String): Boolean {
     if (!isJsonData()) return true
     val data = if (call.attributes.contains(jsonKey)) {
         call.attributes[jsonKey]
@@ -160,6 +158,30 @@ suspend fun PipelineContext<Unit, ApplicationCall>.isString(key: String): Boolea
     return data[key] is JsonPrimitive
 }
 
+suspend fun PipelineContext<Unit, ApplicationCall>.isJsonObject(key: String): Boolean {
+    if (!isJsonData()) return false
+    val data = if (call.attributes.contains(jsonKey)) {
+        call.attributes[jsonKey]
+    } else {
+        Json.parseToJsonElement(call.receiveText()).jsonObject.also {
+            call.attributes.put(jsonKey, it)
+        }
+    }
+    return data[key] is JsonObject
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.isJsonArray(key: String): Boolean {
+    if (!isJsonData()) return false
+    val data = if (call.attributes.contains(jsonKey)) {
+        call.attributes[jsonKey]
+    } else {
+        Json.parseToJsonElement(call.receiveText()).jsonObject.also {
+            call.attributes.put(jsonKey, it)
+        }
+    }
+    return data[key] is JsonArray
+}
+
 suspend fun PipelineContext<Unit, ApplicationCall>.fetchPostJsonString(key: String): String {
     val data = if (call.attributes.contains(jsonKey)) {
         call.attributes[jsonKey]
@@ -169,6 +191,17 @@ suspend fun PipelineContext<Unit, ApplicationCall>.fetchPostJsonString(key: Stri
         }
     }
     return data[key].asString
+}
+
+suspend fun PipelineContext<Unit, ApplicationCall>.fetchPostJsonElement(key: String): JsonElement {
+    val data = if (call.attributes.contains(jsonKey)) {
+        call.attributes[jsonKey]
+    } else {
+        Json.parseToJsonElement(call.receiveText()).jsonObject.also {
+            call.attributes.put(jsonKey, it)
+        }
+    }
+    return data[key]!!
 }
 
 suspend fun PipelineContext<Unit, ApplicationCall>.fetchPostJsonObject(key: String): JsonObject {
@@ -218,15 +251,8 @@ internal suspend inline fun PipelineContext<Unit, ApplicationCall>.respond(
     isOk: Boolean,
     code: Status,
     msg: String = "",
-    echo: String = ""
+    echo: JsonElement = EmptyJsonString
 ) {
-    if (ShamrockConfig.isEchoNumber()) runCatching {
-        echo.toLong()
-    }.onSuccess {
-        return call.respond(
-            CommonResultForEchoNumber(if (isOk) "ok" else "failed", code.code, EmptyObject, msg, it)
-        )
-    }
     call.respond(CommonResult(
         if (isOk) "ok" else "failed",
         code.code,
@@ -242,15 +268,8 @@ internal suspend inline fun <reified T : Any> PipelineContext<Unit, ApplicationC
     code: Status,
     data: T,
     msg: String = "",
-    echo: String = ""
+    echo: JsonElement = EmptyJsonString
 ) {
-    if (ShamrockConfig.isEchoNumber()) runCatching {
-        echo.toLong()
-    }.onSuccess {
-        return call.respond(
-            CommonResultForEchoNumber(if (isOk) "ok" else "failed", code.code, data, msg, it)
-        )
-    }
     call.respond(CommonResult(
         if (isOk) "ok" else "failed",
         code.code,
@@ -266,15 +285,8 @@ internal suspend inline fun <reified T : Any> PipelineContext<Unit, ApplicationC
     code: Int,
     data: T,
     msg: String = "",
-    echo: String = ""
+    echo: JsonElement = EmptyJsonString
 ) {
-    if (ShamrockConfig.isEchoNumber()) runCatching {
-        echo.toLong()
-    }.onSuccess {
-        return call.respond(
-            CommonResultForEchoNumber(if (isOk) "ok" else "failed", code, data, msg, it)
-        )
-    }
     call.respond(CommonResult(
         if (isOk) "ok" else "failed",
         code,

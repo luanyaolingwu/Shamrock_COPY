@@ -1,8 +1,10 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object LeaveTroop: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -10,7 +12,7 @@ internal object LeaveTroop: IActionHandler() {
         return invoke(groupId, session.echo)
     }
 
-    operator fun invoke(groupId: String, echo: String = ""): String {
+    operator fun invoke(groupId: String, echo: JsonElement = EmptyJsonString): String {
         if (GroupSvc.isOwner(groupId)) {
             return error("you are the owner of this group", echo)
         }

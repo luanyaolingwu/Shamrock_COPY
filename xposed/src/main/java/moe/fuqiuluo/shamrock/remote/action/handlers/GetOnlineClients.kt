@@ -2,16 +2,18 @@ package moe.fuqiuluo.shamrock.remote.action.handlers
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.qqinterface.servlet.QSafeSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object GetOnlineClients: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         return invoke(session.echo)
     }
 
-    suspend operator fun invoke(echo: String = ""): String {
+    suspend operator fun invoke(echo: JsonElement = EmptyJsonString): String {
         val clients = QSafeSvc.getOnlineClients()
             ?: return logic("获取在线设备信息失败", echo)
         return ok(clients.map {

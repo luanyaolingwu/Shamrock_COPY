@@ -2,10 +2,12 @@ package moe.fuqiuluo.shamrock.remote.action.handlers
 
 import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
 import moe.fuqiuluo.shamrock.helper.db.ImageDB
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object GetImage: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -14,7 +16,7 @@ internal object GetImage: IActionHandler() {
         return invoke(file, echo)
     }
 
-    operator fun invoke(file: String, echo: String = ""): String {
+    operator fun invoke(file: String, echo: JsonElement = EmptyJsonString): String {
         val fileMd5 = file
             .replace("{", "")
             .replace("}", "")

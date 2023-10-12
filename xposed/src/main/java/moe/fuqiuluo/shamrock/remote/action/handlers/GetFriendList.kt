@@ -1,10 +1,12 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.remote.service.data.FriendEntry
 import moe.fuqiuluo.shamrock.remote.service.data.PlatformType
 import moe.fuqiuluo.qqinterface.servlet.FriendSvc
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object GetFriendList: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -12,7 +14,7 @@ internal object GetFriendList: IActionHandler() {
         return invoke(refresh, session.echo)
     }
 
-    suspend operator fun invoke(refresh: Boolean, echo: String = ""): String {
+    suspend operator fun invoke(refresh: Boolean, echo: JsonElement = EmptyJsonString): String {
         val friendList = FriendSvc.getFriendList(refresh).onFailure {
             return error(it.message ?: "unknown error", echo)
         }.getOrThrow()

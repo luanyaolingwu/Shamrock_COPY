@@ -1,5 +1,6 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.helper.MessageHelper
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
@@ -7,6 +8,7 @@ import moe.fuqiuluo.shamrock.remote.service.data.MessageDetail
 import moe.fuqiuluo.shamrock.remote.service.data.MessageSender
 import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.MsgConvert
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object GetMsg: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -15,7 +17,7 @@ internal object GetMsg: IActionHandler() {
         return invoke(hashCode, session.echo)
     }
 
-    suspend operator fun invoke(msgHash: Int, echo: String = ""): String {
+    suspend operator fun invoke(msgHash: Int, echo: JsonElement = EmptyJsonString): String {
         val msg = MsgSvc.getMsg(msgHash).onFailure {
             return logic("Obtain msg failed, please check your msg_id.", echo)
         }.getOrThrow()

@@ -1,8 +1,10 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.qqinterface.servlet.CardSvc
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
 
 internal object SetModelShow: IActionHandler() {
@@ -15,7 +17,7 @@ internal object SetModelShow: IActionHandler() {
         return invoke(model, manu, modelshow, imei, show, session.echo)
     }
 
-    suspend operator fun invoke(model: String, manu: String, modelshow: String, imei: String, show: Boolean, echo: String = ""): String {
+    suspend operator fun invoke(model: String, manu: String, modelshow: String, imei: String, show: Boolean, echo: JsonElement = EmptyJsonString): String {
         CardSvc.setModelShow(model, manu, modelshow, imei, show)
         return ok("成功", echo = echo)
     }

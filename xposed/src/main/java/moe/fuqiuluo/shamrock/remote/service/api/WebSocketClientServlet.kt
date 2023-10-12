@@ -51,7 +51,7 @@ internal abstract class WebSocketClientServlet(
             }
 
             val action = actionObject["action"].asString
-            val echo = actionObject["echo"].asStringOrNull ?: ""
+            val echo = actionObject["echo"] ?: EmptyJsonString
             val params = actionObject["params"].asJsonObject
 
             val handler = ActionManager[action]

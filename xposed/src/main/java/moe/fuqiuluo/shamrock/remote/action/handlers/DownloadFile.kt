@@ -1,8 +1,11 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
+import moe.fuqiuluo.shamrock.tools.EmptyJsonObject
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import moe.fuqiuluo.shamrock.tools.asString
 import moe.fuqiuluo.shamrock.utils.DownloadUtils
 import moe.fuqiuluo.shamrock.utils.FileUtils
@@ -25,7 +28,7 @@ internal object DownloadFile: IActionHandler() {
         url: String,
         threadCnt: Int,
         headers: List<String>,
-        echo: String = ""
+        echo: JsonElement = EmptyJsonString
     ): String {
         return invoke(url, threadCnt, headers.associate {
             it.split("=").let { (k, v) ->
@@ -38,7 +41,7 @@ internal object DownloadFile: IActionHandler() {
         url: String,
         threadCnt: Int,
         headers: Map<String, String>,
-        echo: String = ""
+        echo: JsonElement = EmptyJsonString
     ): String {
         var tmp = FileUtils.getTmpFile("cache")
         if(DownloadUtils.download(
@@ -52,7 +55,7 @@ internal object DownloadFile: IActionHandler() {
         tmp = FileUtils.renameByMd5(tmp)
         return ok(data = DownloadResult(
             file = tmp.absolutePath
-        ),"成功", echo)
+        ), msg = "成功", echo = echo)
     }
 
     override val requiredParams: Array<String> = arrayOf("url")

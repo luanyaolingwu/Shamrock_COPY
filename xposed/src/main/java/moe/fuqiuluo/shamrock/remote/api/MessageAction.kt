@@ -13,13 +13,12 @@ import moe.fuqiuluo.shamrock.tools.fetchGetOrNull
 import moe.fuqiuluo.shamrock.tools.fetchGetOrThrow
 import moe.fuqiuluo.shamrock.tools.fetchOrThrow
 import moe.fuqiuluo.shamrock.tools.fetchPostJsonArray
-import moe.fuqiuluo.shamrock.tools.fetchPostJsonObject
 import moe.fuqiuluo.shamrock.tools.fetchPostJsonString
 import moe.fuqiuluo.shamrock.tools.fetchPostOrNull
 import moe.fuqiuluo.shamrock.tools.fetchPostOrThrow
 import moe.fuqiuluo.shamrock.tools.getOrPost
 import moe.fuqiuluo.shamrock.tools.isJsonData
-import moe.fuqiuluo.shamrock.tools.isString
+import moe.fuqiuluo.shamrock.tools.isJsonString
 
 fun Routing.messageAction() {
     getOrPost("/delete_msg") {
@@ -45,7 +44,7 @@ fun Routing.messageAction() {
             val msgType = fetchPostOrThrow("message_type")
             val peerIdKey = if(msgType == "group") "group_id" else "user_id"
             val chatType = MessageHelper.obtainMessageTypeByDetailType(msgType)
-            call.respondText(if (isJsonData() && !isString("message")) {
+            call.respondText(if (isJsonData() && !isJsonString("message")) {
                 SendMessage(chatType, fetchPostOrThrow(peerIdKey), fetchPostJsonArray("message"))
             } else {
                 val autoEscape = fetchPostOrNull("auto_escape")?.toBooleanStrict() ?: false
@@ -67,7 +66,7 @@ fun Routing.messageAction() {
             val autoEscape = fetchPostOrNull("auto_escape")?.toBooleanStrict() ?: false
 
             val result = if (isJsonData()) {
-                if (isString("message")) {
+                if (isJsonString("message")) {
                     SendMessage(MsgConstant.KCHATTYPEGROUP, groupId, fetchPostJsonString("message"), autoEscape)
                 } else {
                     SendMessage(MsgConstant.KCHATTYPEGROUP, groupId, fetchPostJsonArray("message"))
@@ -92,7 +91,7 @@ fun Routing.messageAction() {
             val autoEscape = fetchPostOrNull("auto_escape")?.toBooleanStrict() ?: false
 
             val result = if (isJsonData()) {
-                if (isString("message")) {
+                if (isJsonString("message")) {
                     SendMessage(MsgConstant.KCHATTYPEC2C, userId, fetchPostJsonString("message"), autoEscape)
                 } else {
                     SendMessage(MsgConstant.KCHATTYPEC2C, userId, fetchPostJsonArray("message"))

@@ -1,11 +1,13 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
 import com.tencent.mobileqq.data.Card
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.remote.service.data.SimpleTroopMemberInfo
 import moe.fuqiuluo.shamrock.remote.service.data.push.MemberRole
+import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import moe.fuqiuluo.shamrock.tools.ifNullOrEmpty
 
 internal object GetTroopMemberInfo: IActionHandler() {
@@ -17,7 +19,7 @@ internal object GetTroopMemberInfo: IActionHandler() {
         return invoke(groupId, uin, refresh, session.echo)
     }
 
-    suspend operator fun invoke(groupId: String, uin: String, refresh: Boolean, echo: String = ""): String {
+    suspend operator fun invoke(groupId: String, uin: String, refresh: Boolean, echo: JsonElement = EmptyJsonString): String {
         val info = GroupSvc.getTroopMemberInfoByUin(groupId, uin, refresh).onFailure {
             return error(it.message ?: "unknown error", echo)
         }.getOrThrow()
