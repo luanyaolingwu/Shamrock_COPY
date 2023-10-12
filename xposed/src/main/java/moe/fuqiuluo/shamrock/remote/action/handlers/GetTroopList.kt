@@ -18,8 +18,8 @@ internal object GetTroopList: IActionHandler() {
         }.onSuccess { troops ->
             troops.forEach { groupInfo ->
                 troopList.add(SimpleTroopInfo(
-                    groupId = groupInfo.troopuin,
-                    groupUin = groupInfo.troopcode,
+                    groupId = groupInfo.troopuin.toLong(),
+                    groupUin = groupInfo.troopcode.toLong(),
                     groupName = groupInfo.troopname ?: groupInfo.newTroopName ?: groupInfo.oldTroopName,
                     groupRemark = groupInfo.troopRemark,
                     adminList = GroupSvc.getAdminList(groupInfo.troopuin, true),

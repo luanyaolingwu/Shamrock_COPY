@@ -25,7 +25,7 @@ internal object GetTroopMemberList: IActionHandler() {
                 if (info.memberuin != "0") {
                     add(
                         SimpleTroopMemberInfo(
-                        uin = info.memberuin,
+                        uin = info.memberuin.toLong(),
                         name = info.friendnick.ifNullOrEmpty(info.autoremark) ?: "",
                         showName = info.troopnick.ifNullOrEmpty(info.troopColorNick),
                         distance = info.distance,
@@ -33,7 +33,7 @@ internal object GetTroopMemberList: IActionHandler() {
                         joinTime = info.join_time,
                         lastActiveTime = info.last_active_time,
                         uniqueName = info.mUniqueTitle,
-                        groupId = groupId,
+                        groupId = groupId.toLong(),
                         nick = info.friendnick.ifNullOrEmpty(info.autoremark) ?: "",
                         sex = when(info.sex.toShort()) {
                             Card.FEMALE -> "female"

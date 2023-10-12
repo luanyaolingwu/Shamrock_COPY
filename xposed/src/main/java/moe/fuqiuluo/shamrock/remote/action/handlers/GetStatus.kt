@@ -14,7 +14,7 @@ internal object GetStatus: IActionHandler() {
         val curUin = runtime.currentAccountUin
         return resultToString(true, Status.Ok, listOf(
             BotStatus(
-                Self("qq", curUin), runtime.isLogin, status = "正常", good = runtime.isLogin
+                Self("qq", curUin.toLong()), runtime.isLogin, status = "正常", good = runtime.isLogin
             )
         ), echo = session.echo)
     }

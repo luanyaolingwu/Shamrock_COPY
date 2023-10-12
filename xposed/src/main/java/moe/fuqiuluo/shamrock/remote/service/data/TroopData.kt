@@ -6,10 +6,10 @@ import moe.fuqiuluo.shamrock.remote.service.data.push.MemberRole
 
 @Serializable
 internal data class SimpleTroopInfo(
-    @SerialName("group_id") val groupId: String,
+    @SerialName("group_id") val groupId: Long,
     @SerialName("group_name") val groupName: String?,
     @SerialName("group_remark") val groupRemark: String?,
-    @SerialName("group_uin") val groupUin: String,
+    @SerialName("group_uin") val groupUin: Long,
     @SerialName("admins") val adminList: List<Long>,
     @SerialName("class_text") val classText: String?,
     @SerialName("is_frozen") val isFrozen: Boolean,
@@ -22,8 +22,8 @@ internal data class SimpleTroopInfo(
 
 @Serializable
 internal data class SimpleTroopMemberInfo(
-    @SerialName("user_id") val uin: String,
-    @SerialName("group_id") val groupId: String,
+    @SerialName("user_id") val uin: Long,
+    @SerialName("group_id") val groupId: Long,
     @SerialName("user_name") val name: String,
     @SerialName("sex") val sex: String,
     @SerialName("title") val title: String,

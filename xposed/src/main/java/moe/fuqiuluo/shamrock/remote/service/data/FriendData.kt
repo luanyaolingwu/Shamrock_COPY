@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 internal data class FriendEntry(
-    @SerialName("user_id") val id: String?,
+    @SerialName("user_id") val id: Long = 0,
     @SerialName("user_name") val name: String?,
     @SerialName("user_displayname") val displayName: String?,
     @SerialName("user_remark") val remark: String?,

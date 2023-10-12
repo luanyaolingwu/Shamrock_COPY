@@ -38,7 +38,7 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
                 type = MetaEventType.LifeCycle,
                 subType = MetaSubType.Connect,
                 status = BotStatus(
-                    Self("qq", curUin), runtime.isLogin, status = "正常", good = true
+                    Self("qq", curUin.toLong()), runtime.isLogin, status = "正常", good = true
                 ),
                 interval = 15000
             )

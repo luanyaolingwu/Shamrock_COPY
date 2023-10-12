@@ -29,7 +29,7 @@ internal object GetMsg: IActionHandler() {
                 msg.senderUin, msg.sendNickName, "unknown", 0, msg.senderUid
             ),
             message = MsgConvert.convertMsgRecordToMsgSegment(msg),
-            groupId = msg.peerUin.toString()
+            groupId = msg.peerUin
         ), echo)
     }
 
