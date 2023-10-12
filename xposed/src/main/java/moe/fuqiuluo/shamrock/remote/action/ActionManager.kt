@@ -41,7 +41,7 @@ internal object ActionManager {
             GetWeatherCityCode, GetWeather,
 
             // OTHER
-            GetDeviceBattery
+            GetDeviceBattery, DownloadFile
         ).forEach {
             it.alias.forEach { name ->
                 actionMap[name] = it

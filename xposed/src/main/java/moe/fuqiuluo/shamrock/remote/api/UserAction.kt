@@ -39,14 +39,6 @@ fun Routing.userAction() {
         call.respondText(GetModelShow(uin?.toLong() ?: 0))
     }
 
-    getOrPost("/clean_cache") {
-        call.respondText(CleanCache())
-    }
-
-    getOrPost("/set_restart") {
-        call.respondText(RestartMe(2000))
-    }
-
     getOrPost("/send_like") {
         val uin = fetchOrThrow("user_id")
         val cnt = fetchOrThrow("times")
