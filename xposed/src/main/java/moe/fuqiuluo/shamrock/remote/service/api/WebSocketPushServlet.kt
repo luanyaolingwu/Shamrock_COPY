@@ -59,7 +59,7 @@ internal abstract class WebSocketPushServlet(
                 type = MetaEventType.Heartbeat,
                 subType = MetaSubType.Connect,
                 status = BotStatus(
-                    Self("qq", curUin), runtime.isLogin, status = "正常", good = true
+                    Self("qq", curUin.toLong()), runtime.isLogin, status = "正常", good = true
                 ),
                 interval = 15000
             ))

@@ -18,7 +18,7 @@ internal object GetFriendList: IActionHandler() {
         }.getOrThrow()
         return ok(friendList.map { friend ->
             FriendEntry(
-                id = friend.uin,
+                id = friend.uin.toLong(),
                 name = friend.name,
                 displayName = friend.remark,
                 remark = friend.remark,

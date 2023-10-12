@@ -6,7 +6,7 @@ import moe.fuqiuluo.shamrock.remote.service.data.VipInfo
 
 @Serializable
 data class ProfileCard(
-    @SerialName("user_id") val uin: String,
+    @SerialName("user_id") val uin: Long,
     @SerialName("user_name") val name: String,
     @SerialName("user_displayname") val displayName: String?,
     @SerialName("user_remark") val remark: String?,

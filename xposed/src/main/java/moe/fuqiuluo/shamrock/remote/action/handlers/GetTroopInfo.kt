@@ -18,8 +18,8 @@ internal object GetTroopInfo: IActionHandler() {
             logic("Unable to obtain group information", echo)
         } else {
             ok(SimpleTroopInfo(
-                groupId = groupInfo.troopuin,
-                groupUin = groupInfo.troopcode,
+                groupId = groupInfo.troopuin.toLong(),
+                groupUin = groupInfo.troopcode.toLong(),
                 groupName = groupInfo.troopname ?: groupInfo.newTroopName ?: groupInfo.oldTroopName,
                 groupRemark = groupInfo.troopRemark,
                 adminList = GroupSvc.getAdminList(groupId, true),

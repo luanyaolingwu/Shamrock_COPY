@@ -16,13 +16,13 @@ data class BotStatus(
 data class Self(
     val platform: String,
     @SerialName("user_id")
-    val userId: String
+    val userId: Long
 )
 
 @Serializable
 data class UserDetail(
     @SerialName("user_id")
-    val userId: String,
+    val userId: Long,
     @SerialName("user_name")
     val userName: String,
     @SerialName("user_displayname")

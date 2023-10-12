@@ -16,7 +16,7 @@ internal object GetSelfInfo: IActionHandler() {
         //val account = accounts.firstOrNull { it.uin == curUin }
 
         return resultToString(true, Status.Ok, UserDetail(
-            curUin, runtime.currentNickname, runtime.currentNickname
+            curUin.toLong(), runtime.currentNickname, runtime.currentNickname
         ), echo = session.echo)
     }
 

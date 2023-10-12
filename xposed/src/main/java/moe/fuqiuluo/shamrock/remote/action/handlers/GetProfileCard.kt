@@ -26,7 +26,7 @@ internal object GetProfileCard: IActionHandler() {
         requireNotNull(card)
 
         return resultToString(true, Status.Ok, ProfileCard(
-            uin = card.uin,
+            uin = card.uin.toLong(),
             name = card.strNick,
             mail = card.strShowName ?: card.strEmail ?: "",
             remark = card.strReMark.let { if (it.isNullOrBlank()) card.strAutoRemark else it },

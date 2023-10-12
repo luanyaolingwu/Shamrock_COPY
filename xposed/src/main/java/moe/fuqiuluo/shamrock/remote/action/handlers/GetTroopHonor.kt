@@ -36,7 +36,7 @@ internal object GetTroopHonor: IActionHandler() {
         }
 
         return ok(GroupAllHonor(
-            groupId = groupId,
+            groupId = groupId.toLong(),
             currentTalkActive = honorInfo.firstOrNull {
                 it.id == HONOR_TALKATIVE
             },
