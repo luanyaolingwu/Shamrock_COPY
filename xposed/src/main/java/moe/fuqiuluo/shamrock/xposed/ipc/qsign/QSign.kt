@@ -53,4 +53,8 @@ internal object QSignGenerator: IQSigner.Stub() {
     override fun xwDebugId(uin: String, start: String, end: String): ByteArray {
         return QSec.getInstance().getFeKitAttach(MobileQQ.getContext(), uin, start, end)
     }
+
+    override fun getCmdWhiteList(): List<String> {
+        return FEKit.getInstance().cmdWhiteList
+    }
 }
