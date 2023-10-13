@@ -183,7 +183,6 @@ private fun AppMainView() {
                         ,
                         selectedTabIndex = state.currentPage,
                         divider = {  },
-                        containerColor = Color.White,
                         indicator = {
                             TabRowDefaults.Indicator(
                                 Modifier.tabIndicatorOffset(it[state.currentPage]),
