@@ -46,7 +46,7 @@ internal object CardSvc: BaseSvc() {
         }
     }
 
-    suspend fun setModelShow(model: String, manu: String, modelshow: String, imei: String, show: Boolean) {
+    suspend fun setModelShow(model: String, manu: String, modelShow: String, imei: String, show: Boolean) {
         val cookie = TicketSvc.getCookie("vip.qq.com")
         val csrf = TicketSvc.getCSRF(TicketSvc.getUin(), "vip.qq.com")
         val p4token = TicketSvc.getPt4Token(TicketSvc.getUin(), "vip.qq.com") ?: ""
@@ -62,7 +62,7 @@ internal object CardSvc: BaseSvc() {
                     "sManu" to manu,
                     "lUin" to app.currentUin.toLong(),
                     "bShowInfo" to show,
-                    "sModelShow" to modelshow
+                    "sModelShow" to modelShow
                 ))
             ).json.toString())
         }.bodyAsText().let {

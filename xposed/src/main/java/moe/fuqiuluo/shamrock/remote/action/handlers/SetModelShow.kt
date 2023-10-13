@@ -7,22 +7,29 @@ import moe.fuqiuluo.qqinterface.servlet.CardSvc
 import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
 
-internal object SetModelShow: IActionHandler() {
+internal object SetModelShow : IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val model = session.getString("model")
-        val manu = session.getString("manu")
-        val modelshow = session.getStringOrNull("modelshow") ?: "Android"
+        val manu = session.getStringOrNull("manu") ?: session.getString("model_show")
+        val modelShow = session.getStringOrNull("modelshow") ?: "Android"
         val imei = session.getStringOrNull("imei") ?: PlatformUtils.getAndroidID()
         val show = session.getBooleanOrDefault("show", true)
-        return invoke(model, manu, modelshow, imei, show, session.echo)
+        return invoke(model, manu, modelShow, imei, show, session.echo)
     }
 
-    suspend operator fun invoke(model: String, manu: String, modelshow: String, imei: String, show: Boolean, echo: JsonElement = EmptyJsonString): String {
-        CardSvc.setModelShow(model, manu, modelshow, imei, show)
+    suspend operator fun invoke(
+        model: String,
+        manu: String,
+        modelShow: String,
+        imei: String,
+        show: Boolean,
+        echo: JsonElement = EmptyJsonString
+    ): String {
+        CardSvc.setModelShow(model, manu, modelShow, imei, show)
         return ok("成功", echo = echo)
     }
 
-    override val requiredParams: Array<String> = arrayOf("model", "manu")
+    override val requiredParams: Array<String> = arrayOf("model")
 
     override fun path(): String = "_set_model_show"
 }
