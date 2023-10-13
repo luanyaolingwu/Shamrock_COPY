@@ -27,10 +27,10 @@ fun Routing.userAction() {
 
     getOrPost("/_set_model_show") {
         val model = fetchOrThrow("model")
-        val manu = fetchOrThrow("manu")
+        val manu = fetchOrNull("manu") ?: fetchOrThrow("model_show")
         val modelshow = fetchOrNull("modelshow") ?: "Android"
         val imei = fetchOrNull("imei") ?: PlatformUtils.getAndroidID()
-        val show = fetchOrNull("show")?.toBooleanStrictOrNull()?: true
+        val show = fetchOrNull("show")?.toBooleanStrictOrNull() ?: true
         call.respondText(SetModelShow(model, manu, modelshow, imei, show))
     }
 
@@ -42,9 +42,15 @@ fun Routing.userAction() {
     getOrPost("/send_like") {
         val uin = fetchOrThrow("user_id")
         val cnt = fetchOrThrow("times")
-        call.respondText(ActionManager["send_like"]?.handle(ActionSession(mapOf(
-            "user_id" to uin,
-            "cnt" to cnt
-        ))) ?: throw LogicException("Unable to obtain send_like handler."))
+        call.respondText(
+            ActionManager["send_like"]?.handle(
+                ActionSession(
+                    mapOf(
+                        "user_id" to uin,
+                        "cnt" to cnt
+                    )
+                )
+            ) ?: throw LogicException("Unable to obtain send_like handler.")
+        )
     }
 }
