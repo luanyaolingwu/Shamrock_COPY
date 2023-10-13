@@ -16,9 +16,19 @@ import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 
 internal object SendMessage: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
-        val detailType = session.getStringOrNull("detail_type") ?: session.getString("message_type")
+        val detailType = session.getStringOrNull("detail_type") ?: session.getStringOrNull("message_type")
         try {
-            val chatType = MessageHelper.obtainMessageTypeByDetailType(detailType)
+            val chatType = detailType?.let {
+                MessageHelper.obtainMessageTypeByDetailType(it)
+            } ?: run {
+                if (session.has("group_id")) {
+                    MsgConstant.KCHATTYPEGROUP
+                } else if (session.has("user_id")) {
+                    MsgConstant.KCHATTYPEC2C
+                } else {
+                    return noParam("detail_type/message_type", session.echo)
+                }
+            }
             val peerId = when(chatType) {
                 MsgConstant.KCHATTYPEGROUP -> session.getStringOrNull("group_id") ?: return noParam("group_id", session.echo)
                 MsgConstant.KCHATTYPEC2C -> session.getStringOrNull("user_id") ?: return noParam("user_id", session.echo)
