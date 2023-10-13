@@ -42,15 +42,9 @@ fun Routing.userAction() {
     getOrPost("/send_like") {
         val uin = fetchOrThrow("user_id")
         val cnt = fetchOrThrow("times")
-        call.respondText(
-            ActionManager["send_like"]?.handle(
-                ActionSession(
-                    mapOf(
-                        "user_id" to uin,
-                        "cnt" to cnt
-                    )
-                )
-            ) ?: throw LogicException("Unable to obtain send_like handler.")
-        )
+        call.respondText(SendLike(
+            uin.toLong(),
+            cnt.toInt()
+        ))
     }
 }
