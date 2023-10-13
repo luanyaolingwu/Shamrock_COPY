@@ -246,6 +246,7 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
                 subType = subType,
                 messageId = msgHash,
                 groupId = if(msgType == MsgType.Private) 0 else record.peerUin,
+                peerId = if(msgType != MsgType.Private) 0 else record.peerUin,
                 userId = record.senderUin,
                 message = if (ShamrockConfig.useCQ()) raw.json else elements.toSegment(record.chatType, record.peerUin.toString()).json,
                 rawMessage = raw,
