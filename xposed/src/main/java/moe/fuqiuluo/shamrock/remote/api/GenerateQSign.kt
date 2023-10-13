@@ -1,8 +1,6 @@
 package moe.fuqiuluo.shamrock.remote.api
 
 import com.tencent.mobileqq.qsec.qsecdandelionsdk.Dandelion
-import com.tencent.mobileqq.qsec.qsecurity.QSec
-import com.tencent.secprotocol.ByteData
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.response.respond
@@ -11,8 +9,6 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.util.pipeline.PipelineContext
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.readBytes
@@ -28,15 +24,25 @@ import moe.fuqiuluo.shamrock.tools.hex2ByteArray
 import moe.fuqiuluo.shamrock.tools.respond
 import moe.fuqiuluo.shamrock.tools.toHexString
 import moe.fuqiuluo.shamrock.xposed.ipc.ShamrockIpc
-import moe.fuqiuluo.shamrock.xposed.ipc.qsign.IQSigner
 import moe.fuqiuluo.shamrock.xposed.ipc.bytedata.IByteData
-import mqq.app.MobileQQ
+import moe.fuqiuluo.shamrock.xposed.ipc.qsign.IQSigner
 import java.nio.ByteBuffer
 
 private var signer: IQSigner? = null
 private var byteData: IByteData? = null
 
 fun Routing.qsign() {
+    get("/get_cmd_whitelist") {
+        if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
+            if (!initSigner()) {
+                respond(false, Status.InternalHandlerError)
+                return@get
+            }
+        }
+        val list = signer!!.cmdWhiteList
+        call.respond(OldApiResult(0, "success", list))
+    }
+
     getOrPost("/get_xw_debug_id") {
         if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
             if (!initSigner()) {

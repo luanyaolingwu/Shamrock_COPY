@@ -9,4 +9,6 @@ interface IQSigner {
     byte[] energy(String module, in byte[] salt);
 
     byte[] xwDebugId(String uin, String start, String end);
+
+    List<String> getCmdWhiteList();
 }
