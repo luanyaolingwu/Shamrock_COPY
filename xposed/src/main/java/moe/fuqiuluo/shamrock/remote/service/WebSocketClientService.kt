@@ -253,7 +253,7 @@ internal class WebSocketClientService(
                     messageId = msgHash,
                     groupId = if(msgType == MsgType.Private) 0 else record.peerUin,
                     userId = record.senderUin,
-                    message = if (ShamrockConfig.useCQ()) raw.json else elements.toSegment(record.chatType).json,
+                    message = if (ShamrockConfig.useCQ()) raw.json else elements.toSegment(record.chatType, record.peerUin.toString()).json,
                     rawMessage = raw,
                     font = 0,
                     sender = Sender(

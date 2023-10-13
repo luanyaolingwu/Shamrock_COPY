@@ -49,6 +49,9 @@ interface MessageMappingDao {
 
     @Query("SELECT * FROM message_mapping WHERE msgSeq = :msgSeq AND chatType = :chatType")
     fun queryByMsgSeq(chatType: Int, msgSeq: Int): MessageMapping?
+
+    @Query("SELECT * FROM message_mapping WHERE msgSeq = :msgSeq AND chatType = :chatType AND peerId = :peerId")
+    fun queryByMsgSeq(chatType: Int, peerId: String, msgSeq: Int): MessageMapping?
 }
 
 @Database(entities = [MessageMapping::class], version = 1)

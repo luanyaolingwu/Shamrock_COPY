@@ -13,6 +13,7 @@ import moe.fuqiuluo.shamrock.helper.db.ImageDB
 import moe.fuqiuluo.shamrock.helper.db.ImageMapping
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.helper.db.MessageDB
 
 internal typealias MsgSegment = ArrayList<HashMap<String, JsonElement>>
 
@@ -24,35 +25,47 @@ internal suspend fun MsgRecord.toCQCode(): String {
     return MsgConvert.convertMsgRecordToCQCode(this)
 }
 
-internal suspend fun List<MsgElement>.toSegment(chatType: Int): MsgSegment {
-    return MsgConvert.convertMsgElementsToMsgSegment(chatType, this)
+internal suspend fun List<MsgElement>.toSegment(chatType: Int, peerId: String): MsgSegment {
+    return MsgConvert.convertMsgElementsToMsgSegment(chatType, this, peerId)
 }
 
-internal suspend fun List<MsgElement>.toCQCode(chatType: Int): String {
-    return MsgConvert.convertMsgElementsToCQCode(this, chatType)
+internal suspend fun List<MsgElement>.toCQCode(chatType: Int, peerId: String): String {
+    return MsgConvert.convertMsgElementsToCQCode(this, chatType, peerId)
 }
 
 internal object MsgConvert {
     suspend fun convertMsgRecordToCQCode(record: MsgRecord, chatType: Int = record.chatType): String {
-        return MessageHelper.encodeCQCode(convertMsgElementsToMsgSegment(chatType, record.elements))
+        return MessageHelper.encodeCQCode(convertMsgElementsToMsgSegment(
+            chatType,
+            record.elements,
+            record.peerUin.toString()
+        ))
     }
 
-    suspend fun convertMsgElementsToCQCode(elements: List<MsgElement>, chatType: Int): String {
+    suspend fun convertMsgElementsToCQCode(
+        elements: List<MsgElement>,
+        chatType: Int,
+        peerId: String
+    ): String {
         if(elements.isEmpty()) {
             return ""
         }
-        return MessageHelper.encodeCQCode(convertMsgElementsToMsgSegment(chatType, elements))
+        return MessageHelper.encodeCQCode(convertMsgElementsToMsgSegment(chatType, elements, peerId))
     }
 
     suspend fun convertMsgRecordToMsgSegment(record: MsgRecord, chatType: Int = record.chatType): ArrayList<HashMap<String, JsonElement>> {
-        return convertMsgElementsToMsgSegment(chatType, record.elements)
+        return convertMsgElementsToMsgSegment(chatType, record.elements, record.peerUin.toString())
     }
 
-    suspend fun convertMsgElementsToMsgSegment(chatType: Int, elements: List<MsgElement>): ArrayList<HashMap<String, JsonElement>> {
+    suspend fun convertMsgElementsToMsgSegment(
+        chatType: Int,
+        elements: List<MsgElement>,
+        peerId: String
+    ): ArrayList<HashMap<String, JsonElement>> {
         val messageData = arrayListOf<HashMap<String, JsonElement>>()
         elements.forEach {
             try {
-                val segment = covertMsgElementToMsgSegment(chatType, it)
+                val segment = covertMsgElementToMsgSegment(chatType, peerId, it)
                 if (segment != null) {
                     messageData.add(segment)
                 }
@@ -63,7 +76,7 @@ internal object MsgConvert {
         return messageData
     }
 
-    suspend fun covertMsgElementToMsgSegment(chatType: Int, element: MsgElement): HashMap<String, JsonElement>? {
+    suspend fun covertMsgElementToMsgSegment(chatType: Int, peerId: String, element: MsgElement): HashMap<String, JsonElement>? {
         when (element.elementType) {
             MsgConstant.KELEMTYPETEXT -> {
                 val text = element.textElement
@@ -241,15 +254,17 @@ internal object MsgConvert {
             }
             MsgConstant.KELEMTYPEREPLY -> {
                 val reply = element.replyElement
-                var msgId = reply.replayMsgId
+                var msgId = reply.sourceMsgIdInRecords
                 if (msgId == 0L) {
-                    msgId = reply.sourceMsgIdInRecords
+                    msgId = reply.replayMsgId
                 }
+
+                val mapping = MessageDB.getInstance().messageMappingDao().queryByMsgSeq(chatType, peerId, reply.replayMsgSeq.toInt())
 
                 return hashMapOf(
                     "type" to "reply".json,
                     "data" to JsonObject(mapOf(
-                        "id" to MessageHelper.generateMsgIdHash(chatType, msgId).json,
+                        "id" to (mapping?.msgHashId ?: MessageHelper.generateMsgIdHash(chatType, msgId)).json,
                     ))
                 )
             }
