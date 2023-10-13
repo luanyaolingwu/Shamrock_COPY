@@ -1,8 +1,11 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.qqinterface.servlet.transfile
 
 import com.tencent.mobileqq.transfile.FileMsg
 import com.tencent.mobileqq.transfile.TransferRequest
 import com.tencent.mobileqq.transfile.api.ITransFileController
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -71,18 +74,21 @@ internal abstract class FileTransfer {
     ): Boolean {
         val service = runtime.getRuntimeService(ITransFileController::class.java, "all")
         if(service.transferAsync(transferRequest)) {
-            if (wait) {
+            if (!wait) { // 如果无需等待直接返回
                 return true
             }
             return suspendCancellableCoroutine { continuation ->
                 val waiter = GlobalScope.launch {
                     while (
                         service.findProcessor(transferRequest.keyForTransfer) != null
+                        // 如果上传处理器依旧存在，说明没有上传成功
                     ) {
                         delay(100)
                     }
                     continuation.resume(true)
                 }
+                // 实现取消上传器
+                // 目前没什么用
                 continuation.invokeOnCancellation {
                     waiter.cancel()
                     continuation.resume(false)
