@@ -27,7 +27,7 @@ internal object AioListener: IKernelMsgListener {
 
     private suspend fun handleMsg(record: MsgRecord) {
         try {
-            val rawMsg = record.elements.toCQCode(record.chatType)
+            val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
             if (rawMsg.isEmpty()) return
             val msgHash = MessageHelper.convertMsgIdToMsgHash(record.chatType, record.msgId)
 
@@ -43,7 +43,7 @@ internal object AioListener: IKernelMsgListener {
 
             when (record.chatType) {
                 MsgConstant.KCHATTYPEGROUP -> {
-                    LogCenter.log("群消息(group = ${record.peerName}(${record.peerUin}), uin = ${record.senderUin}, msg = $rawMsg)")
+                    LogCenter.log("群消息(group = ${record.peerName}(${record.peerUin}), uin = ${record.senderUin}, id = $msgHash, msg = $rawMsg)")
                     ShamrockConfig.getGroupMsgRule()?.let { rule ->
                         if (rule.black?.contains(record.peerUin) == true) return
                         if (rule.white?.contains(record.peerUin) == false) return
@@ -74,7 +74,7 @@ internal object AioListener: IKernelMsgListener {
     override fun onAddSendMsg(record: MsgRecord) {
         GlobalScope.launch {
             try {
-                val rawMsg = record.elements.toCQCode(record.chatType)
+                val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
                 if (rawMsg.isEmpty()) return@launch
                 LogCenter.log("发送消息: $rawMsg")
 
