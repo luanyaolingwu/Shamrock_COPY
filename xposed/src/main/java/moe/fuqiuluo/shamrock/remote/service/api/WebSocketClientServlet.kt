@@ -7,6 +7,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import moe.fuqiuluo.shamrock.remote.action.ActionManager
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.entries.EmptyObject
@@ -61,7 +62,7 @@ internal abstract class WebSocketClientServlet(
 
             val action = actionObject["action"].asString
             val echo = actionObject["echo"] ?: EmptyJsonString
-            val params = actionObject["params"].asJsonObject
+            val params = actionObject["params"].asJsonObjectOrNull ?: JsonObject(emptyMap())
 
             val handler = ActionManager[action]
             handler?.handle(ActionSession(params, echo))
