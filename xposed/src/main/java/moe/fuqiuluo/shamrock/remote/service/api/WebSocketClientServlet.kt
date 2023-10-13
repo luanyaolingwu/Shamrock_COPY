@@ -1,4 +1,5 @@
 @file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.shamrock.remote.service.api
 
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -15,6 +16,13 @@ import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.tools.*
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.remote.service.data.BotStatus
+import moe.fuqiuluo.shamrock.remote.service.data.Self
+import moe.fuqiuluo.shamrock.remote.service.data.push.MetaEventType
+import moe.fuqiuluo.shamrock.remote.service.data.push.MetaSubType
+import moe.fuqiuluo.shamrock.remote.service.data.push.PostType
+import moe.fuqiuluo.shamrock.remote.service.data.push.PushMetaEvent
+import mqq.app.MobileQQ
 import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import java.lang.Exception
@@ -33,6 +41,7 @@ internal abstract class WebSocketClientServlet(
 
     override fun onOpen(handshakedata: ServerHandshake?) {
         LogCenter.log("WebSocketClient onOpen: ${handshakedata?.httpStatus}, ${handshakedata?.httpStatusMessage}")
+        pushMetaLifecycle()
         GlobalPusher.register(this)
     }
 
@@ -56,7 +65,13 @@ internal abstract class WebSocketClientServlet(
 
             val handler = ActionManager[action]
             handler?.handle(ActionSession(params, echo))
-                ?: resultToString(false, Status.UnsupportedAction, EmptyObject, "不支持的Action", echo = echo)
+                ?: resultToString(
+                    false,
+                    Status.UnsupportedAction,
+                    EmptyObject,
+                    "不支持的Action",
+                    echo = echo
+                )
         }.getOrNull()
         respond?.let { send(it) }
     }
@@ -72,11 +87,31 @@ internal abstract class WebSocketClientServlet(
     }
 
     protected inline fun <reified T> pushTo(body: T) {
-        if(!allowPush() || isClosed || isClosing) return
+        if (!allowPush() || isClosed || isClosing) return
         try {
             send(GlobalJson.encodeToString(body))
         } catch (e: Throwable) {
             LogCenter.log("被动WS推送失败: ${e.stackTraceToString()}", Level.ERROR)
+        }
+    }
+
+    private fun pushMetaLifecycle() {
+        GlobalScope.launch {
+            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val curUin = runtime.currentAccountUin
+            pushTo(
+                PushMetaEvent(
+                    time = System.currentTimeMillis() / 1000,
+                    selfId = app.longAccountUin,
+                    postType = PostType.Meta,
+                    type = MetaEventType.LifeCycle,
+                    subType = MetaSubType.Connect,
+                    status = BotStatus(
+                        Self("qq", curUin.toLong()), runtime.isLogin, status = "正常", good = true
+                    ),
+                    interval = 15000
+                )
+            )
         }
     }
 }
