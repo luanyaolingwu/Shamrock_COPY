@@ -14,7 +14,6 @@ import moe.fuqiuluo.shamrock.remote.service.api.WebSocketPushServlet
 import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.remote.service.data.BotStatus
 import moe.fuqiuluo.shamrock.remote.service.data.Self
-import moe.fuqiuluo.shamrock.remote.service.data.push.PostType
 import moe.fuqiuluo.shamrock.remote.service.data.push.*
 import moe.fuqiuluo.shamrock.tools.ifNullOrEmpty
 import moe.fuqiuluo.shamrock.tools.json
@@ -30,8 +29,7 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
         GlobalScope.launch {
             val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
             val curUin = runtime.currentAccountUin
-            pushTo(
-                PushMetaEvent(
+            pushTo(PushMetaEvent(
                 time = System.currentTimeMillis() / 1000,
                 selfId = app.longAccountUin,
                 postType = PostType.Meta,
@@ -41,8 +39,7 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
                     Self("qq", curUin.toLong()), runtime.isLogin, status = "正常", good = true
                 ),
                 interval = 15000
-            )
-            )
+            ))
         }
     }
 

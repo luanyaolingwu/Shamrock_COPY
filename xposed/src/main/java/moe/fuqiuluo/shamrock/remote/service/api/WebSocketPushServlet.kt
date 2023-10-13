@@ -34,7 +34,7 @@ internal abstract class WebSocketPushServlet(
     protected val eventReceivers: MutableList<WebSocket> = Collections.synchronizedList(mutableListOf<WebSocket>())!!
 
     override val address: String
-        get() = ShamrockConfig.getWebHookAddress()
+        get() = "-"
 
      override fun allowPush(): Boolean {
          return ShamrockConfig.openWebSocket()
@@ -105,8 +105,8 @@ internal abstract class WebSocketPushServlet(
     }
 
     override fun onStart() {
-        LogCenter.log("WSServer start running on ws://0.0.0.0:$port!")
         GlobalPusher.register(this)
+        LogCenter.log("WSServer start running on ws://0.0.0.0:$port!")
     }
 
     protected inline fun <reified T> pushTo(body: T) {
