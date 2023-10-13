@@ -24,8 +24,16 @@ internal data class GroupMemberHonor(
     @SerialName("day_count") val dayCount: Int,
     @SerialName("id") val id: Int,
     @SerialName("description") val desc: String,
-
-)
+) {
+    constructor(userId: String, nick: String, avatar: String, dayCount: Int, id: Int, desc: String) : this(
+        userId.toLong(),
+        nick,
+        avatar,
+        dayCount,
+        id,
+        desc,
+    )
+}
 
 @Serializable
 internal data class GroupAllHonor(
