@@ -164,7 +164,7 @@ fun NoticeTextDialog(
                 Text(
                     text,
                     fontSize = 14.sp,
-                    color = GlobalColor.NoticeBox
+                    color = GlobalColor.NoticeBoxText
                 )
             },
             confirmButton = {
