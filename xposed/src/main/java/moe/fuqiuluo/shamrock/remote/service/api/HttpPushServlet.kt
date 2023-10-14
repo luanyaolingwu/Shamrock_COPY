@@ -1,5 +1,6 @@
 package moe.fuqiuluo.shamrock.remote.service.api
 
+import com.arthenica.ffmpegkit.BuildConfig
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.request.header
@@ -12,27 +13,28 @@ import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.tools.GlobalClient
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.tools.ShamrockVersion
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
 import mqq.app.MobileQQ
 import java.net.SocketException
 
-internal abstract class HttpPushServlet: BasePushServlet {
-     override val address: String
-         get() = ShamrockConfig.getWebHookAddress()
+internal abstract class HttpPushServlet : BasePushServlet {
+    override val address: String
+        get() = ShamrockConfig.getWebHookAddress()
 
-     override fun allowPush(): Boolean {
-         return ShamrockConfig.allowWebHook()
-     }
+    override fun allowPush(): Boolean {
+        return ShamrockConfig.allowWebHook()
+    }
 
     protected suspend inline fun <reified T> pushTo(body: T): HttpResponse? {
-        if(!allowPush()) return null
+        if (!allowPush()) return null
         try {
             if (address.startsWith("http://") || address.startsWith("https://")) {
                 return GlobalClient.post(address) {
                     contentType(ContentType.Application.Json)
                     setBody(body)
 
-                    header("User-Agent", "Shamrock")
+                    header("User-Agent", "Shamrock/$ShamrockVersion")
                     header("X-QQ-Version", PlatformUtils.getClientVersion(MobileQQ.getContext()))
                     val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
                     val curUin = runtime.currentAccountUin

@@ -6,12 +6,18 @@ import io.ktor.server.routing.Routing
 import moe.fuqiuluo.shamrock.remote.action.handlers.CleanCache
 import moe.fuqiuluo.shamrock.remote.action.handlers.DownloadFile
 import moe.fuqiuluo.shamrock.remote.action.handlers.GetDeviceBattery
+import moe.fuqiuluo.shamrock.remote.action.handlers.GetVersionInfo
 import moe.fuqiuluo.shamrock.remote.action.handlers.RestartMe
 import moe.fuqiuluo.shamrock.tools.fetchOrNull
 import moe.fuqiuluo.shamrock.tools.fetchOrThrow
 import moe.fuqiuluo.shamrock.tools.getOrPost
 
 fun Routing.otherAction() {
+
+    getOrPost("/get_version_info") {
+        call.respondText(GetVersionInfo())
+    }
+
     getOrPost("/get_device_battery") {
         call.respondText(GetDeviceBattery())
     }
