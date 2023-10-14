@@ -30,6 +30,13 @@ fun Routing.fetchRes() {
         call.respondText(GetImage(file))
     }
 
+    getOrPost("/upload_group_file") {
+        val groupId = fetchOrThrow("group_id")
+        val file = fetchOrThrow("file")
+        val name = fetchOrThrow("name")
+        call.respondText(UploadGroupFile(groupId, file, name))
+    }
+
     route("/res/[a-fA-F0-9]{32}".toRegex()) {
         get {
             val md5 = call.request.document()

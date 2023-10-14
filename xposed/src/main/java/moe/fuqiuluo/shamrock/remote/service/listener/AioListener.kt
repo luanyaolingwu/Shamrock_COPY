@@ -226,16 +226,16 @@ internal object AioListener: IKernelMsgListener {
         LogCenter.log(("onRecvOnlineFileMsg" + arrayList?.joinToString { ", " }), Level.DEBUG)
     }
 
-    override fun onRichMediaDownloadComplete(fileTransNotifyInfo: FileTransNotifyInfo?) {
-        LogCenter.log("onRichMediaDownloadComplete($fileTransNotifyInfo)", Level.DEBUG)
+    override fun onRichMediaDownloadComplete(fileTransNotifyInfo: FileTransNotifyInfo) {
+
     }
 
-    override fun onRichMediaProgerssUpdate(fileTransNotifyInfo: FileTransNotifyInfo?) {
-        LogCenter.log(("onRichMediaProgerssUpdate" + fileTransNotifyInfo.toString()), Level.DEBUG)
+    override fun onRichMediaProgerssUpdate(fileTransNotifyInfo: FileTransNotifyInfo) {
+
     }
 
-    override fun onRichMediaUploadComplete(fileTransNotifyInfo: FileTransNotifyInfo?) {
-        LogCenter.log("onRichMediaUploadComplete($fileTransNotifyInfo)", Level.DEBUG)
+    override fun onRichMediaUploadComplete(fileTransNotifyInfo: FileTransNotifyInfo) {
+
     }
 
     override fun onSearchGroupFileInfoUpdate(searchGroupFileResult: SearchGroupFileResult?) {

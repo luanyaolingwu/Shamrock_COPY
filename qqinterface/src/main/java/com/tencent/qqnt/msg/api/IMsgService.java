@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import kotlin.Pair;
 import kotlinx.coroutines.flow.Flow;
 
 public interface IMsgService extends QRouteApi {
@@ -122,6 +124,8 @@ public interface IMsgService extends QRouteApi {
     void getMsgsByTypeFilters(@Nullable Contact contact, long j2, int i2, boolean z, @Nullable ArrayList<MsgTypeFilter> arrayList, @Nullable IMsgOperateCallback iMsgOperateCallback);
 
     //void getNavigateInfo(@Nullable Contact contact, @Nullable IFetchNavigateInfoCallback iFetchNavigateInfoCallback);
+
+    Pair<Integer, Integer> getPicSizeByPath(@NotNull String str);
 
     @NotNull
     Flow<InputStatusInfo> getOnInputStatusPush();
