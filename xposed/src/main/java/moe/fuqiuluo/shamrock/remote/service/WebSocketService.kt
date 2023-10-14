@@ -8,6 +8,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
+import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.toSegment
 import moe.fuqiuluo.shamrock.helper.ErrorTokenException
 import moe.fuqiuluo.shamrock.remote.service.api.WebSocketPushServlet
@@ -237,6 +238,7 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
         role: MemberRole = MemberRole.Member,
         postType: PostType = PostType.Msg
     ) {
+        val uin = TicketSvc.getUin().toLong()
         GlobalScope.launch {
             pushTo(PushMessage(
                 time = record.msgTime,
@@ -247,7 +249,7 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
                 messageId = msgHash,
                 groupId = if(msgType == MsgType.Private) 0 else record.peerUin,
                 targetId = if(msgType != MsgType.Private) 0 else record.peerUin,
-                peerId = record.peerUin,
+                peerId = if (record.senderUin == uin) record.peerUin else uin,
                 userId = record.senderUin,
                 message = if (ShamrockConfig.useCQ()) raw.json else elements.toSegment(record.chatType, record.peerUin.toString()).json,
                 rawMessage = raw,

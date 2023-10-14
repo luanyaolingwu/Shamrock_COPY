@@ -1,5 +1,6 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
+import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.helper.MessageHelper
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
@@ -31,7 +32,9 @@ internal object GetMsg: IActionHandler() {
                 msg.senderUin, msg.sendNickName, "unknown", 0, msg.senderUid
             ),
             message = MsgConvert.convertMsgRecordToMsgSegment(msg),
-            groupId = msg.peerUin
+            peerId = msg.peerUin,
+            groupId = if (msg.chatType == MsgConstant.KCHATTYPEGROUP) msg.peerUin else 0,
+            targetId = if (msg.chatType != MsgConstant.KCHATTYPEGROUP) msg.peerUin else 0
         ), echo)
     }
 

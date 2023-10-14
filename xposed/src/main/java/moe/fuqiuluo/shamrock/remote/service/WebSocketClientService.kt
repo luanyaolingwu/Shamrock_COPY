@@ -16,6 +16,7 @@ import moe.fuqiuluo.shamrock.remote.service.data.push.*
 import moe.fuqiuluo.shamrock.tools.GlobalJson
 import moe.fuqiuluo.shamrock.tools.json
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
+import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.toSegment
 import mqq.app.MobileQQ
 import kotlin.concurrent.timer
@@ -242,6 +243,7 @@ internal class WebSocketClientService(
         role: MemberRole = MemberRole.Member,
         postType: PostType = PostType.Msg
     ) {
+        val uin = TicketSvc.getUin().toLong()
         GlobalScope.launch {
             pushTo(
                 PushMessage(
@@ -253,7 +255,7 @@ internal class WebSocketClientService(
                     messageId = msgHash,
                     groupId = if(msgType == MsgType.Private) 0 else record.peerUin,
                     targetId = if(msgType != MsgType.Private) 0 else record.peerUin,
-                    peerId = record.peerUin,
+                    peerId = if (record.senderUin == uin) record.peerUin else uin,
                     userId = record.senderUin,
                     message = if (ShamrockConfig.useCQ()) raw.json else elements.toSegment(record.chatType, record.peerUin.toString()).json,
                     rawMessage = raw,
