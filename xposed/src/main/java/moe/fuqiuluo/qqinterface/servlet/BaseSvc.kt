@@ -1,3 +1,5 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.qqinterface.servlet
 
 import android.os.Bundle
@@ -5,6 +7,7 @@ import com.tencent.mobileqq.app.QQAppInterface
 import com.tencent.mobileqq.msf.core.MsfCore
 import com.tencent.mobileqq.pb.ByteStringMicro
 import com.tencent.qphone.base.remote.ToServiceMsg
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch

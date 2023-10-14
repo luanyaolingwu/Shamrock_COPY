@@ -80,7 +80,8 @@ internal interface BasePushServlet {
         fileId: String,
         fileName: String,
         fileSize: Long,
-        bizId: Int
+        bizId: Int,
+        url: String
     )
 
     val app: QQAppInterface

@@ -59,5 +59,6 @@ internal data class FileMsg(
     val id: String,
     val name: String,
     val size: Long,
-    val busid: Long
+    val busid: Long,
+    val url: String,
 )

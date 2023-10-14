@@ -5,7 +5,9 @@ import androidx.exifinterface.media.ExifInterface
 import com.tencent.mobileqq.app.QQAppInterface
 import com.tencent.mobileqq.emoticon.QQSysFaceUtil
 import com.tencent.mobileqq.pb.ByteStringMicro
+import com.tencent.mobileqq.qroute.QRoute
 import com.tencent.qphone.base.remote.ToServiceMsg
+import com.tencent.qqnt.aio.adapter.api.IAIOPttApi
 import com.tencent.qqnt.kernel.nativeinterface.ArkElement
 import com.tencent.qqnt.kernel.nativeinterface.FaceElement
 import com.tencent.qqnt.kernel.nativeinterface.MarkdownElement
@@ -548,9 +550,9 @@ internal object MessageMaker {
         when (AudioUtils.getMediaType(file)) {
             MediaType.Silk -> {
                 //LogCenter.log("Silk: $file", Level.DEBUG)
-
                 ptt.formatType = MsgConstant.KPTTFORMATTYPESILK
-                ptt.duration = 1
+                ptt.duration = QRoute.api(IAIOPttApi::class.java)
+                    .getPttFileDuration(file.absolutePath)
             }
             MediaType.Amr -> {
                 //LogCenter.log("Amr: $file", Level.DEBUG)

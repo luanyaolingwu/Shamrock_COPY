@@ -105,17 +105,17 @@ internal object MsgSvc: BaseSvc() {
     suspend fun sendToAio(chatType: Int, peedId: String, message: JsonArray): Pair<Long, Int> {
         val callback = MessageCallback(peedId, 0)
         val result = MessageHelper.sendMessageWithoutMsgId(chatType, peedId, message, callback)
-        callback.hashCode = result.second
+        callback.msgHash = result.second
         return result
     }
 
     private class MessageCallback(
         private val peerId: String,
-        var hashCode: Int
+        var msgHash: Int
     ): IOperateCallback {
         override fun onResult(code: Int, reason: String?) {
-            if (code != 0 && hashCode != 0) {
-                MessageHelper.removeMsgByHashCode(hashCode)
+            if (code != 0 && msgHash != 0) {
+                MessageHelper.removeMsgByHashCode(msgHash)
             }
             when (code) {
                 120 -> LogCenter.log("消息发送: $peerId, 禁言状态无法发送。")
