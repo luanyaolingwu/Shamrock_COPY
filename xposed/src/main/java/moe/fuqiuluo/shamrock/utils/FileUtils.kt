@@ -130,8 +130,8 @@ internal object FileUtils {
         if (sourceFile.exists()) {
             sourceFile.delete()
         }
-        tmpFile.delete()
         tmpFile.renameTo(sourceFile)
+        tmpFile.delete()
         return sourceFile
     }
 
