@@ -22,11 +22,7 @@ internal object PlatformUtils {
     /**
      * 获取OIDB包的ClientVersion信息
      */
-    fun getClientVersion(context: Context): String {
-        val packageInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        val versionName = packageInfo.versionName
-        return "android $versionName"
-    }
+    fun getClientVersion(context: Context): String = "android ${getVersion(context)}"
 
     /**
      * 是否处于QQ MSF协议进程
@@ -57,8 +53,10 @@ internal object PlatformUtils {
 
             DeviceBattery(
                 battery = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY),
-                scale = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER ),
-                status = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_STATUS) else -1,
+                scale = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER),
+                status = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) batteryManager.getIntProperty(
+                    BatteryManager.BATTERY_PROPERTY_STATUS
+                ) else -1,
             )
         }.getOrElse {
             val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
@@ -73,7 +71,8 @@ internal object PlatformUtils {
 
     @SuppressLint("HardwareIds")
     fun getAndroidID(): String {
-        var androidId = Settings.Secure.getString(MobileQQ.getContext().contentResolver, "android_id")
+        var androidId =
+            Settings.Secure.getString(MobileQQ.getContext().contentResolver, "android_id")
         if (androidId == null) {
             val sb = StringBuilder()
             for (i in 0..15) {

@@ -1,4 +1,5 @@
 @file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.shamrock.xposed.actions
 
 import android.content.Context
@@ -12,10 +13,11 @@ import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.tools.ShamrockVersion
 import mqq.app.MobileQQ
 import kotlin.concurrent.timer
 
-internal class InitRemoteService: IAction {
+internal class InitRemoteService : IAction {
     override fun invoke(ctx: Context) {
         if (!PlatformUtils.isMainProcess()) return
 
@@ -41,7 +43,7 @@ internal class InitRemoteService: IAction {
             val wsHeaders = hashMapOf(
                 "X-Client-Role" to "Universal",
                 "X-Self-ID" to curUin,
-                "User-Agent" to "Shamrock",
+                "User-Agent" to "Shamrock/$ShamrockVersion",
                 "X-QQ-Version" to PlatformUtils.getClientVersion(MobileQQ.getContext()),
                 "X-OneBot-Version" to "11",
                 "X-Impl" to "Shamrock",
