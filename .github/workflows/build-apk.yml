@@ -31,7 +31,7 @@ jobs:
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v2.9.0
 
       - name: Build with Gradle
         run: |
@@ -52,7 +52,7 @@ jobs:
 
       - name: Set Shamrock Version
         run: |
-          apk_file = ${{ env.APK_FILE_ALL }}
+          apk_file=${{ env.APK_FILE_ALL }}
           apk_dump=$(aapt dump badging "$apk_file")
           version_name=$(sed -n "s/.*versionName='\([^']*\)'.*/\1/p" <<< "$apk_dump")
           echo "SHAMROCK_VERSION=$version_name" >> $GITHUB_ENV
