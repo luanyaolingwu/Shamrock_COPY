@@ -7,6 +7,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import moe.fuqiuluo.qqinterface.servlet.msg.toCQCode
+import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
 import moe.fuqiuluo.shamrock.remote.service.api.GlobalPusher
 import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.helper.Level
@@ -190,15 +191,16 @@ internal object AioListener: IKernelMsgListener {
 
     override fun onFileMsgCome(arrayList: ArrayList<MsgRecord>?) {
         arrayList?.forEach { record ->
-            when(record.chatType) {
-                MsgConstant.KCHATTYPEGROUP -> onGroupFileMsg(record)
-                else -> LogCenter.log("不支持该来源的文件上传事件：${record.chatType}", Level.WARN)
+            GlobalScope.launch {
+                when(record.chatType) {
+                    MsgConstant.KCHATTYPEGROUP -> onGroupFileMsg(record)
+                    else -> LogCenter.log("不支持该来源的文件上传事件：${record.chatType}", Level.WARN)
+                }
             }
-
         }
     }
 
-    private fun onGroupFileMsg(record: MsgRecord) {
+    private suspend fun onGroupFileMsg(record: MsgRecord) {
         val groupId = record.peerUin
         val userId = record.senderUin
         val fileMsg = record.elements.firstOrNull {
@@ -213,8 +215,10 @@ internal object AioListener: IKernelMsgListener {
         val uuid = fileMsg.fileUuid
         val bizId = fileMsg.fileBizId
 
+        val url = RichProtoSvc.getGroupFileDownUrl(record.peerUin.toString(), uuid, bizId)
+
         GlobalPusher().forEach {
-            it.pushGroupFileCome(record.msgTime, userId, groupId, uuid, fileName, fileSize, bizId)
+            it.pushGroupFileCome(record.msgTime, userId, groupId, uuid, fileName, fileSize, bizId, url)
         }
     }
 

@@ -191,7 +191,8 @@ internal object HttpService: HttpPushServlet() {
         fileId: String,
         fileName: String,
         fileSize: Long,
-        bizId: Int
+        bizId: Int,
+        url: String
     ) {
         pushNotice(
             time = time,
@@ -203,7 +204,8 @@ internal object HttpService: HttpPushServlet() {
                 id = fileId,
                 name = fileName,
                 size = fileSize,
-                busid = bizId.toLong()
+                busid = bizId.toLong(),
+                url = url
             )
         )
     }

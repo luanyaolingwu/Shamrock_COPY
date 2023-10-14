@@ -177,7 +177,8 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
         fileId: String,
         fileName: String,
         fileSize: Long,
-        bizId: Int
+        bizId: Int,
+        url: String
     ) {
         pushNotice(
             time = time,
@@ -189,7 +190,8 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
                 id = fileId,
                 name = fileName,
                 size = fileSize,
-                busid = bizId.toLong()
+                busid = bizId.toLong(),
+                url = url
             )
         )
     }

@@ -14,7 +14,7 @@ import mqq.app.MobileQQ
 import kotlin.random.Random
 
 internal object PlatformUtils {
-    fun getVersion(context: Context): String {
+    fun getQQVersion(context: Context): String {
         val packageInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
         return packageInfo.versionName
     }
@@ -22,7 +22,7 @@ internal object PlatformUtils {
     /**
      * 获取OIDB包的ClientVersion信息
      */
-    fun getClientVersion(context: Context): String = "android ${getVersion(context)}"
+    fun getClientVersion(context: Context): String = "android ${getQQVersion(context)}"
 
     /**
      * 是否处于QQ MSF协议进程
