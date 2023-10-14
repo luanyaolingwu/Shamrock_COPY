@@ -1,4 +1,4 @@
-name: Release Shamrock
+name: Shamrock Release
 
 on:
   push:
@@ -9,7 +9,6 @@ jobs:
   build:
     name: Release
     runs-on: ubuntu-latest
-    if: "! contains(github.event.head_commit.message, 'Merge remote-tracking branch')"
 
     steps:
       - uses: actions/checkout@v4
