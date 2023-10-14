@@ -24,30 +24,7 @@ import kotlin.concurrent.timer
 internal class WebSocketClientService(
     url: String,
     wsHeaders: Map<String, String>
-): WebSocketClientServlet(url, wsHeaders) {
-    init {
-        timer("heartbeat", true, 0, 1000L * 15) {
-            if (isClosed || isClosing || !isOpen) {
-                cancel()
-                return@timer
-            }
-            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
-            val curUin = runtime.currentAccountUin
-            send(GlobalJson.encodeToString(
-                PushMetaEvent(
-                time = System.currentTimeMillis() / 1000,
-                selfId = app.longAccountUin,
-                postType = PostType.Meta,
-                type = MetaEventType.Heartbeat,
-                subType = MetaSubType.Connect,
-                status = BotStatus(
-                    Self("qq", curUin.toLong()), runtime.isLogin, status = "正常", good = true
-                ),
-                interval = 15000
-            )
-            ))
-        }
-    }
+) : WebSocketClientServlet(url, wsHeaders) {
 
     override fun pushSelfPrivateSentMsg(
         record: MsgRecord,
@@ -144,7 +121,7 @@ internal class WebSocketClientService(
             type = NoticeType.GroupRecall,
             operation = operation,
             userId = userId,
-            groupId =  groupId,
+            groupId = groupId,
             msgHash = msgHash,
             tip = tip
         )
@@ -157,7 +134,15 @@ internal class WebSocketClientService(
         groupId: Long,
         duration: Int
     ) {
-        pushNotice(time, NoticeType.GroupBan, if (duration == 0) NoticeSubType.LiftBan else NoticeSubType.Ban, operation, userId, groupId, duration)
+        pushNotice(
+            time,
+            NoticeType.GroupBan,
+            if (duration == 0) NoticeSubType.LiftBan else NoticeSubType.Ban,
+            operation,
+            userId,
+            groupId,
+            duration
+        )
     }
 
     override fun pushGroupMemberDecreased(
@@ -172,7 +157,14 @@ internal class WebSocketClientService(
     }
 
     override fun pushGroupAdminChange(time: Long, target: Long, groupId: Long, setAdmin: Boolean) {
-        pushNotice(time, NoticeType.GroupAdminChange, if (setAdmin) NoticeSubType.Set else NoticeSubType.UnSet, 0, target, groupId)
+        pushNotice(
+            time,
+            NoticeType.GroupAdminChange,
+            if (setAdmin) NoticeSubType.Set else NoticeSubType.UnSet,
+            0,
+            target,
+            groupId
+        )
     }
 
     override fun pushGroupFileCome(
@@ -255,11 +247,14 @@ internal class WebSocketClientService(
                     messageType = msgType,
                     subType = subType,
                     messageId = msgHash,
-                    groupId = if(msgType == MsgType.Private) 0 else record.peerUin,
-                    targetId = if(msgType != MsgType.Private) 0 else record.peerUin,
+                    groupId = if (msgType == MsgType.Private) 0 else record.peerUin,
+                    targetId = if (msgType != MsgType.Private) 0 else record.peerUin,
                     peerId = if (record.senderUin == uin) record.peerUin else uin,
                     userId = record.senderUin,
-                    message = if (ShamrockConfig.useCQ()) raw.json else elements.toSegment(record.chatType, record.peerUin.toString()).json,
+                    message = if (ShamrockConfig.useCQ()) raw.json else elements.toSegment(
+                        record.chatType,
+                        record.peerUin.toString()
+                    ).json,
                     rawMessage = raw,
                     font = 0,
                     sender = Sender(
