@@ -37,7 +37,7 @@ internal object TicketSvc: BaseSvc() {
     }
 
     fun getUin(): String {
-        return app.currentUin
+        return app.currentUin.ifBlank { "0" }
     }
 
     fun getCookie(): String {

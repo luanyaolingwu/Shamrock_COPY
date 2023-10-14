@@ -15,6 +15,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.*
 import moe.fuqiuluo.shamrock.remote.service.api.HttpPushServlet
 import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
@@ -249,6 +250,7 @@ internal object HttpService: HttpPushServlet() {
         role: MemberRole = MemberRole.Member,
         postType: PostType = PostType.Msg
     ) {
+        val uin = TicketSvc.getUin().toLong()
         GlobalScope.launch {
             val respond = pushTo(PushMessage(
                 time = record.msgTime,
@@ -259,7 +261,7 @@ internal object HttpService: HttpPushServlet() {
                 messageId = msgHash,
                 groupId = if(msgType == MsgType.Private) 0 else record.peerUin,
                 targetId = if(msgType != MsgType.Private) 0 else record.peerUin,
-                peerId = record.peerUin,
+                peerId = if (record.senderUin == uin) record.peerUin else uin,
                 userId = record.senderUin,
                 message = if(ShamrockConfig.useCQ()) raw.json else elements.toSegment(record.chatType, record.peerUin.toString()).json,
                 rawMessage = raw,

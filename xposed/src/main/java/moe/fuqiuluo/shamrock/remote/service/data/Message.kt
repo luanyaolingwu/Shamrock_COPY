@@ -19,6 +19,8 @@ internal data class MessageDetail(
     @SerialName("sender") val sender: MessageSender,
     @SerialName("message") val message: ArrayList<HashMap<String, JsonElement>>,
     @SerialName("group_id") val groupId: Long = 0,
+    @SerialName("peer_id") val peerId: Long,
+    @SerialName("target_id") val targetId: Long = 0,
 )
 
 @Serializable
