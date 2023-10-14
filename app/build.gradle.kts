@@ -1,4 +1,6 @@
+import com.android.build.OutputFile
 import com.android.build.api.dsl.ApplicationExtension
+import com.android.utils.osArchitecture
 import org.gradle.api.Project
 
 fun gitCommitHash(): String {
@@ -51,7 +53,15 @@ android {
     android.applicationVariants.all {
         outputs.map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach {
-                it.outputFileName = "Shamrock-${versionName}.apk"
+                // 根据 abi 分包
+                println("outputFileName: ${it.outputFileName}")
+                val abi = it.outputFileName.split("-")[1].split(".apk")[0]
+                val abiName = when (abi) {
+                    "app" -> "all"
+                    "x64" -> "x86_64"
+                    else -> abi
+                }
+                it.outputFileName = "Shamrock-v${versionName}-${abiName}.apk"
             }
     }
 
