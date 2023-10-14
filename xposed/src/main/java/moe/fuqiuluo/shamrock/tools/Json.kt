@@ -21,7 +21,7 @@ val GlobalJson = Json {
     isLenient = true // 宽松模式
     allowSpecialFloatingPointValues = true // 允许特殊浮点数值（如NaN）
     encodeDefaults = false // 不编码默认值
-    prettyPrint = true // 格式化输出
+    prettyPrint = false // 格式化输出
     coerceInputValues = true // 强制输入值
 }
 
@@ -35,7 +35,7 @@ val Collection<Any>.json: JsonArray
     get() {
         val arrayList = arrayListOf<JsonElement>()
         forEach {
-            when(it) {
+            when (it) {
                 is JsonElement -> arrayList.add(it)
                 is Number -> arrayList.add(it.json)
                 is String -> arrayList.add(it.json)
@@ -52,7 +52,7 @@ val Map<String, Any>.json: JsonObject
     get() {
         val map = hashMapOf<String, JsonElement>()
         forEach { (key, any) ->
-            when(any) {
+            when (any) {
                 is JsonElement -> map[key] = any
                 is Number -> map[key] = any.json
                 is String -> map[key] = any.json

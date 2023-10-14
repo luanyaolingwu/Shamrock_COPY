@@ -28,6 +28,7 @@ import org.java_websocket.client.WebSocketClient
 import org.java_websocket.handshake.ServerHandshake
 import java.lang.Exception
 import java.net.URI
+import kotlin.concurrent.timer
 
 internal abstract class WebSocketClientServlet(
     url: String,
@@ -42,6 +43,7 @@ internal abstract class WebSocketClientServlet(
 
     override fun onOpen(handshakedata: ServerHandshake?) {
         LogCenter.log("WebSocketClient onOpen: ${handshakedata?.httpStatus}, ${handshakedata?.httpStatusMessage}")
+        startHeartbeatTimer()
         pushMetaLifecycle()
         GlobalPusher.register(this)
     }
@@ -93,6 +95,39 @@ internal abstract class WebSocketClientServlet(
             send(GlobalJson.encodeToString(body))
         } catch (e: Throwable) {
             LogCenter.log("被动WS推送失败: ${e.stackTraceToString()}", Level.ERROR)
+        }
+    }
+
+    private fun startHeartbeatTimer() {
+        timer(
+            name = "heartbeat",
+            initialDelay = 0,
+            period = 1000L * 15,
+        ) {
+            if (isClosed || isClosing || !isOpen) {
+                cancel()
+                return@timer
+            }
+            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val curUin = runtime.currentAccountUin
+            send(
+                GlobalJson.encodeToString(
+                    PushMetaEvent(
+                        time = System.currentTimeMillis() / 1000,
+                        selfId = app.longAccountUin,
+                        postType = PostType.Meta,
+                        type = MetaEventType.Heartbeat,
+                        subType = MetaSubType.Connect,
+                        status = BotStatus(
+                            Self("qq", curUin.toLong()),
+                            runtime.isLogin,
+                            status = "正常",
+                            good = true
+                        ),
+                        interval = 1000L * 15
+                    )
+                )
+            )
         }
     }
 
