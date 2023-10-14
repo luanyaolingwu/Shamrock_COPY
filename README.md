@@ -22,10 +22,13 @@
 > 本项目目的是研究 Xposed 和 LSPosed 框架的使用。 Epic 框架开发相关知识。  
 > 如有违反法律，请联系删除。
 
-## 兼容说明
+## 兼容|迁移|替代 说明
 
-本项目基于 go-cqhttp 的文档进行开发实现，未来将会支持 Docker 部署(现在也可以)。  
-在 qsign 死亡(报废)的情况下，Shamrock 支持作为 NTR 提供 sign API 服务。
+- 一键移植：本项目基于 go-cqhttp 的文档进行开发实现。
+- 平行部署：可多平台部署，未来将会支持 Docker 部署的教程。  
+- 强行续命：Shamrock支持提供 QSIGN API 服务。
+
+> 若您追求小而轻便的Bot服务, [Chronocat](https://chronocat.vercel.app/)是您的不二之选，而不是迁移到闭源框架。
 
 ## 权限声明
 
