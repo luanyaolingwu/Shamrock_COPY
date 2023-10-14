@@ -9,6 +9,7 @@ import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import moe.fuqiuluo.shamrock.tools.asString
 import moe.fuqiuluo.shamrock.utils.DownloadUtils
 import moe.fuqiuluo.shamrock.utils.FileUtils
+import moe.fuqiuluo.shamrock.utils.MD5
 
 internal object DownloadFile: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
@@ -54,7 +55,8 @@ internal object DownloadFile: IActionHandler() {
         }
         tmp = FileUtils.renameByMd5(tmp)
         return ok(data = DownloadResult(
-            file = tmp.absolutePath
+            file = tmp.absolutePath,
+            md5 = MD5.genFileMd5Hex(tmp.absolutePath)
         ), msg = "成功", echo = echo)
     }
 
@@ -64,6 +66,7 @@ internal object DownloadFile: IActionHandler() {
 
     @Serializable
     data class DownloadResult(
-        val file: String
+        val file: String,
+        val md5: String
     )
 }
