@@ -37,6 +37,18 @@ fun Routing.fetchRes() {
         call.respondText(UploadGroupFile(groupId, file, name))
     }
 
+    getOrPost("/create_group_file_folder") {
+        val groupId = fetchOrThrow("group_id")
+        val name = fetchOrThrow("name")
+        call.respondText(CreateGroupFileFolder(groupId, name))
+    }
+
+    getOrPost("/delete_group_folder") {
+        val groupId = fetchOrThrow("group_id")
+        val id = fetchOrThrow("folder_id")
+        call.respondText(DeleteGroupFolder(groupId, id))
+    }
+
     route("/res/[a-fA-F0-9]{32}".toRegex()) {
         get {
             val md5 = call.request.document()

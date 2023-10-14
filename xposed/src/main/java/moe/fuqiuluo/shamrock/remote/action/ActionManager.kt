@@ -35,7 +35,8 @@ internal object ActionManager {
             SendMessage, DeleteMessage, GetMsg, GetForwardMsg, SendGroupForwardMsg, SendGroupMessage, SendPrivateMessage,
 
             // RESOURCE ACTION
-            GetRecord, GetImage, UploadGroupFile,
+            GetRecord, GetImage, UploadGroupFile, CreateGroupFileFolder, DeleteGroupFolder,
+
 
             // WEATHER
             GetWeatherCityCode, GetWeather,
