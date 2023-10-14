@@ -1,6 +1,14 @@
 import com.android.build.api.dsl.ApplicationExtension
 import org.gradle.api.Project
 
+fun gitCommitHash(): String {
+    val builder = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+    val process = builder.start()
+    val reader = process.inputReader()
+    val hash = reader.readText().trim()
+    return if (hash.isNotEmpty()) ".$hash" else ""
+}
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -17,7 +25,7 @@ android {
         minSdk = 24
         targetSdk = 33
         versionCode = (System.currentTimeMillis() / 1000).toInt()
-        versionName = "1.0.4"
+        versionName = "1.0.4-dev" + gitCommitHash()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -43,16 +51,7 @@ android {
     android.applicationVariants.all {
         outputs.map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach {
-                val fileName = StringBuffer("Shamrock-v$versionName.r$versionCode")
-                val command = gradle.startParameter.taskNames.firstOrNull()
-                if (command != null) {
-                    if (command.endsWith("Release")) {
-                        fileName.append("-release")
-                    } else if(command.endsWith("Debug")) {
-                        fileName.append("-debug")
-                    }
-                    it.outputFileName = fileName.append(".apk").toString()
-                }
+                it.outputFileName = "Shamrock-${versionName}.apk"
             }
     }
 
@@ -98,24 +97,24 @@ android {
             useLegacyPackaging = true
         }
         resources {
-            excludes +=  "/META-INF/{AL2.0,LGPL2.1}"
-            excludes +=  "/META-INF/*"
-            excludes +=  "/META-INF/NOTICE.txt"
-            excludes +=  "/META-INF/DEPENDENCIES.txt"
-            excludes +=  "/META-INF/NOTICE"
-            excludes +=  "/META-INF/LICENSE"
-            excludes +=  "/META-INF/DEPENDENCIES"
-            excludes +=  "/META-INF/notice.txt"
-            excludes +=  "/META-INF/dependencies.txt"
-            excludes +=  "/META-INF/LGPL2.1"
-            excludes +=  "/META-INF/ASL2.0"
-            excludes +=  "/META-INF/INDEX.LIST"
-            excludes +=  "/META-INF/io.netty.versions.properties"
-            excludes +=  "/META-INF/INDEX.LIST"
-            excludes +=  "/META-INF/LICENSE.txt"
-            excludes +=  "/META-INF/license.txt"
-            excludes +=  "/META-INF/*.kotlin_module"
-            excludes +=  "/META-INF/services/reactor.blockhound.integration.BlockHoundIntegration"
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/*"
+            excludes += "/META-INF/NOTICE.txt"
+            excludes += "/META-INF/DEPENDENCIES.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/notice.txt"
+            excludes += "/META-INF/dependencies.txt"
+            excludes += "/META-INF/LGPL2.1"
+            excludes += "/META-INF/ASL2.0"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/io.netty.versions.properties"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/license.txt"
+            excludes += "/META-INF/*.kotlin_module"
+            excludes += "/META-INF/services/reactor.blockhound.integration.BlockHoundIntegration"
         }
     }
     externalNativeBuild {

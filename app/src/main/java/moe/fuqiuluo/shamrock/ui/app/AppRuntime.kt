@@ -85,7 +85,6 @@ object AppRuntime {
 class RuntimeState(
     val isFined: MutableState<Boolean>,
     val coreVersion: MutableState<String>,
-    val coreCode: MutableIntState,
     val coreName: MutableState<String>,
     val supportVoice: MutableState<Boolean>
 ) {
