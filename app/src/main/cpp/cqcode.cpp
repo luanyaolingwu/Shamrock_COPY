@@ -27,13 +27,30 @@ void decode_cqcode(const std::string& code, std::vector<std::unordered_map<std::
                     dest.push_back(kv);
                     cache.clear();
                 }
-                auto c1 = code[++i];
-                auto c2 = code[++i];
-                auto c3 = code[++i];
-                if (c1 == 'C' && c2 == 'Q' && c3 == ':') {
-                    is_start = true;
+                auto c1 = code[i + 1];
+                if (c1 == 'C') {
+                    i++;
+                    auto c2 = code[i + 1];
+                    if(c2 == 'Q') {
+                        i++;
+                        auto c3 = code[i + 1];
+                        if (c3 == ':') {
+                            i++;
+                            is_start = true;
+                        } else {
+                            cache += c;
+                            cache += c1;
+                            cache += c2;
+                            continue;
+                        }
+                    } else {
+                        cache += c;
+                        cache += c1;
+                        continue;
+                    }
                 } else {
-                    throw illegal_code();
+                    cache += c;
+                    continue;
                 }
             }
         } else if (c == '=') {
@@ -83,7 +100,7 @@ void decode_cqcode(const std::string& code, std::vector<std::unordered_map<std::
                     is_start = false;
                 }
             } else {
-                throw illegal_code();
+                cache += c;
             }
         } else {
             cache += c;
