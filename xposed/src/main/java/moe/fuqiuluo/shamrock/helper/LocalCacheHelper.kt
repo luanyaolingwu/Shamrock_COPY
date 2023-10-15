@@ -1,6 +1,7 @@
 package moe.fuqiuluo.shamrock.helper
 
 import moe.fuqiuluo.qqinterface.servlet.BaseSvc
+import moe.fuqiuluo.shamrock.utils.FileUtils
 import mqq.app.MobileQQ
 import java.io.File
 
@@ -16,6 +17,7 @@ internal object LocalCacheHelper: BaseSvc() {
     }
 
     fun getCachePttFile(md5: String): File {
-        return getCurrentPttPath().resolve("$md5.amr")
+        val file = FileUtils.getFile(md5)
+        return if (file.exists()) file else getCurrentPttPath().resolve("$md5.amr")
     }
 }

@@ -78,15 +78,18 @@ object AudioUtils {
         var duration: Int
         pcmToSilk(pcmFile).let {
             val silkMd5 = MD5.genFileMd5Hex(it.first.absolutePath)
-            silkFile = LocalCacheHelper.getCachePttFile(silkMd5)
             mmkv.putString(md5, silkMd5)
-            it.first.renameTo(silkFile)
-            it.first.delete()
+            //LogCenter.log({ "音频转SILK完成：重命名${it.first} ==> $silkFile" }, Level.DEBUG)
             pcmFile.delete()
+            silkFile = it.first
             duration = it.second
         }
         if (duration < 1000) {
             duration = 1000
+        }
+
+        if (!silkFile.exists()) {
+            LogCenter.log("音频转SILK错误：$silkFile", Level.ERROR)
         }
 
         return duration to silkFile

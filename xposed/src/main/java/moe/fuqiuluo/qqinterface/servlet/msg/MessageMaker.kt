@@ -546,25 +546,25 @@ internal object MessageMaker {
 
         when (AudioUtils.getMediaType(file)) {
             MediaType.Silk -> {
-                //LogCenter.log("Silk: $file", Level.DEBUG)
+                LogCenter.log({ "Silk: $file" }, Level.DEBUG)
                 ptt.formatType = MsgConstant.KPTTFORMATTYPESILK
                 ptt.duration = QRoute.api(IAIOPttApi::class.java)
                     .getPttFileDuration(file.absolutePath)
             }
             MediaType.Amr -> {
-                //LogCenter.log("Amr: $file", Level.DEBUG)
+                LogCenter.log({ "Amr: $file" }, Level.DEBUG)
                 ptt.duration = AudioUtils.getDurationSec(file)
                 ptt.formatType = MsgConstant.KPTTFORMATTYPEAMR
             }
             MediaType.Pcm -> {
-                //LogCenter.log("Pcm To Silk: $file", Level.DEBUG)
+                LogCenter.log({ "Pcm To Silk: $file" }, Level.DEBUG)
                 val result = AudioUtils.pcmToSilk(file)
                 ptt.duration = (result.second * 0.001).roundToInt()
                 file = result.first
                 ptt.formatType = MsgConstant.KPTTFORMATTYPESILK
             }
             else -> {
-                //LogCenter.log("Audio To SILK: $file", Level.DEBUG)
+                LogCenter.log({ "Audio To SILK: $file" }, Level.DEBUG)
                 val result = AudioUtils.audioToSilk(file)
                 ptt.duration = result.first
                 file = result.second
