@@ -36,7 +36,8 @@ internal object ActionManager {
 
             // RESOURCE ACTION
             GetRecord, GetImage, UploadGroupFile, CreateGroupFileFolder, DeleteGroupFolder,
-            DeleteGroupFile, GetGroupFileSystemInfo, GetGroupRootFiles,
+            DeleteGroupFile, GetGroupFileSystemInfo, GetGroupRootFiles, GetGroupSubFiles,
+            GetGroupFileUrl,
 
 
             // WEATHER

@@ -16,11 +16,19 @@ import tencent.im.cs.group_file_common.group_file_common;
 public class oidb_0x6d8 {
     public static class ReqBody extends MessageMicro<ReqBody> {
         //static final MessageMicro.FieldMap __fieldMap__ = MessageMicro.initFieldMap(new int[]{10, 18, 26, 34, 42}, new String[]{"file_info_req", "file_list_info_req", "group_file_cnt_req", "group_space_req", "file_preview_req"}, new Object[]{null, null, null, null, null}, oidb_0x6d8$ReqBody.class);
-        //public oidb_0x6d8$GetFileInfoReqBody file_info_req = new oidb_0x6d8$GetFileInfoReqBody();
+        public GetFileInfoReqBody file_info_req = new GetFileInfoReqBody();
         public GetFileListReqBody file_list_info_req = new GetFileListReqBody();
         public GetFileCountReqBody group_file_cnt_req = new GetFileCountReqBody();
         public GetSpaceReqBody group_space_req = new GetSpaceReqBody();
         //public oidb_0x6d8$GetFilePreviewReqBody file_preview_req = new oidb_0x6d8$GetFilePreviewReqBody();
+    }
+
+    public static class GetFileInfoRspBody extends MessageMicro<GetFileInfoRspBody> {
+        //static final MessageMicro.FieldMap __fieldMap__ = MessageMicro.initFieldMap(new int[]{8, 18, 26, 34}, new String[]{"int32_ret_code", "str_ret_msg", "str_client_wording", "file_info"}, new Object[]{0, "", "", null}, oidb_0x6d8$GetFileInfoRspBody.class);
+        public final PBInt32Field int32_ret_code = PBField.initInt32(0);
+        public final PBStringField str_ret_msg = PBField.initString("");
+        public final PBStringField str_client_wording = PBField.initString("");
+        public group_file_common.FileInfo file_info = new group_file_common.FileInfo();
     }
 
     public static class GetFileListReqBody extends MessageMicro<GetFileListReqBody> {
@@ -65,7 +73,7 @@ public class oidb_0x6d8 {
 
     public static class RspBody extends MessageMicro<RspBody> {
         //static final MessageMicro.FieldMap __fieldMap__ = MessageMicro.initFieldMap(new int[]{10, 18, 26, 34, 42}, new String[]{"file_info_rsp", "file_list_info_rsp", "group_file_cnt_rsp", "group_space_rsp", "file_preview_rsp"}, new Object[]{null, null, null, null, null}, oidb_0x6d8$RspBody.class);
-        //public oidb_0x6d8$GetFileInfoRspBody file_info_rsp = new oidb_0x6d8$GetFileInfoRspBody();
+        public GetFileInfoRspBody file_info_rsp = new GetFileInfoRspBody();
         public GetFileListRspBody file_list_info_rsp = new GetFileListRspBody(); // 2
         public GetFileCountRspBody group_file_cnt_rsp = new GetFileCountRspBody(); // 3
         public GetSpaceRspBody group_space_rsp = new GetSpaceRspBody(); // 4
@@ -136,5 +144,14 @@ public class oidb_0x6d8 {
          //           "uint32_role",  // 13
          //           "uint32_open_flag"}, new Object[]{0, "", "", bool, null, null, 0, 0, bool, 0, 0, ByteStringMicro.EMPTY, 0, 0}, oidb_0x6d8$GetFileListRspBody.class);
         //}
+    }
+
+    public static final class GetFileInfoReqBody extends MessageMicro<GetFileInfoReqBody> {
+        //static final MessageMicro.FieldMap __fieldMap__ = MessageMicro.initFieldMap(new int[]{8, 16, 24, 34, 40}, new String[]{"uint64_group_code", "uint32_app_id", "uint32_bus_id", "str_file_id", "uint32_field_flag"}, new Object[]{0L, 0, 0, "", 16777215}, oidb_0x6d8$GetFileInfoReqBody.class);
+        public final PBUInt64Field uint64_group_code = PBField.initUInt64(0);
+        public final PBUInt32Field uint32_app_id = PBField.initUInt32(0);
+        public final PBUInt32Field uint32_bus_id = PBField.initUInt32(0);
+        public final PBStringField str_file_id = PBField.initString("");
+        public final PBUInt32Field uint32_field_flag = PBField.initUInt32(16777215);
     }
 }
