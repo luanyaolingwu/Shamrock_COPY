@@ -4,6 +4,7 @@ import com.tencent.mobileqq.pb.ByteStringMicro
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import moe.fuqiuluo.proto.protobufOf
+import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
 import moe.fuqiuluo.shamrock.tools.EMPTY_BYTE_ARRAY
 import moe.fuqiuluo.shamrock.tools.slice
 import tencent.im.oidb.cmd0x6d8.oidb_0x6d8
@@ -93,12 +94,20 @@ internal object GroupFileSvc: BaseSvc() {
     }
 
     suspend fun getGroupRootFiles(groupId: Long): GroupFileList {
+        return getGroupFiles(groupId, "/")
+    }
+
+    suspend fun getGroupFileInfo(groupId: String, fileId: String, busid: Int): FileUrl {
+        return FileUrl(RichProtoSvc.getGroupFileDownUrl(groupId, fileId, busid))
+    }
+
+    suspend fun getGroupFiles(groupId: Long, folderId: String): GroupFileList {
         val fileSystemInfo = getGroupFileSystemInfo(groupId)
         val rspGetFileListBuffer = sendOidbAW("OidbSvc.0x6d8_1", 1752, 1, oidb_0x6d8.ReqBody().also {
             it.file_list_info_req.set(oidb_0x6d8.GetFileListReqBody().apply {
                 uint64_group_code.set(groupId)
                 uint32_app_id.set(3)
-                str_folder_id.set("/")
+                str_folder_id.set(folderId)
 
                 uint32_file_count.set(fileSystemInfo.fileCount)
                 uint32_all_file_count.set(0)
@@ -159,6 +168,11 @@ internal object GroupFileSvc: BaseSvc() {
 
         return GroupFileList(files, dirs)
     }
+
+    @Serializable
+    data class FileUrl(
+        @SerialName("url") val url: String,
+    )
 
     @Serializable
     data class GroupFileList(
