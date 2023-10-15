@@ -65,6 +65,8 @@ void decode_cqcode(const std::string& code, std::vector<std::unordered_map<std::
                         cache += c;
                     }
                 }
+            } else {
+                cache += c;
             }
         } else if (c == ',') {
             if (is_start) {
@@ -82,6 +84,8 @@ void decode_cqcode(const std::string& code, std::vector<std::unordered_map<std::
                         key_tmp.clear();
                     }
                 }
+            } else {
+                cache += c;
             }
         } else if (c == ']') {
             if (is_start) {
