@@ -17,7 +17,9 @@ public interface TicketManager extends Manager {
 
     String getPt4Token(String uin, String domain);
 
-    String getSkey(String uin);
+    String getSkey(String uin); // 假的Skey
+
+    String getRealSkey(String uin);
 
     //Ticket getPskey(String uin, long j2, String[] strArr, WtTicketPromise wtTicketPromise);
 
