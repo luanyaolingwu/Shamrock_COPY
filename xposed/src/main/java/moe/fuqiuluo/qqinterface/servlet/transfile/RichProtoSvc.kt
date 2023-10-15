@@ -47,7 +47,7 @@ internal object RichProtoSvc: BaseSvc() {
                 return ""
             }
 
-            val domain = if (result.has(3, 4)) result[3, 4].asUtf8String else result[3, 5].asUtf8String
+            val domain = if (result.has(3, 5)) result[3, 4].asUtf8String else result[3, 5].asUtf8String
             val downloadUrl = result[3, 6].asByteArray.toHexString()
             val appId = MobileQQ.getMobileQQ().appId
             val version = PlatformUtils.getQQVersion(MobileQQ.getContext())
