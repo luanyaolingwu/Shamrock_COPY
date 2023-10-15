@@ -10,6 +10,7 @@ import kotlinx.io.core.ByteReadPacket
 import kotlinx.io.core.discardExact
 import kotlinx.io.core.readBytes
 import kotlinx.io.core.readUInt
+import moe.fuqiuluo.proto.ProtoByteString
 import moe.fuqiuluo.proto.ProtoMap
 import moe.fuqiuluo.proto.asInt
 import moe.fuqiuluo.proto.asLong
@@ -17,6 +18,7 @@ import moe.fuqiuluo.proto.asUtf8String
 import moe.fuqiuluo.proto.ProtoUtils
 import moe.fuqiuluo.proto.asByteArray
 import moe.fuqiuluo.proto.asList
+import moe.fuqiuluo.proto.asMap
 import moe.fuqiuluo.shamrock.helper.MessageHelper
 import moe.fuqiuluo.shamrock.remote.service.api.GlobalPusher
 import moe.fuqiuluo.shamrock.remote.service.data.push.NoticeSubType
@@ -24,6 +26,7 @@ import moe.fuqiuluo.shamrock.remote.service.data.push.NoticeType
 import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.tools.toHexString
 import moe.fuqiuluo.shamrock.xposed.helper.PacketHandler
 
 internal object PrimitiveListener {
@@ -67,13 +70,24 @@ internal object PrimitiveListener {
     private fun onGroupPoke(time: Long, pb: ProtoMap) {
         val groupCode = pb[1, 1, 1].asLong
         val readPacket = ByteReadPacket( pb[1, 3, 2].asByteArray )
-        val detail = if (readPacket.readUInt().toLong() == groupCode) {
+        var detail = if (readPacket.readUInt().toLong() == groupCode) {
             readPacket.discardExact(1)
             ProtoUtils.decodeFromByteArray(readPacket.readBytes(readPacket.readShort().toInt()))
         } else pb[1, 3, 2]
+
+        if (detail !is ProtoMap) {
+            readPacket.discardExact(1)
+            detail = ProtoUtils.decodeFromByteArray(readPacket.readBytes(readPacket.readShort().toInt()))
+        }
+
+        readPacket.release()
+
         lateinit var target: String
         lateinit var operation: String
-        detail[26, 7].asList.value.forEach {
+        detail[26][7]
+            .asList
+            .value
+            .forEach {
             val value = it[2].asUtf8String
             when(it[1].asUtf8String) {
                 "uin_str1" -> operation = value

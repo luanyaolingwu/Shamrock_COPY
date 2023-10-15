@@ -31,7 +31,7 @@ sealed interface ProtoValue {
     }
 
     operator fun get(vararg tags: Int): ProtoValue {
-        error("Instance is not ProtoMap")
+        error("Instance is not ProtoMap for (${tags.first()})")
     }
 
     fun add(v: ProtoValue) {

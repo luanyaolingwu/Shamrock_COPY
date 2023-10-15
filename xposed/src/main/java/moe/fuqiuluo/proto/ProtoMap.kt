@@ -69,7 +69,7 @@ class ProtoMap(
                 }
             } ?: error("Tag $tag not found")
         }
-        error("Instance is not ProtoMap")
+        error("Instance is not ProtoMap for get(${tags.first()})")
     }
 
     override fun size(): Int {

@@ -275,7 +275,15 @@ internal object MsgConvert {
                         val notify = tip.jsonGrayTipElement
                         when(notify.busiId) {
                             /* 群戳一戳 */1061L, /* 群撤回 */1014L -> {}
-                            else -> LogCenter.log("不支持的灰条类型: $tipType", Level.WARN)
+                            else -> LogCenter.log("不支持的灰条类型(JSON): $tipType", Level.WARN)
+                        }
+                        return null
+                    }
+                    MsgConstant.GRAYTIPELEMENTSUBTYPEXMLMSG -> {
+                        val notify = tip.xmlElement
+                        when(notify.busiId) {
+                            /* 群戳一戳 */12L -> {}
+                            else -> LogCenter.log("不支持的灰条类型(XML): $tipType", Level.WARN)
                         }
                         return null
                     }
