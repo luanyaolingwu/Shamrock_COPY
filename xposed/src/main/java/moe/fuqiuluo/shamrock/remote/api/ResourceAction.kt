@@ -49,6 +49,18 @@ fun Routing.fetchRes() {
         call.respondText(DeleteGroupFolder(groupId, id))
     }
 
+    getOrPost("/delete_group_file") {
+        val groupId = fetchOrThrow("group_id")
+        val id = fetchOrThrow("file_id")
+        val busid = fetchOrThrow("busid").toInt()
+        call.respondText(DeleteGroupFile(groupId, id, busid))
+    }
+
+    getOrPost("/get_group_file_system_info") {
+        val groupId = fetchOrThrow("group_id")
+        call.respondText(GetGroupFileSystemInfo(groupId))
+    }
+
     route("/res/[a-fA-F0-9]{32}".toRegex()) {
         get {
             val md5 = call.request.document()
