@@ -27,8 +27,8 @@ internal object MessageHelper {
         var uniseq = generateMsgId(chatType)
         var nonMsg: Boolean
         val msg = messageArrayToMessageElements(chatType, uniseq.second, peerId, message).also {
-            if (it.isEmpty()) error("消息合成失败，请查看日志或者检查输入。")
-        }.filter {
+            if (it.second.isEmpty() && !it.first) error("消息合成失败，请查看日志或者检查输入。")
+        }.second.filter {
             it.elementType != -1
         }.also {
             nonMsg = it.isEmpty()
@@ -73,8 +73,9 @@ internal object MessageHelper {
         }
     }
 
-    suspend fun messageArrayToMessageElements(chatType: Int, msgId: Long, targetUin: String, messageList: JsonArray): ArrayList<MsgElement> {
+    suspend fun messageArrayToMessageElements(chatType: Int, msgId: Long, targetUin: String, messageList: JsonArray): Pair<Boolean, ArrayList<MsgElement>> {
         val msgList = arrayListOf<MsgElement>()
+        var hasActionMsg = false
         messageList.forEach {
             val msg = it.jsonObject
             try {
@@ -86,6 +87,8 @@ internal object MessageHelper {
                     }.onFailure {
                         if (it.javaClass != ActionMsgException::class.java) {
                             throw it
+                        } else {
+                            hasActionMsg = true
                         }
                     }
                 }
@@ -93,7 +96,7 @@ internal object MessageHelper {
                 LogCenter.log(e.stackTraceToString(), Level.ERROR)
             }
         }
-        return msgList
+        return hasActionMsg to msgList
     }
 
     fun generateMsgIdHash(chatType: Int, msgId: Long): Int {
