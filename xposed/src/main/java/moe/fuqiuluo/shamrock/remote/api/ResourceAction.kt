@@ -61,6 +61,11 @@ fun Routing.fetchRes() {
         call.respondText(GetGroupFileSystemInfo(groupId))
     }
 
+    getOrPost("/get_group_root_files") {
+        val groupId = fetchOrThrow("group_id")
+        call.respondText(GetGroupRootFiles(groupId))
+    }
+
     route("/res/[a-fA-F0-9]{32}".toRegex()) {
         get {
             val md5 = call.request.document()

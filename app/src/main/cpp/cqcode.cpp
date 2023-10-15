@@ -53,7 +53,8 @@ void decode_cqcode(const std::string& code, std::vector<std::unordered_map<std::
                     continue;
                 }
             }
-        } else if (c == '=') {
+        }
+        else if (c == '=') {
             if (is_start) {
                 if (cache.empty()) {
                     throw illegal_code();
@@ -68,7 +69,8 @@ void decode_cqcode(const std::string& code, std::vector<std::unordered_map<std::
             } else {
                 cache += c;
             }
-        } else if (c == ',') {
+        }
+        else if (c == ',') {
             if (is_start) {
                 if (kv.count("_type") == 0 && !cache.empty()) {
                     kv.emplace("_type", cache);
@@ -87,7 +89,8 @@ void decode_cqcode(const std::string& code, std::vector<std::unordered_map<std::
             } else {
                 cache += c;
             }
-        } else if (c == ']') {
+        }
+        else if (c == ']') {
             if (is_start) {
                 if (!cache.empty()) {
                     if (!key_tmp.empty()) {
@@ -106,7 +109,8 @@ void decode_cqcode(const std::string& code, std::vector<std::unordered_map<std::
             } else {
                 cache += c;
             }
-        } else {
+        }
+        else {
             cache += c;
         }
     }
