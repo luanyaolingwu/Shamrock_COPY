@@ -524,21 +524,18 @@ internal object MessageMaker {
     }
 
     private suspend fun createRecordElem(chatType: Int, msgId: Long, peerId: String, data: JsonObject): Result<MsgElement> {
-        data.checkAndThrow("file")
-
-        var file = data["file"].asString.let {
+        var file = data["file"].asStringOrNull?.let {
             val md5 = it.replace(regex = "[{}\\-]".toRegex(), replacement = "")
                 .replace(" ", "")
                 .split(".")[0].lowercase()
-            var file = if (md5.length == 32) {
+            if (md5.length == 32) {
                 LocalCacheHelper.getCachePttFile(md5)
             } else {
                 FileUtils.parseAndSave(it)
             }
-            if (!file.exists() && data.containsKey("url")) {
-                file = FileUtils.parseAndSave(data["url"].asString)
-            }
-            return@let file
+        }
+        if (file == null || (!file.exists() && data.containsKey("url"))) {
+            file = FileUtils.parseAndSave(data["url"].asString)
         }
         if (!file.exists()) {
             throw LogicException("Voice(${file.name}) file is not exists, please check your filename.")
