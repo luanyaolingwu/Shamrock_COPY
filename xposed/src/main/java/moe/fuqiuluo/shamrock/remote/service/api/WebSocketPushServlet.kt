@@ -31,7 +31,7 @@ import kotlin.concurrent.timer
 internal abstract class WebSocketPushServlet(
     port: Int
 ) : BasePushServlet, WebSocketServer(InetSocketAddress(port)) {
-    protected val eventReceivers: MutableList<WebSocket> = Collections.synchronizedList(mutableListOf<WebSocket>())!!
+    protected val eventReceivers: MutableList<WebSocket> = Collections.synchronizedList(mutableListOf<WebSocket>())
 
     override val address: String
         get() = "-"
