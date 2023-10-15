@@ -53,8 +53,6 @@ android {
     android.applicationVariants.all {
         outputs.map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach {
-                // 根据 abi 分包
-                println("outputFileName: ${it.outputFileName}")
                 val abi = it.outputFileName.split("-")[1].split(".apk")[0]
                 val abiName = when (abi) {
                     "app" -> "all"
