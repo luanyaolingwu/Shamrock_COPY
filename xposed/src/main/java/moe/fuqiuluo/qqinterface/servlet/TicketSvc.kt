@@ -42,14 +42,14 @@ internal object TicketSvc: BaseSvc() {
 
     fun getCookie(): String {
         val uin = getUin()
-        val skey = getSKey(uin)
+        val skey = getRealSkey(uin)
         val pskey = getPSKey(uin)
         return "uin=o$uin; skey=$skey; p_uin=o$uin; p_skey=$pskey"
     }
 
     suspend fun getCookie(domain: String): String {
         val uin = getUin()
-        val skey = getSKey(uin)
+        val skey = getRealSkey(uin)
         val pskey = getPSKey(uin, domain) ?: ""
         val pt4token = getPt4Token(uin, domain) ?: ""
         return "uin=o$uin; skey=$skey; p_uin=o$uin; p_skey=$pskey; pt4_token=$pt4token"
@@ -84,6 +84,10 @@ internal object TicketSvc: BaseSvc() {
 
     fun getSKey(uin: String): String {
         return (app.getManager(QQAppInterface.TICKET_MANAGER) as TicketManager).getSkey(uin)
+    }
+
+    fun getRealSkey(uin: String): String {
+        return (app.getManager(QQAppInterface.TICKET_MANAGER) as TicketManager).getRealSkey(uin)
     }
 
     fun getPSKey(uin: String): String {
