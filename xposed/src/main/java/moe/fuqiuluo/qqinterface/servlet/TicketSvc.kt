@@ -1,10 +1,13 @@
 package moe.fuqiuluo.qqinterface.servlet
 
 import com.tencent.mobileqq.app.QQAppInterface
+import io.ktor.client.request.get
+import io.ktor.client.request.header
 import moe.fuqiuluo.proto.ProtoUtils
 import moe.fuqiuluo.proto.asUtf8String
 import moe.fuqiuluo.proto.protobufOf
 import moe.fuqiuluo.qqinterface.servlet.BaseSvc
+import moe.fuqiuluo.shamrock.tools.GlobalClientNoRedirect
 import moe.fuqiuluo.shamrock.tools.slice
 import mqq.app.MobileQQ
 import mqq.manager.TicketManager
@@ -106,10 +109,10 @@ internal object TicketSvc: BaseSvc() {
         body.mergeFrom(resp.slice(4))
 
         val pb = ProtoUtils.decodeFromByteArray(body.bytes_bodybuffer.get().toByteArray())
-        if (pb.has(1, 2)) {
-            return pb[1][2].asUtf8String
+        return if (pb.has(1, 2)) {
+            pb[1][2].asUtf8String
         } else {
-            return null
+            null
         }
     }
 
@@ -121,5 +124,29 @@ internal object TicketSvc: BaseSvc() {
 
     fun getPt4Token(uin: String, domain: String): String? {
         return (app.getManager(QQAppInterface.TICKET_MANAGER) as TicketManager).getPt4Token(uin, domain)
+    }
+
+    suspend fun GetHttpCookies(appid: String, daid: String, jumpurl: String): String? {
+        val uin = getUin()
+        val clientkey = getStWeb(uin)
+        var url = "https://ui.ptlogin2.qq.com/cgi-bin/login?pt_hide_ad=1&style=9&appid=$appid&pt_no_auth=1&pt_wxtest=1&daid=$daid&s_url=$jumpurl"
+        var cookie = GlobalClientNoRedirect.get(url).headers.getAll("Set-Cookie")?.joinToString(";")
+        url = "https://ssl.ptlogin2.qq.com/jump?u1=$jumpurl&pt_report=1&daid=$daid&style=9&keyindex=19&clientuin=$uin&clientkey=$clientkey"
+        var head = GlobalClientNoRedirect.get(url) {
+            header("Cookie", cookie)
+        }.let {
+            cookie = it.headers.getAll("Set-Cookie")?.joinToString(";")
+            url = it.headers["Location"].toString()
+        }
+        cookie = GlobalClientNoRedirect.get(url).headers.getAll("Set-Cookie")?.joinToString(";")
+        val extractedCookie = StringBuilder()
+        val cookies = cookie?.split(";")
+        cookies?.filter { cookie ->
+            val cookiePair = cookie.trim().split("=")
+            cookiePair.size == 2 && cookiePair[1].isNotBlank() && cookiePair[0].trim() in listOf("uin", "skey", "p_uin", "p_skey", "pt4_token")
+        }?.forEach {
+            extractedCookie.append("$it; ")
+        }
+        return extractedCookie.toString().trim()
     }
 }
