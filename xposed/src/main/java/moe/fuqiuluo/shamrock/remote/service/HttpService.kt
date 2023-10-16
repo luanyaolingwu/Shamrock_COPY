@@ -103,7 +103,7 @@ internal object HttpService: HttpPushServlet() {
             operation = operation,
             userId = operation,
             groupId = groupId,
-            target = userId
+            target = userId,
         )
     }
 
@@ -220,6 +220,7 @@ internal object HttpService: HttpPushServlet() {
         duration: Int = 0,
         msgHash: Int = 0,
         target: Long = 0,
+        sender: Long = 0,
         tip: String = "",
         fileMsg: FileMsg? = null
     ) {
@@ -237,7 +238,8 @@ internal object HttpService: HttpPushServlet() {
                 target = target,
                 msgId = msgHash,
                 tip = tip,
-                file = fileMsg
+                file = fileMsg,
+                senderId = sender
             ))
         }
     }

@@ -49,6 +49,9 @@ val ProtoValue.asInt: Int
 val ProtoValue.asLong: Long
     get() = (this as ProtoNumber).value.toLong()
 
+val ProtoValue.asULong: Long
+    get() = (this as ProtoNumber).value.toLong() and 0xFFFFFFFFL
+
 val ProtoValue.asMap: ProtoMap
     get() = (this as ProtoMap)
 
