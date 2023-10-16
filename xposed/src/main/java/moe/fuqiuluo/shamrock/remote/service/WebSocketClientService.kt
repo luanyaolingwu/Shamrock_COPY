@@ -193,6 +193,18 @@ internal class WebSocketClientService(
         )
     }
 
+    override fun pushC2CPoke(time: Long, userId: Long, targetId: Long) {
+        pushNotice(
+            time = time,
+            type = NoticeType.Notify,
+            subType = NoticeSubType.Poke,
+            operation = userId,
+            userId = userId,
+            target = targetId,
+            sender = userId
+        )
+    }
+
     private fun pushNotice(
         time: Long,
         type: NoticeType,
@@ -203,6 +215,7 @@ internal class WebSocketClientService(
         duration: Int = 0,
         msgHash: Int = 0,
         target: Long = 0,
+        sender: Long = 0,
         tip: String = "",
         fileMsg: FileMsg? = null
     ) {
@@ -221,7 +234,8 @@ internal class WebSocketClientService(
                     target = target,
                     msgId = msgHash,
                     tip = tip,
-                    file = fileMsg
+                    file = fileMsg,
+                    senderId = sender
                 )
             )
         }
