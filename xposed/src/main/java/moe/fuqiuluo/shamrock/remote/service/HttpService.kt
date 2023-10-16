@@ -210,6 +210,18 @@ internal object HttpService: HttpPushServlet() {
         )
     }
 
+    override fun pushC2CPoke(time: Long, userId: Long, targetId: Long) {
+        pushNotice(
+            time = time,
+            type = NoticeType.Notify,
+            subType = NoticeSubType.Poke,
+            operation = userId,
+            userId = userId,
+            target = targetId,
+            sender = userId
+        )
+    }
+
     private fun pushNotice(
         time: Long,
         type: NoticeType,

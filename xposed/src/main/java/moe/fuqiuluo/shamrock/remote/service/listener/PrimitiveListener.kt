@@ -60,6 +60,7 @@ internal object PrimitiveListener {
             44 -> onGroupAdminChange(msgTime, pb)
             528 -> when(subType) {
                 138 -> onC2CRecall(msgTime, pb)
+                290 -> onC2cPoke(msgTime, pb)
             }
             732 -> when(subType) {
                 12 -> onGroupBan(msgTime, pb)
@@ -69,20 +70,47 @@ internal object PrimitiveListener {
         }
     }
 
+    private fun onC2cPoke(msgTime: Long, pb: ProtoMap) {
+        val detail = pb[1, 3, 2]
+        if (detail !is ProtoMap) {
+            error("不支持该私聊戳一戳解析: ${(detail as ProtoByteString).toByteArray().toHexString()}")
+        }
+
+        lateinit var target: String
+        lateinit var operation: String
+        detail[7]
+            .asList
+            .value
+            .forEach {
+                val value = it[2].asUtf8String
+                when(it[1].asUtf8String) {
+                    "uin_str1" -> operation = value
+                    "uin_str2" -> target = value
+                }
+            }
+        LogCenter.log("私聊戳一戳: $operation -> $target")
+
+        GlobalPusher().forEach { it.pushC2CPoke(msgTime, operation.toLong(), target.toLong()) }
+    }
+
     private fun onGroupPoke(time: Long, pb: ProtoMap) {
-        val groupCode = pb[1, 1, 1].asULong
+        val groupCode1 = pb[1, 1, 1].asULong
+
+        var groupCode: Long = groupCode1
+
         val readPacket = ByteReadPacket( pb[1, 3, 2].asByteArray )
         val groupCode2 = readPacket.readBuf32Long()
-        var detail = if (groupCode2 == groupCode) {
+
+        var detail = if (groupCode2 == groupCode1) {
+            groupCode = groupCode2
             readPacket.discardExact(1)
             ProtoUtils.decodeFromByteArray(readPacket.readBytes(readPacket.readShort().toInt()))
         } else pb[1, 3, 2]
-
         if (detail !is ProtoMap) {
+            groupCode = groupCode2
             readPacket.discardExact(1)
             detail = ProtoUtils.decodeFromByteArray(readPacket.readBytes(readPacket.readShort().toInt()))
         }
-
         readPacket.release()
 
         lateinit var target: String
@@ -97,9 +125,9 @@ internal object PrimitiveListener {
                 "uin_str2" -> target = value
             }
         }
-        LogCenter.log("群戳一戳($groupCode2): $operation -> $target")
+        LogCenter.log("群戳一戳($groupCode): $operation -> $target")
 
-        GlobalPusher().forEach { it.pushGroupPoke(time, operation.toLong(), target.toLong(), groupCode2) }
+        GlobalPusher().forEach { it.pushGroupPoke(time, operation.toLong(), target.toLong(), groupCode) }
     }
 
     private suspend fun onC2CRecall(time: Long, pb: ProtoMap) {
