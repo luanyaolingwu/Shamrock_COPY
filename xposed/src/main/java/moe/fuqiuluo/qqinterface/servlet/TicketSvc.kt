@@ -105,7 +105,12 @@ internal object TicketSvc: BaseSvc() {
         val body = oidb_sso.OIDBSSOPkg()
         body.mergeFrom(resp.slice(4))
 
-        return ProtoUtils.decodeFromByteArray(body.bytes_bodybuffer.get().toByteArray())[1][2].asUtf8String
+        val pb = ProtoUtils.decodeFromByteArray(body.bytes_bodybuffer.get().toByteArray())
+        if (pb.has(1, 2)) {
+            return pb[1][2].asUtf8String
+        } else {
+            return null
+        }
     }
 
     suspend fun getPSKey(uin: String, domain: String): String? {
