@@ -22,7 +22,7 @@ internal object ActionManager {
             // UserActions
             GetProfileCard, GetFriendList, SendLike, GetUid, GetUinByUid, ScanQRCode, SetProfileCard,
             GetCookies, GetCSRF, GetCredentials, RestartMe, CleanCache, GetModelShow, SetModelShow,
-            GetModelShowList, GetOnlineClients, GetStrangerInfo, IsBlackListUin,
+            GetModelShowList, GetOnlineClients, GetStrangerInfo, IsBlackListUin, GetHttpCookies,
 
             // GroupInfo
             GetTroopList, GetTroopInfo, GetTroopList, GetTroopMemberInfo, GetTroopMemberList,
@@ -44,7 +44,10 @@ internal object ActionManager {
             GetWeatherCityCode, GetWeather,
 
             // OTHER
-            GetDeviceBattery, DownloadFile
+            GetDeviceBattery, DownloadFile,
+
+            // HTTP
+            GetTTS
         ).forEach {
             it.alias.forEach { name ->
                 actionMap[name] = it
