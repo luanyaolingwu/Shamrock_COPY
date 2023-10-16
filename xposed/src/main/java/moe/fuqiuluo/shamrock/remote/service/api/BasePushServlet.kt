@@ -43,6 +43,8 @@ internal interface BasePushServlet {
 
     fun pushGroupPoke(time: Long, operation: Long, userId: Long, groupId: Long)
 
+    //fun pushPrivatePoke(time: Long, operation: Long, userId: Long, sender: Long)
+
     fun pushPrivateMsgRecall(time: Long, operation: Long, msgHash: Int, tip: String)
 
     fun pushGroupMsgRecall(

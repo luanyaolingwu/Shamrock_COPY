@@ -194,10 +194,22 @@ internal object AioListener: IKernelMsgListener {
             GlobalScope.launch {
                 when(record.chatType) {
                     MsgConstant.KCHATTYPEGROUP -> onGroupFileMsg(record)
-                    else -> LogCenter.log("不支持该来源的文件上传事件：${record.chatType}", Level.WARN)
+                    MsgConstant.KCHATTYPEC2C -> onC2CFileMsg(record)
+                    else -> LogCenter.log("不支持该来源的文件上传事件：${record}", Level.WARN)
                 }
             }
         }
+    }
+
+    private fun onC2CFileMsg(record: MsgRecord) {
+        val userId = record.senderUin
+        val fileMsg = record.elements.firstOrNull {
+            it.elementType == MsgConstant.KELEMTYPEFILE
+        }?.fileElement ?: kotlin.run {
+            LogCenter.log("消息为私聊文件消息但不包含文件消息，来自：${record.peerUin}", Level.WARN)
+            return
+        }
+
     }
 
     private suspend fun onGroupFileMsg(record: MsgRecord) {
@@ -206,10 +218,10 @@ internal object AioListener: IKernelMsgListener {
         val fileMsg = record.elements.firstOrNull {
             it.elementType == MsgConstant.KELEMTYPEFILE
         }?.fileElement ?: kotlin.run {
-            LogCenter.log("消息为文件消息但不包含文件消息，来自：${record.peerUin}", Level.WARN)
+            LogCenter.log("消息为群聊文件消息但不包含文件消息，来自：${record.peerUin}", Level.WARN)
             return
         }
-        val fileMd5 = fileMsg.fileMd5
+        //val fileMd5 = fileMsg.fileMd5
         val fileName = fileMsg.fileName
         val fileSize = fileMsg.fileSize
         val uuid = fileMsg.fileUuid

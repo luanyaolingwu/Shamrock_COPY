@@ -19,6 +19,7 @@ import moe.fuqiuluo.proto.ProtoUtils
 import moe.fuqiuluo.proto.asByteArray
 import moe.fuqiuluo.proto.asList
 import moe.fuqiuluo.proto.asMap
+import moe.fuqiuluo.proto.asULong
 import moe.fuqiuluo.shamrock.helper.MessageHelper
 import moe.fuqiuluo.shamrock.remote.service.api.GlobalPusher
 import moe.fuqiuluo.shamrock.remote.service.data.push.NoticeSubType
@@ -26,6 +27,7 @@ import moe.fuqiuluo.shamrock.remote.service.data.push.NoticeType
 import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.tools.readBuf32Long
 import moe.fuqiuluo.shamrock.tools.toHexString
 import moe.fuqiuluo.shamrock.xposed.helper.PacketHandler
 
@@ -68,9 +70,9 @@ internal object PrimitiveListener {
     }
 
     private fun onGroupPoke(time: Long, pb: ProtoMap) {
-        val groupCode = pb[1, 1, 1].asLong
+        val groupCode = pb[1, 1, 1].asULong
         val readPacket = ByteReadPacket( pb[1, 3, 2].asByteArray )
-        var detail = if (readPacket.readUInt().toLong() == groupCode) {
+        var detail = if (readPacket.readBuf32Long() == groupCode) {
             readPacket.discardExact(1)
             ProtoUtils.decodeFromByteArray(readPacket.readBytes(readPacket.readShort().toInt()))
         } else pb[1, 3, 2]
@@ -118,7 +120,7 @@ internal object PrimitiveListener {
     }
 
     private suspend fun onGroupMemIncreased(time: Long, pb: ProtoMap) {
-        val groupCode = pb[1, 3, 2, 1].asLong
+        val groupCode = pb[1, 3, 2, 1].asULong
         val targetUid = pb[1, 3, 2, 3].asUtf8String
         val type = pb[1, 3, 2, 4].asInt
         val operation = ContactHelper.getUinByUidAsync(pb[1, 3, 2, 5].asUtf8String).toLong()
@@ -136,7 +138,7 @@ internal object PrimitiveListener {
     }
 
     private suspend fun onGroupMemberDecreased(time: Long, pb: ProtoMap) {
-        val groupCode = pb[1, 3, 2, 1].asLong
+        val groupCode = pb[1, 3, 2, 1].asULong
         val targetUid = pb[1, 3, 2, 3].asUtf8String
         val type = pb[1, 3, 2, 4].asInt
         val operation = ContactHelper.getUinByUidAsync(pb[1, 3, 2, 5].asUtf8String).toLong()
@@ -156,7 +158,7 @@ internal object PrimitiveListener {
     }
 
     private suspend fun onGroupAdminChange(msgTime: Long, pb: ProtoMap) {
-        val groupCode = pb[1, 3, 2, 1].asLong
+        val groupCode = pb[1, 3, 2, 1].asULong
         lateinit var targetUid: String
         val isSetAdmin: Boolean
         if (pb.has(1, 3, 2, 4, 1)) {
@@ -175,7 +177,7 @@ internal object PrimitiveListener {
     }
 
     private suspend fun onGroupBan(msgTime: Long, pb: ProtoMap) {
-        val groupCode = pb[1, 1, 1].asLong
+        val groupCode = pb[1, 1, 1].asULong
         val operatorUid = pb[1, 3, 2, 4].asUtf8String
         val targetUid = pb[1, 3, 2, 5, 3, 1].asUtf8String
         val duration = pb[1, 3, 2, 5, 3, 2].asInt
@@ -189,7 +191,7 @@ internal object PrimitiveListener {
     }
 
     private suspend fun onGroupRecall(time: Long, pb: ProtoMap) {
-        val groupCode = pb[1, 1, 1].asLong
+        val groupCode = pb[1, 1, 1].asULong
         val readPacket = ByteReadPacket( pb[1, 3, 2].asByteArray )
         try {
             /**

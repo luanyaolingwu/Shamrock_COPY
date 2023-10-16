@@ -24,6 +24,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import moe.fuqiuluo.proto.protobufOf
 import moe.fuqiuluo.shamrock.tools.ifNullOrEmpty
+import moe.fuqiuluo.shamrock.tools.putBuf32Long
 import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.xposed.helper.NTServiceFetcher
 import mqq.app.MobileQQ
@@ -129,8 +130,8 @@ internal object GroupSvc: BaseSvc() {
 
     fun setGroupAdmin(groupId: Long, userId: Long, enable: Boolean) {
         val buffer = ByteBuffer.allocate(9)
-        buffer.putInt(groupId.toInt())
-        buffer.putInt(userId.toInt())
+        buffer.putBuf32Long(groupId)
+        buffer.putBuf32Long(userId)
         buffer.put(if (enable) 1 else 0)
         val array = buffer.array()
         sendOidb("OidbSvc.0x55c_1", 1372, 1, array)
@@ -147,10 +148,10 @@ internal object GroupSvc: BaseSvc() {
 
     fun banMember(groupId: Long, memberUin: Long, time: Int) {
         val buffer = ByteBuffer.allocate(1 * 8 + 7)
-        buffer.putInt(groupId.toInt())
+        buffer.putBuf32Long(groupId)
         buffer.put(32.toByte())
         buffer.putShort(1)
-        buffer.putInt(memberUin.toInt())
+        buffer.putBuf32Long(memberUin)
         buffer.putInt(time)
         val array = buffer.array()
         sendOidb("OidbSvc.0x570_8", 1392, 8, array)

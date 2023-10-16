@@ -118,6 +118,7 @@ internal object MsgSvc: BaseSvc() {
                 MessageHelper.removeMsgByHashCode(msgHash)
             }
             when (code) {
+                110 -> LogCenter.log("消息发送: $peerId, 无该联系人无法发送。")
                 120 -> LogCenter.log("消息发送: $peerId, 禁言状态无法发送。")
                 5 -> LogCenter.log("消息发送: $peerId, 当前不支持该消息类型。")
                 else -> LogCenter.log("消息发送: $peerId, code: $code $reason")
