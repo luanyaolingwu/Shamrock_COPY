@@ -9,6 +9,13 @@ import moe.fuqiuluo.shamrock.remote.entries.Status
 import moe.fuqiuluo.shamrock.tools.*
 
 fun Routing.ticketActions() {
+    getOrPost("/get_http_cookies") {
+        val appid =fetchOrThrow("appid")
+        val daid = fetchOrThrow("daid")
+        val jumpurl = fetchOrThrow("jumpurl")
+        call.respondText(GetHttpCookies(appid, daid, jumpurl))
+    }
+
     getOrPost("/get_credentials") {
         val domain = fetchOrNull("domain")
         if (domain != null) {
