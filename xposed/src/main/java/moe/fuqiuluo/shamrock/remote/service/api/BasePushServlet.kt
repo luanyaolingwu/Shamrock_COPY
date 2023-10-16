@@ -86,6 +86,8 @@ internal interface BasePushServlet {
         url: String
     )
 
+    fun pushC2CPoke(time: Long, userId: Long, targetId: Long)
+
     val app: QQAppInterface
         get() = MobileQQ.getMobileQQ().waitAppRuntime() as QQAppInterface
 
