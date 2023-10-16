@@ -1,6 +1,10 @@
 package moe.fuqiuluo.shamrock.helper
 
+import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import kotlinx.coroutines.suspendCancellableCoroutine
+import moe.fuqiuluo.qqinterface.servlet.FriendSvc
+import moe.fuqiuluo.qqinterface.servlet.GroupSvc
+import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.shamrock.xposed.helper.NTServiceFetcher
 import kotlin.coroutines.resume
 
@@ -30,5 +34,20 @@ internal object ContactHelper {
         }[peerId]!!
     }
 
+    suspend fun checkContactAvailable(chatType: Int, peerId: String): Boolean {
+        return when(chatType) {
+            MsgConstant.KCHATTYPEGROUP -> {
+                GroupSvc.getGroupList(false).getOrNull()?.find {
+                    it.troopcode == peerId
+                } != null
+            }
 
+            MsgConstant.KCHATTYPEC2C -> {
+                FriendSvc.getFriendList(false).getOrNull()?.find {
+                    it.uin == peerId
+                } != null
+            }
+            else -> error("unknown chat type: $chatType")
+        }
+    }
 }
