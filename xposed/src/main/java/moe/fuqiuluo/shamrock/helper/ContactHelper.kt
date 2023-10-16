@@ -34,16 +34,19 @@ internal object ContactHelper {
         }[peerId]!!
     }
 
+    /**
+     * 检查联系人是否可用, 每次都刷新，性能有损耗
+     */
     suspend fun checkContactAvailable(chatType: Int, peerId: String): Boolean {
         return when(chatType) {
             MsgConstant.KCHATTYPEGROUP -> {
-                GroupSvc.getGroupList(false).getOrNull()?.find {
+                GroupSvc.getGroupList(true).getOrNull()?.find {
                     it.troopcode == peerId
                 } != null
             }
 
             MsgConstant.KCHATTYPEC2C -> {
-                FriendSvc.getFriendList(false).getOrNull()?.find {
+                FriendSvc.getFriendList(true).getOrNull()?.find {
                     it.uin == peerId
                 } != null
             }
