@@ -274,6 +274,7 @@ internal object MsgConvert {
                     MsgConstant.GRAYTIPELEMENTSUBTYPEJSON -> {
                         val notify = tip.jsonGrayTipElement
                         when(notify.busiId) {
+                            /* 新人入群 */ 17L,
                             /* 群戳一戳 */1061L, /* 群撤回 */1014L -> {}
                             else -> LogCenter.log("不支持的灰条类型(JSON): $tipType", Level.WARN)
                         }
