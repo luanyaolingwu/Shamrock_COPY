@@ -1,6 +1,10 @@
 @file:OptIn(DelicateCoroutinesApi::class, ObsoleteCoroutinesApi::class)
 package moe.fuqiuluo.shamrock.utils
 
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.HttpStatusCode
+import io.ktor.utils.io.jvm.javaio.toInputStream
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -10,6 +14,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import moe.fuqiuluo.shamrock.helper.Level
+import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.tools.GlobalClient
 import java.io.File
 import java.io.RandomAccessFile
 import java.net.HttpURLConnection
@@ -25,7 +32,7 @@ object DownloadUtils {
         threadCount: Int = MAX_THREAD,
         headers: Map<String, String> = mapOf()
     ): Boolean {
-        var threadCnt = threadCount
+        var threadCnt = if(threadCount == 0) MAX_THREAD else threadCount
         val url = URL(urlAdr)
         val connection = withContext(Dispatchers.IO) { url.openConnection() } as HttpURLConnection
         headers.forEach { (k, v) ->
@@ -36,10 +43,14 @@ object DownloadUtils {
         val responseCode = connection.responseCode
         if (responseCode == 200) {
             val contentLength = connection.contentLength
-            withContext(Dispatchers.IO) {
-                val raf = RandomAccessFile(dest, "rw")
-                raf.setLength(contentLength.toLong())
-                raf.close()
+            if (contentLength <= 0) {
+                return downloadByKtor(url, dest)
+            } else {
+                withContext(Dispatchers.IO) {
+                    val raf = RandomAccessFile(dest, "rw")
+                    raf.setLength(contentLength.toLong())
+                    raf.close()
+                }
             }
             if (contentLength <= 1024 * 1024) {
                 threadCnt = 1
@@ -69,6 +80,24 @@ object DownloadUtils {
                 return@withTimeoutOrNull true
             } ?: dest.delete()
             return true
+        }
+        return false
+    }
+
+    private suspend fun downloadByKtor(url: URL, dest: File): Boolean {
+        val respond = GlobalClient.get(url)
+        if (respond.status == HttpStatusCode.OK) {
+            val channel = respond.bodyAsChannel()
+            withContext(Dispatchers.IO) {
+                dest.outputStream().use {
+                    channel.toInputStream().use { input ->
+                        input.copyTo(it)
+                    }
+                }
+            }
+            return true
+        } else {
+            LogCenter.log("文件下载失败: ${respond.status}", Level.WARN)
         }
         return false
     }

@@ -8,6 +8,7 @@ import com.tencent.qqnt.kernel.nativeinterface.FileElement
 import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import com.tencent.qqnt.kernel.nativeinterface.MsgElement
 import com.tencent.qqnt.msg.api.IMsgService
+import com.tencent.qqnt.msg.api.IMsgUtilApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -65,9 +66,9 @@ internal object UploadPrivateFile : IActionHandler() {
         fileElement.fileSha = ""
         fileElement.fileSha3 = ""
         fileElement.file10MMd5 = ""
-        when (TransfileHelper.getExtensionId(srcFile)) {
+        when (TransfileHelper.getExtensionId(name)) {
             0 -> {
-                val wh = QRoute.api(IMsgService::class.java)
+                val wh = QRoute.api(IMsgUtilApi::class.java)
                     .getPicSizeByPath(srcFile.absolutePath)
                 fileElement.picWidth = wh.first
                 fileElement.picHeight = wh.second

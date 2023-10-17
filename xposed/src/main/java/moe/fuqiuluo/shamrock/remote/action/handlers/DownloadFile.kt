@@ -31,11 +31,17 @@ internal object DownloadFile: IActionHandler() {
         headers: List<String>,
         echo: JsonElement = EmptyJsonString
     ): String {
-        return invoke(url, threadCnt, headers.associate {
-            it.split("=").let { (k, v) ->
-                k to v
+        val headerMap = mutableMapOf(
+            "User-Agent" to "Shamrock"
+        )
+        headers.forEach {
+            val pair = it.split("=")
+            if (pair.size >= 2) {
+                val (k, v) = pair
+                headerMap[k] = v
             }
-        }, echo)
+        }
+        return invoke(url, threadCnt, headerMap, echo)
     }
 
     suspend operator fun invoke(
@@ -44,20 +50,24 @@ internal object DownloadFile: IActionHandler() {
         headers: Map<String, String>,
         echo: JsonElement = EmptyJsonString
     ): String {
-        var tmp = FileUtils.getTmpFile("cache")
-        if(DownloadUtils.download(
-            urlAdr = url,
-            dest = tmp,
-            headers = headers,
-            threadCount = threadCnt
-        )) {
-            return error("下载失败", echo)
+        return kotlin.runCatching {
+            var tmp = FileUtils.getTmpFile("cache")
+            if(!DownloadUtils.download(
+                    urlAdr = url,
+                    dest = tmp,
+                    headers = headers,
+                    threadCount = threadCnt
+                )) {
+                return error("下载失败 (0x1)", echo)
+            }
+            tmp = FileUtils.renameByMd5(tmp)
+            ok(data = DownloadResult(
+                file = tmp.absolutePath,
+                md5 = MD5.genFileMd5Hex(tmp.absolutePath)
+            ), msg = "成功", echo = echo)
+        }.getOrElse {
+            logic(it.stackTraceToString(), echo)
         }
-        tmp = FileUtils.renameByMd5(tmp)
-        return ok(data = DownloadResult(
-            file = tmp.absolutePath,
-            md5 = MD5.genFileMd5Hex(tmp.absolutePath)
-        ), msg = "成功", echo = echo)
     }
 
     override val requiredParams: Array<String> = arrayOf("url")
