@@ -1,7 +1,7 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
 import kotlinx.serialization.json.JsonElement
-import moe.fuqiuluo.qqinterface.servlet.GroupFileSvc
+import moe.fuqiuluo.qqinterface.servlet.FileSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.tools.EmptyJsonString
@@ -13,7 +13,7 @@ internal object GetGroupFileSystemInfo: IActionHandler() {
     }
 
     suspend operator fun invoke(groupId: String, echo: JsonElement = EmptyJsonString): String {
-        return ok(data = GroupFileSvc.getGroupFileSystemInfo(groupId.toLong()), echo)
+        return ok(data = FileSvc.getGroupFileSystemInfo(groupId.toLong()), echo)
     }
 
     override val requiredParams: Array<String> = arrayOf("group_id")

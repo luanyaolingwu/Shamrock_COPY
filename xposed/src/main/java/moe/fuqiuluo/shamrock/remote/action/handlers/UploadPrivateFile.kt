@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import moe.fuqiuluo.shamrock.helper.ContactHelper
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.helper.MessageHelper
 import moe.fuqiuluo.shamrock.helper.TransfileHelper
@@ -24,9 +25,9 @@ import moe.fuqiuluo.shamrock.utils.MD5
 import java.io.File
 import java.io.FileOutputStream
 
-internal object UploadGroupFile : IActionHandler() {
+internal object UploadPrivateFile : IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
-        val groupId = session.getString("group_id")
+        val userId = session.getString("user_id")
         val file = session.getString("file")
         val name = session.getString("name")
             .replace("/", "_")
@@ -34,11 +35,11 @@ internal object UploadGroupFile : IActionHandler() {
             .replace("\n", "_")
             .replace("\t", "_")
             .replace("\r", "_")
-        return invoke(groupId, file, name, session.echo)
+        return invoke(userId, file, name, session.echo)
     }
 
     suspend operator fun invoke(
-        groupId: String,
+        userId: String,
         file: String,
         name: String,
         echo: JsonElement = EmptyJsonString
@@ -93,12 +94,13 @@ internal object UploadGroupFile : IActionHandler() {
         msgElement.elementType = MsgConstant.KELEMTYPEFILE
         msgElement.fileElement = fileElement
 
-        val msgIdPair = MessageHelper.generateMsgId(MsgConstant.KCHATTYPEGROUP)
+        val msgIdPair = MessageHelper.generateMsgId(MsgConstant.KCHATTYPEC2C)
         val msgService = QRoute.api(IMsgService::class.java)
         msgService.sendMsgWithMsgId(
-            MessageHelper.generateContact(MsgConstant.KCHATTYPEGROUP, groupId), msgIdPair.second, arrayListOf(msgElement)
+            MessageHelper.generateContact(MsgConstant.KCHATTYPEC2C, userId), msgIdPair.second, arrayListOf(msgElement)
         ) { code, reason ->
-            LogCenter.log("群文件消息发送异常(code = $code, reason = $reason)")
+            if (code != 0)
+                LogCenter.log("私聊文件消息发送异常(code = $code, reason = $reason)")
         }
 
         return ok(data = FileUploadResult(
@@ -106,9 +108,9 @@ internal object UploadGroupFile : IActionHandler() {
         ), echo = echo)
     }
 
-    override val requiredParams: Array<String> = arrayOf("group_id", "file", "name")
+    override val requiredParams: Array<String> = arrayOf("user_id", "file", "name")
 
-    override fun path(): String = "upload_group_file"
+    override fun path(): String = "upload_private_file"
 
     @Serializable
     data class FileUploadResult(

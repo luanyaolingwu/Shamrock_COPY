@@ -1,36 +1,39 @@
 package moe.fuqiuluo.qqinterface.servlet.transfile
 
+import com.tencent.av.utils.api.IAudioHelperApi
+import com.tencent.mobileqq.qroute.QRoute
 import com.tencent.mobileqq.transfile.FileMsg
 import com.tencent.mobileqq.transfile.api.IProtoReqManager
 import com.tencent.mobileqq.transfile.protohandler.RichProto
 import com.tencent.mobileqq.transfile.protohandler.RichProtoProc
-import io.ktor.server.util.url
 import kotlinx.coroutines.suspendCancellableCoroutine
 import moe.fuqiuluo.proto.ProtoUtils
 import moe.fuqiuluo.proto.asByteArray
 import moe.fuqiuluo.proto.asInt
+import moe.fuqiuluo.proto.asList
 import moe.fuqiuluo.proto.asUtf8String
 import moe.fuqiuluo.proto.protobufOf
 import moe.fuqiuluo.qqinterface.servlet.BaseSvc
-import moe.fuqiuluo.shamrock.tools.hex2ByteArray
-import moe.fuqiuluo.shamrock.utils.PlatformUtils
+import moe.fuqiuluo.shamrock.helper.ContactHelper
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.tools.hex2ByteArray
 import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.tools.toHexString
+import moe.fuqiuluo.shamrock.utils.PlatformUtils
 import mqq.app.MobileQQ
 import tencent.im.oidb.oidb_sso
 import kotlin.coroutines.resume
 
 internal object RichProtoSvc: BaseSvc() {
     suspend fun getGroupFileDownUrl(
-        peerId: String,
+        peerId: Long,
         fileId: String,
         bizId: Int = 102
     ): String {
         val buffer = sendOidbAW("OidbSvcTrpcTcp.0x6d6_2", 1750, 2, protobufOf(
             3 to mapOf(
-                1 to peerId.toLong(),
+                1 to peerId,
                 2 to 3,
                 3 to bizId,
                 4 to fileId,
@@ -47,12 +50,55 @@ internal object RichProtoSvc: BaseSvc() {
                 return ""
             }
 
-            val domain = if (result.has(3, 5)) result[3, 4].asUtf8String else result[3, 5].asUtf8String
+            val domain = if (result.has(3, 5)) ("https://" + result[3, 4].asUtf8String) else ("http://" + result[3, 5].asUtf8String)
             val downloadUrl = result[3, 6].asByteArray.toHexString()
             val appId = MobileQQ.getMobileQQ().appId
             val version = PlatformUtils.getQQVersion(MobileQQ.getContext())
 
-            return "https://$domain/ftn_handler/$downloadUrl/?fname=$fileId&client_proto=qq&client_appid=$appId&client_type=android&client_ver=$version&client_down_type=auto&client_aio_type=unk"
+            return "$domain/ftn_handler/$downloadUrl/?fname=$fileId&client_proto=qq&client_appid=$appId&client_type=android&client_ver=$version&client_down_type=auto&client_aio_type=unk"
+        }
+    }
+
+    suspend fun getC2CFileDownUrl(
+        fileId: String,
+        subId: String,
+    ): String {
+        val uid = ContactHelper.getUidByUinAsync(app.currentUin.toLong())
+        val buffer = sendOidbAW("OidbSvcTrpcTcp.0xe37_1200", 3639, 1200, protobufOf(
+            1 to 1200,
+            2 to 1 /* QRoute.api(IAudioHelperApi::class.java).genDebugSeq().toInt() */, /* seq */
+            14 to mapOf(
+                10 to uid,
+                20 to fileId,
+                30 to 2, /* ver */
+                60 to subId,
+                601 to 0
+            ),
+            101 to 3,
+            102 to 104, /* client_type */
+            200 to 1, /* url_type */
+            99999 to 90200 to 1
+        ).toByteArray(), trpc = true)
+        if (buffer == null) {
+            return ""
+        } else {
+            val body = oidb_sso.OIDBSSOPkg()
+            body.mergeFrom(buffer.slice(4))
+            val result = ProtoUtils.decodeFromByteArray(body.bytes_bodybuffer.get().toByteArray())
+
+            if (body.uint32_result.get() != 0 || result[14, 10].asInt != 0) {
+                return ""
+            }
+
+            val oldData = result[14, 30]
+            //val newData = result[14, 40] NTQQ 文件信息
+
+            val domain = if (oldData.has(90)) ("https://" + oldData[90].asUtf8String) else ("http://" + oldData[60].asList.value.first().asUtf8String)
+            val params = oldData[50].asUtf8String
+            val appId = MobileQQ.getMobileQQ().appId
+            val version = PlatformUtils.getQQVersion(MobileQQ.getContext())
+
+            return "$domain$params&isthumb=0&client_proto=qq&client_appid=$appId&client_type=android&client_ver=$version&client_down_type=auto&client_aio_type=unk"
         }
     }
 

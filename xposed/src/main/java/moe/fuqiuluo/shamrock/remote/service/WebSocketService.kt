@@ -186,7 +186,7 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
             groupId = groupId,
             operation = userId,
             userId = userId,
-            fileMsg = FileMsg(
+            groupFileMsg = GroupFileMsg(
                 id = fileId,
                 name = fileName,
                 size = fileSize,
@@ -208,6 +208,33 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
         )
     }
 
+    override fun pushC2CFileCome(
+        time: Long,
+        sender: Long,
+        fileId: String,
+        fileSubId: String,
+        fileName: String,
+        fileSize: Long,
+        expireTime: Long,
+        url: String
+    ) {
+        pushNotice(
+            time = time,
+            type = NoticeType.PrivateUpload,
+            operation = sender,
+            userId = sender,
+            sender = sender,
+            privateFileMsg = PrivateFileMsg(
+                id = fileId,
+                name = fileName,
+                size = fileSize,
+                url = url,
+                subId = fileSubId,
+                expire = expireTime
+            )
+        )
+    }
+
     private fun pushNotice(
         time: Long,
         type: NoticeType,
@@ -220,7 +247,8 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
         target: Long = 0,
         sender: Long = 0,
         tip: String = "",
-        fileMsg: FileMsg? = null
+        groupFileMsg: GroupFileMsg? = null,
+        privateFileMsg: PrivateFileMsg? = null
     ) {
         GlobalScope.launch {
             pushTo(
@@ -237,8 +265,9 @@ internal class WebSocketService(port: Int): WebSocketPushServlet(port) {
                     target = target,
                     msgId = msgHash,
                     tip = tip,
-                    file = fileMsg,
-                    senderId = sender
+                    file = groupFileMsg,
+                    senderId = sender,
+                    privateFile = privateFileMsg
                 )
             )
         }

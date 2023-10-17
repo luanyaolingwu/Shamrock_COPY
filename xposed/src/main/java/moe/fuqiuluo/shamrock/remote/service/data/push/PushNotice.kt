@@ -12,7 +12,8 @@ internal enum class NoticeType {
     @SerialName("group_recall") GroupRecall,
     @SerialName("friend_recall") FriendRecall,
     @SerialName("notify") Notify,
-    @SerialName("group_upload") GroupUpload
+    @SerialName("group_upload") GroupUpload,
+    @SerialName("private_upload") PrivateUpload
 }
 
 @Serializable
@@ -52,14 +53,25 @@ internal data class PushNotice(
     @SerialName("message_id") val msgId: Int,
     @SerialName("tip_text") val tip: String = "",
     @SerialName("target_id") val target: Long = 0,
-    @SerialName("file") val file: FileMsg? = null,
+    @SerialName("file") val file: GroupFileMsg? = null,
+    @SerialName("private_file") val privateFile: PrivateFileMsg? = null,
 )
 
 @Serializable
-internal data class FileMsg(
+internal data class GroupFileMsg(
     val id: String,
     val name: String,
     val size: Long,
     val busid: Long,
     val url: String,
+)
+
+@Serializable
+internal data class PrivateFileMsg(
+    val id: String,
+    val name: String,
+    val size: Long,
+    @SerialName("sub_id") val subId: String,
+    val url: String,
+    val expire: Long,
 )

@@ -7,19 +7,13 @@ import com.tencent.qqnt.kernel.nativeinterface.MsgRecord
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import moe.fuqiuluo.shamrock.remote.service.api.WebSocketClientServlet
 import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
-import moe.fuqiuluo.shamrock.remote.service.data.BotStatus
-import moe.fuqiuluo.shamrock.remote.service.data.Self
 import moe.fuqiuluo.shamrock.remote.service.data.push.*
-import moe.fuqiuluo.shamrock.tools.GlobalJson
 import moe.fuqiuluo.shamrock.tools.json
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.toSegment
-import mqq.app.MobileQQ
-import kotlin.concurrent.timer
 
 internal class WebSocketClientService(
     url: String,
@@ -183,7 +177,7 @@ internal class WebSocketClientService(
             groupId = groupId,
             operation = userId,
             userId = userId,
-            fileMsg = FileMsg(
+            groupFileMsg = GroupFileMsg(
                 id = fileId,
                 name = fileName,
                 size = fileSize,
@@ -205,6 +199,33 @@ internal class WebSocketClientService(
         )
     }
 
+    override fun pushC2CFileCome(
+        time: Long,
+        sender: Long,
+        fileId: String,
+        fileSubId: String,
+        fileName: String,
+        fileSize: Long,
+        expireTime: Long,
+        url: String
+    ) {
+        pushNotice(
+            time = time,
+            type = NoticeType.PrivateUpload,
+            operation = sender,
+            userId = sender,
+            sender = sender,
+            privateFileMsg = PrivateFileMsg(
+                id = fileId,
+                name = fileName,
+                size = fileSize,
+                url = url,
+                subId = fileSubId,
+                expire = expireTime
+            )
+        )
+    }
+
     private fun pushNotice(
         time: Long,
         type: NoticeType,
@@ -217,7 +238,8 @@ internal class WebSocketClientService(
         target: Long = 0,
         sender: Long = 0,
         tip: String = "",
-        fileMsg: FileMsg? = null
+        groupFileMsg: GroupFileMsg? = null,
+        privateFileMsg: PrivateFileMsg? = null
     ) {
         GlobalScope.launch {
             pushTo(
@@ -234,8 +256,9 @@ internal class WebSocketClientService(
                     target = target,
                     msgId = msgHash,
                     tip = tip,
-                    file = fileMsg,
-                    senderId = sender
+                    file = groupFileMsg,
+                    senderId = sender,
+                    privateFile = privateFileMsg
                 )
             )
         }

@@ -1,7 +1,7 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
 import kotlinx.serialization.json.JsonElement
-import moe.fuqiuluo.qqinterface.servlet.GroupFileSvc
+import moe.fuqiuluo.qqinterface.servlet.FileSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.tools.EmptyJsonString
@@ -15,7 +15,7 @@ internal object CreateGroupFileFolder: IActionHandler() {
     }
 
     operator fun invoke(groupId: String, folderName: String, echo: JsonElement = EmptyJsonString): String {
-        GroupFileSvc.createFileFolder(groupId, folderName)
+        FileSvc.createFileFolder(groupId, folderName)
         return ok(msg = "成功", echo = echo)
     }
 

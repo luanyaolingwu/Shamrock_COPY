@@ -37,6 +37,13 @@ fun Routing.fetchRes() {
         call.respondText(UploadGroupFile(groupId, file, name))
     }
 
+    getOrPost("/upload_private_file") {
+        val userId = fetchOrThrow("user_id")
+        val file = fetchOrThrow("file")
+        val name = fetchOrThrow("name")
+        call.respondText(UploadPrivateFile(userId, file, name))
+    }
+
     getOrPost("/create_group_file_folder") {
         val groupId = fetchOrThrow("group_id")
         val name = fetchOrThrow("name")

@@ -11,6 +11,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import moe.fuqiuluo.proto.protobufOf
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
 import moe.fuqiuluo.shamrock.xposed.helper.PacketHandler
 import moe.fuqiuluo.shamrock.xposed.helper.internal.DynamicReceiver
@@ -33,7 +34,7 @@ abstract class BaseSvc {
             return ToServiceMsg("mobileqq.service", app.currentAccountUin, cmd)
         }
 
-        suspend fun sendOidbAW(cmd: String, cmdId: Int, serviceId: Int, data: ByteArray): ByteArray? {
+        suspend fun sendOidbAW(cmd: String, cmdId: Int, serviceId: Int, data: ByteArray, trpc: Boolean = false): ByteArray? {
             return suspendCoroutine { continuation ->
                 val seq = MsfCore.getNextSeq()
                 val timer = timer(initialDelay = 5000L, period = 5000L) {
@@ -49,7 +50,8 @@ abstract class BaseSvc {
                         continuation.resume(buffer)
                     })
                 }
-                sendOidb(cmd, cmdId, serviceId, data, seq)
+                if (trpc) sendTrpcOidb(cmd, cmdId, serviceId, data, seq)
+                else sendOidb(cmd, cmdId, serviceId, data, seq)
             }
         }
 
@@ -73,7 +75,11 @@ abstract class BaseSvc {
             }
         }
 
-        fun sendOidb(cmd: String, cmdId: Int, serviceId: Int, buffer: ByteArray, seq: Int = -1) {
+        fun sendOidb(cmd: String, cmdId: Int, serviceId: Int, buffer: ByteArray, seq: Int = -1, trpc: Boolean = false) {
+            if (trpc) {
+                sendTrpcOidb(cmd, cmdId, serviceId, buffer, seq)
+                return
+            }
             val to = createToServiceMsg(cmd)
             val oidb = oidb_sso.OIDBSSOPkg()
             oidb.uint32_command.set(cmdId)
@@ -81,6 +87,21 @@ abstract class BaseSvc {
             oidb.bytes_bodybuffer.set(ByteStringMicro.copyFrom(buffer))
             oidb.str_client_version.set(PlatformUtils.getClientVersion(MobileQQ.getContext()))
             to.putWupBuffer(oidb.toByteArray())
+            to.addAttribute("req_pb_protocol_flag", true)
+            if (seq != -1) {
+                to.addAttribute("shamrock_seq", seq)
+            }
+            app.sendToService(to)
+        }
+
+        fun sendTrpcOidb(cmd: String, cmdId: Int, serviceId: Int, buffer: ByteArray, seq: Int = -1) {
+            val to = createToServiceMsg(cmd)
+            to.putWupBuffer(protobufOf(
+                1 to cmdId,
+                2 to serviceId,
+                4 to buffer,
+                12 to 0
+            ).toByteArray())
             to.addAttribute("req_pb_protocol_flag", true)
             if (seq != -1) {
                 to.addAttribute("shamrock_seq", seq)
