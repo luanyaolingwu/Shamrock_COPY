@@ -58,7 +58,12 @@ internal object FileUtils {
 
     fun renameByMd5(file: File): File {
         val md5 = genFileMd5Hex(file.absolutePath)
-        val newFile = file.parentFile!!.resolve(md5)
+        val dirName  = md5.substring(md5.length - 4)
+        val newFile = CacheDir.resolve(dirName).also {
+            if(!it.exists()) {
+                it.mkdirs()
+            }
+        }.resolve(md5)
         file.renameTo(newFile)
         file.delete()
         return newFile
@@ -86,7 +91,17 @@ internal object FileUtils {
         return file.resolve(name)
     }
 
-    fun getFile(name: String) = CacheDir.resolve(name)
+    fun getFile(name: String): File {
+        if (name.length == 32) {
+            // 使用md5获取值
+            val dirName = name.substring(name.length - 4)
+            val file = CacheDir.resolve("$dirName/$name")
+            if (file.exists()) {
+                return file
+            }
+        }
+        return CacheDir.resolve(name)
+    }
 
     fun getFileType(file: File): String {
         val bytes = ByteArray(2)

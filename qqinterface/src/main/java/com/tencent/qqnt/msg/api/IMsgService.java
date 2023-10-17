@@ -125,8 +125,6 @@ public interface IMsgService extends QRouteApi {
 
     //void getNavigateInfo(@Nullable Contact contact, @Nullable IFetchNavigateInfoCallback iFetchNavigateInfoCallback);
 
-    Pair<Integer, Integer> getPicSizeByPath(@NotNull String str);
-
     @NotNull
     Flow<InputStatusInfo> getOnInputStatusPush();
 

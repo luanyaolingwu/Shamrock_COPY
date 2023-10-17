@@ -88,11 +88,10 @@ internal object TransfileHelper {
         ".sketch" to 21
     )
 
-    fun getExtensionId(file: File): Int {
-        val name = file.name
+    fun getExtensionId(name: String): Int {
         val index = name.lastIndexOf(".")
         if (index == -1) return 0
         val extension = name.substring(index)
-        return extensionMap[extension] ?: 0
+        return extensionMap[extension] ?: -1
     }
 }

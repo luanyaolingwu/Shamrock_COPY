@@ -26,13 +26,15 @@ internal enum class Level(
 
 @SuppressLint("SimpleDateFormat")
 internal object LogCenter {
-    private val LogFile = FileUtils.getFile(
-        dir = "log",
-        name = MobileQQ.getMobileQQ().qqProcessName.replace(":", ".") + "_${
+    private val LogFile = MobileQQ.getContext().getExternalFilesDir(null)!!
+        .parentFile!!.resolve("Tencent/Shamrock/log").also {
+            if (it.exists()) it.delete()
+            it.mkdirs()
+        }
+        .resolve(MobileQQ.getMobileQQ().qqProcessName.replace(":", ".") + "_${
             // 格式化时间 
             SimpleDateFormat("yyyy-MM-dd").format(Date())
-        }_" + ".log"
-    )
+        }_" + ".log")
     private val format = SimpleDateFormat("[HH:mm:ss] ")
 
     fun log(string: String, level: Level = Level.INFO, toast: Boolean = false) =
