@@ -335,6 +335,7 @@ internal object HttpService: HttpPushServlet() {
                 LogCenter.log({ "quickly reply successfully" }, Level.DEBUG)
                 val autoEscape = data["auto_escape"].asBooleanOrNull ?: false
                 val atSender = data["at_sender"].asBooleanOrNull ?: false
+                val autoReply = data["auto_reply"].asBooleanOrNull ?: false
                 val message = data["reply"]
                 if (message is JsonPrimitive) {
                     if (autoEscape) {
@@ -349,7 +350,8 @@ internal object HttpService: HttpPushServlet() {
                             record,
                             msgList.jsonArray,
                             msgHash,
-                            atSender
+                            atSender,
+                            autoReply
                         )
                     } else {
                         val messageArray = MessageHelper.decodeCQCode(message.asString)
@@ -357,7 +359,8 @@ internal object HttpService: HttpPushServlet() {
                             record,
                             messageArray,
                             msgHash,
-                            atSender
+                            atSender,
+                            autoReply
                         )
                     }
                 } else if (message is JsonArray) {
@@ -365,7 +368,8 @@ internal object HttpService: HttpPushServlet() {
                         record,
                         message,
                         msgHash,
-                        atSender
+                        atSender,
+                        autoReply
                     )
                 }
             }
@@ -390,6 +394,7 @@ internal object HttpService: HttpPushServlet() {
         message: JsonArray,
         msgHash: Int,
         atSender: Boolean,
+        autoReply: Boolean
     ) {
         val messageList = mutableListOf<JsonElement>()
         message.filter {
@@ -403,7 +408,7 @@ internal object HttpService: HttpPushServlet() {
             }
         }
 
-        messageList.add(mapOf(
+        if (autoReply) messageList.add(mapOf(
             "type" to "reply",
             "data" to mapOf(
                 "id" to msgHash
