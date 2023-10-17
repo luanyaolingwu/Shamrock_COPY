@@ -335,7 +335,7 @@ internal object HttpService: HttpPushServlet() {
                 LogCenter.log({ "quickly reply successfully" }, Level.DEBUG)
                 val autoEscape = data["auto_escape"].asBooleanOrNull ?: false
                 val atSender = data["at_sender"].asBooleanOrNull ?: false
-                val autoReply = data["auto_reply"].asBooleanOrNull ?: false
+                val autoReply = data["auto_reply"].asBooleanOrNull ?: true
                 val message = data["reply"]
                 if (message is JsonPrimitive) {
                     if (autoEscape) {
