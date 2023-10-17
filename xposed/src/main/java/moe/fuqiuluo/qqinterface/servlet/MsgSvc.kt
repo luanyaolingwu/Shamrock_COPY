@@ -7,6 +7,7 @@ import com.tencent.qqnt.msg.api.IMsgService
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonArray
+import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.MessageHelper
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.xposed.helper.NTServiceFetcher
@@ -103,13 +104,12 @@ internal object MsgSvc: BaseSvc() {
      * Aio 腾讯内部命名 All In One
      */
     suspend fun sendToAio(chatType: Int, peedId: String, message: JsonArray): Pair<Long, Int> {
-        val callback = MessageCallback(peedId, 0)
-        val result = MessageHelper.sendMessageWithoutMsgId(chatType, peedId, message, callback)
-        callback.msgHash = result.second
-        return result
+        //LogCenter.log(message.toString(), Level.ERROR)
+        //callback.msgHash = result.second 什么垃圾代码，万一cb比你快，你不就寄了？
+        return MessageHelper.sendMessageWithoutMsgId(chatType, peedId, message, MessageCallback(peedId, 0))
     }
 
-    private class MessageCallback(
+    class MessageCallback(
         private val peerId: String,
         var msgHash: Int
     ): IOperateCallback {

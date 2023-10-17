@@ -391,9 +391,9 @@ internal object HttpService: HttpPushServlet() {
         msgHash: Int,
         atSender: Boolean,
     ) {
-        val msgList = mutableSetOf<JsonElement>()
+        val messageList = mutableListOf<JsonElement>()
         message.filter {
-            it.asJsonObject["type"]?.asString in moe.fuqiuluo.shamrock.remote.service.HttpService.actionMsgTypes
+            it.asJsonObject["type"]?.asString in actionMsgTypes
         }.let {
             if (it.isNotEmpty()) {
                 it.map { listOf(it) }.forEach {
@@ -403,23 +403,21 @@ internal object HttpService: HttpPushServlet() {
             }
         }
 
-        msgList.add(mapOf(
+        messageList.add(mapOf(
             "type" to "reply",
             "data" to mapOf(
                 "id" to msgHash
             )
         ).json) // 添加回复
         if (MsgConstant.KCHATTYPEGROUP == record.chatType && atSender) {
-            msgList.add(mapOf(
+            messageList.add(mapOf(
                 "type" to "at",
                 "data" to mapOf(
                     "qq" to record.senderUin
                 )
             ).json) // 添加@发送者
         }
-        msgList.addAll(message)
-        MsgSvc.sendToAio(record.chatType, record.peerUin.toString(), when {
-            else -> msgList
-        }.jsonArray)
+        messageList.addAll(message)
+        MsgSvc.sendToAio(record.chatType, record.peerUin.toString(), JsonArray(messageList))
     }
 }
