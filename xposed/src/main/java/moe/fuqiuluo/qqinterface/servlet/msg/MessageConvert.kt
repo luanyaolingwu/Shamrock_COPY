@@ -290,6 +290,10 @@ internal object MsgConvert {
                     else -> LogCenter.log("不支持的提示类型: $tip", Level.WARN)
                 }
             }
+            MsgConstant.KELEMTYPEFILE -> {
+                // TODO(自发消息 / 其他客户端同步文件消息处理？)
+                return null
+            }
             else -> LogCenter.log("不支持的Elem转消息段: ${element.elementType}", Level.WARN)
         }
         return null
