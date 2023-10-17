@@ -88,6 +88,17 @@ internal interface BasePushServlet {
 
     fun pushC2CPoke(time: Long, userId: Long, targetId: Long)
 
+    fun pushC2CFileCome(
+        msgTime: Long,
+        sender: Long,
+        fileId: String,
+        fileSubId: String,
+        fileName: String,
+        fileSize: Long,
+        expireTime: Long,
+        url: String
+    )
+
     val app: QQAppInterface
         get() = MobileQQ.getMobileQQ().waitAppRuntime() as QQAppInterface
 

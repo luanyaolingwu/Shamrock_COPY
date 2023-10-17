@@ -1,6 +1,7 @@
 @file:OptIn(DelicateCoroutinesApi::class)
 package moe.fuqiuluo.shamrock.remote.service.listener
 
+import android.util.Log
 import moe.fuqiuluo.shamrock.helper.MessageHelper
 import com.tencent.qqnt.kernel.nativeinterface.*
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -201,7 +202,7 @@ internal object AioListener: IKernelMsgListener {
         }
     }
 
-    private fun onC2CFileMsg(record: MsgRecord) {
+    private suspend fun onC2CFileMsg(record: MsgRecord) {
         val userId = record.senderUin
         val fileMsg = record.elements.firstOrNull {
             it.elementType == MsgConstant.KELEMTYPEFILE
@@ -210,6 +211,16 @@ internal object AioListener: IKernelMsgListener {
             return
         }
 
+        val fileName = fileMsg.fileName
+        val fileSize = fileMsg.fileSize
+        val expireTime = fileMsg.expireTime ?: 0
+        val fileId = fileMsg.fileUuid
+        val fileSubId = fileMsg.fileSubId ?: ""
+        val url = RichProtoSvc.getC2CFileDownUrl(fileId, fileSubId)
+
+        GlobalPusher().forEach {
+            it.pushC2CFileCome(record.msgTime, userId, fileId, fileSubId, fileName, fileSize, expireTime, url)
+        }
     }
 
     private suspend fun onGroupFileMsg(record: MsgRecord) {
@@ -227,7 +238,7 @@ internal object AioListener: IKernelMsgListener {
         val uuid = fileMsg.fileUuid
         val bizId = fileMsg.fileBizId
 
-        val url = RichProtoSvc.getGroupFileDownUrl(record.peerUin.toString(), uuid, bizId)
+        val url = RichProtoSvc.getGroupFileDownUrl(record.peerUin, uuid, bizId)
 
         GlobalPusher().forEach {
             it.pushGroupFileCome(record.msgTime, userId, groupId, uuid, fileName, fileSize, bizId, url)

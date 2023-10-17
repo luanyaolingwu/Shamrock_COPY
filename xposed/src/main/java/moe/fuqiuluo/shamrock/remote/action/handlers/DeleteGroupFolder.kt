@@ -1,7 +1,7 @@
 package moe.fuqiuluo.shamrock.remote.action.handlers
 
 import kotlinx.serialization.json.JsonElement
-import moe.fuqiuluo.qqinterface.servlet.GroupFileSvc
+import moe.fuqiuluo.qqinterface.servlet.FileSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.tools.EmptyJsonString
@@ -14,7 +14,7 @@ internal object DeleteGroupFolder: IActionHandler() {
     }
 
     operator fun invoke(groupId: String, folderId: String, echo: JsonElement = EmptyJsonString): String {
-        GroupFileSvc.deleteGroupFolder(groupId, folderId)
+        FileSvc.deleteGroupFolder(groupId, folderId)
         return ok(msg = "成功", echo = echo)
     }
 

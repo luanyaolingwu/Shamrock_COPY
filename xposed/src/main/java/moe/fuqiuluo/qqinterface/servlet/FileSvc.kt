@@ -10,7 +10,7 @@ import moe.fuqiuluo.shamrock.tools.slice
 import tencent.im.oidb.cmd0x6d8.oidb_0x6d8
 import tencent.im.oidb.oidb_sso
 
-internal object GroupFileSvc: BaseSvc() {
+internal object FileSvc: BaseSvc() {
 
     fun createFileFolder(groupId: String, folderName: String) {
         sendOidb("OidbSvc.0x6d7_0", 1751, 0, protobufOf(
@@ -97,7 +97,7 @@ internal object GroupFileSvc: BaseSvc() {
         return getGroupFiles(groupId, "/")
     }
 
-    suspend fun getGroupFileInfo(groupId: String, fileId: String, busid: Int): FileUrl {
+    suspend fun getGroupFileInfo(groupId: Long, fileId: String, busid: Int): FileUrl {
         return FileUrl(RichProtoSvc.getGroupFileDownUrl(groupId, fileId, busid))
     }
 
