@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.MessageMaker
 import moe.fuqiuluo.shamrock.helper.db.MessageDB
 import moe.fuqiuluo.shamrock.helper.db.MessageMapping
@@ -23,8 +24,7 @@ import kotlin.math.abs
 
 internal object MessageHelper {
     suspend fun sendMessageWithoutMsgId(chatType: Int, peerId: String, message: JsonArray, callback: IOperateCallback): Pair<Long, Int> {
-        val service = QRoute.api(IMsgService::class.java)
-        var uniseq = generateMsgId(chatType)
+        val uniseq = generateMsgId(chatType)
         var nonMsg: Boolean
         val msg = messageArrayToMessageElements(chatType, uniseq.second, peerId, message).also {
             if (it.second.isEmpty() && !it.first) error("消息合成失败，请查看日志或者检查输入。")
@@ -33,17 +33,21 @@ internal object MessageHelper {
         }.also {
             nonMsg = it.isEmpty()
         }
-        if (!nonMsg) {
+        return if (!nonMsg) {
+            val service = QRoute.api(IMsgService::class.java)
+            if(callback is MsgSvc.MessageCallback) {
+                callback.msgHash = uniseq.first
+            }
             service.sendMsg(
                 generateContact(chatType, peerId),
                 uniseq.second,
                 msg as ArrayList<MsgElement>,
                 callback
             )
+            System.currentTimeMillis() to uniseq.first
         } else {
-            uniseq = 0 to 0
+            System.currentTimeMillis() to 0
         }
-        return System.currentTimeMillis() to uniseq.first
     }
 
     suspend fun generateContact(chatType: Int, id: String, subId: String = ""): Contact {
