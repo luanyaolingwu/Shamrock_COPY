@@ -30,6 +30,7 @@ internal data class SimpleTroopMemberInfo(
     @SerialName("title_expire_time") val titleExpireTime: Int,
     @SerialName("nickname") val nick: String,
     @SerialName("user_displayname") val showName: String?,
+    @SerialName("card") val cardName: String?,
     @SerialName("distance") val distance: Int,
     @SerialName("honor") val honor: List<Int>,
     @SerialName("join_time") val joinTime: Long,
