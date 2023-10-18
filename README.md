@@ -69,7 +69,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 [![][contrib-image]][contrib-link]
 
-[banner]: https://socialify.git.ci/linxinrao/Shamrock/image?description=1&forks=1&issues=1&language=1&logo=https%3A%2F%2Flinxinrao.github.io%2FShamrock%2Fshamrock.jpg&pattern=Plus&pulls=1&stargazers=1&theme=Auto
+[banner]: https://socialify.git.ci/linxinrao/Shamrock/image?description=1&forks=1&issues=1&logo=https%3A%2F%2Flinxinrao.github.io%2FShamrock%2Fshamrock.jpg&pattern=Plus&pulls=1&stargazers=1&theme=Auto
 
 [actions]: https://img.shields.io/github/actions/workflow/status/linxinrao/Shamrock/build-apk.yml?style=for-the-badge
 
