@@ -42,6 +42,10 @@
 
 请参考文档中 [语音支持][voice-support] 部分
 
+## 贡献说明
+
+<img src="https://github.com/linxinrao/Shamrock/assets/61898844/b7b1f44a-2ab3-4eae-a955-4f8a7ef696f5" width="160px"> **我可爱吗？欢迎你的到来，这里是一个很大的地方，有着无限可能，主要是有你啦！**
+
 ## 开源协议
 
 本项目使用 [GPL-3.0](LICENSE) 协议开放源代码
