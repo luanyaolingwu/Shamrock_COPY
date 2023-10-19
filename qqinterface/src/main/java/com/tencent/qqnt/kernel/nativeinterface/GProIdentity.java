@@ -2,6 +2,7 @@ package com.tencent.qqnt.kernel.nativeinterface;
 
 import java.io.Serializable;
 
+/* loaded from: classes2.dex */
 public final class GProIdentity implements Serializable {
     int identityType;
     byte[] plateData;

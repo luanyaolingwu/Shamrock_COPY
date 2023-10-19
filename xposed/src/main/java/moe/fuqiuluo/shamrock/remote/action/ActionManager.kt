@@ -39,6 +39,8 @@ internal object ActionManager {
             DeleteGroupFile, GetGroupFileSystemInfo, GetGroupRootFiles, GetGroupSubFiles,
             GetGroupFileUrl, UploadPrivateFile,
 
+            // GUILD
+            GetGuildServiceProfile,
 
             // WEATHER
             GetWeatherCityCode, GetWeather,
