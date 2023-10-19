@@ -1,7 +1,4 @@
-import com.android.build.OutputFile
 import com.android.build.api.dsl.ApplicationExtension
-import com.android.utils.osArchitecture
-import org.gradle.api.Project
 
 fun gitCommitHash(): String {
     val builder = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
@@ -70,7 +67,6 @@ android {
             dimension = "mode"
             ndk {
                 abiFilters.add("arm64-v8a")
-                abiFilters.add("armeabi-v7a")
                 abiFilters.add("x86_64")
             }
         }

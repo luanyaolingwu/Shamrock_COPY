@@ -21,6 +21,7 @@
 > 本项目仅提供学习与交流用途，请在24小时内删除。   
 > 本项目目的是研究 Xposed 和 LSPosed 框架的使用。 Epic 框架开发相关知识。  
 > 如有违反法律，请联系删除。
+> 请勿在任何平台宣传，宣扬，转发本项目，请勿恶意修改企业安装包造成相关企业产生损失，如有违背，必将追责到底。
 
 ## 兼容|迁移|替代 说明
 
@@ -41,6 +42,10 @@
 ## 语音解码
 
 请参考文档中 [语音支持][voice-support] 部分
+
+## 贡献说明
+
+<img src="https://github.com/linxinrao/Shamrock/assets/61898844/b7b1f44a-2ab3-4eae-a955-4f8a7ef696f5" width="160px"> **我可爱吗？欢迎你的到来，这里是一个很大的地方，有着无限可能，主要是有你啦！**
 
 ## 开源协议
 
@@ -65,7 +70,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 [![][contrib-image]][contrib-link]
 
-[banner]: https://socialify.git.ci/linxinrao/Shamrock/image?description=1&forks=1&issues=1&language=1&logo=https%3A%2F%2Flinxinrao.github.io%2FShamrock%2Fshamrock.png&pattern=Plus&pulls=1&stargazers=1&theme=Auto
+[banner]: https://socialify.git.ci/linxinrao/Shamrock/image?description=1&forks=1&issues=1&logo=https%3A%2F%2Flinxinrao.github.io%2FShamrock%2Fshamrock.jpg&pattern=Plus&pulls=1&stargazers=1&theme=Auto
 
 [actions]: https://img.shields.io/github/actions/workflow/status/linxinrao/Shamrock/build-apk.yml?style=for-the-badge
 
