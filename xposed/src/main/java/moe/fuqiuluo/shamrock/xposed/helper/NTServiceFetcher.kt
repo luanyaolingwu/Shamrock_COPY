@@ -3,8 +3,11 @@ package moe.fuqiuluo.shamrock.xposed.helper
 import com.tencent.qqnt.kernel.api.IKernelService
 import com.tencent.qqnt.kernel.api.impl.MsgService
 import com.tencent.qqnt.kernel.nativeinterface.IKernelGroupService
+import com.tencent.qqnt.kernel.nativeinterface.IKernelGuildService
 import com.tencent.qqnt.kernel.nativeinterface.IOperateCallback
 import com.tencent.qqnt.kernel.nativeinterface.IQQNTWrapperSession
+import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XposedBridge
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import moe.fuqiuluo.shamrock.helper.Level
@@ -12,9 +15,11 @@ import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.remote.service.PacketReceiver
 import moe.fuqiuluo.shamrock.remote.service.listener.AioListener
 import moe.fuqiuluo.shamrock.remote.service.listener.GroupEventListener
+import moe.fuqiuluo.shamrock.remote.service.listener.KernelGuildListener
 import moe.fuqiuluo.shamrock.remote.service.listener.PrimitiveListener
 import moe.fuqiuluo.shamrock.tools.hookMethod
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
+import kotlin.reflect.jvm.javaMethod
 
 internal object NTServiceFetcher {
     private lateinit var iKernelService: IKernelService
@@ -37,9 +42,22 @@ internal object NTServiceFetcher {
             curKernelHash = curHash
             this.iKernelService = service
 
+
             initNTKernelListener(msgService, groupService)
             antiBackgroundMode(sessionService)
+            hookGuildListener(sessionService)
         }
+    }
+
+    private fun hookGuildListener(sessionService: IQQNTWrapperSession) {
+        val guildService = sessionService.guildService
+        XposedBridge.hookMethod(guildService::addKernelGuildListener.javaMethod, object: XC_MethodHook() {
+            override fun beforeHookedMethod(param: MethodHookParam?) {
+                val service = param?.thisObject as IKernelGuildService
+                service.addKernelGuildListener(KernelGuildListener)
+                LogCenter.log("Register Guild listener successfully.")
+            }
+        })
     }
 
     private inline fun isInitForNt(hash: Int): Boolean {

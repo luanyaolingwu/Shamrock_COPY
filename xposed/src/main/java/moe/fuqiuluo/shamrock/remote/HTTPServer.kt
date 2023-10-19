@@ -61,6 +61,7 @@ internal object HTTPServer {
             profileRouter()
             weatherAction()
             otherAction()
+            guildAction()
             if (ShamrockConfig.isPro()) {
                 qsign()
                 obtainProtocolData()

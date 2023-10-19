@@ -20,6 +20,11 @@ public interface IQQNTWrapperSession {
         }
 
         @Override
+        public IKernelGuildService getGuildService() {
+            return null;
+        }
+
+        @Override
         public IKernelMsgService getMsgService() {
             return null;
         }
@@ -88,7 +93,7 @@ public interface IQQNTWrapperSession {
 
     //IKernelGroupService getGroupService();
 
-    //IKernelGuildService getGuildService();
+    IKernelGuildService getGuildService();
 
     IKernelMsgService getMsgService();
 
