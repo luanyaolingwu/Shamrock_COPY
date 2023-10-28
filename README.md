@@ -1,1 +1,3 @@
-不会用的，记得问老师，感谢!
+--
+当前上游为 https://github.com/whitechi73/OpenShamrock ，仅供个人研究
+--
