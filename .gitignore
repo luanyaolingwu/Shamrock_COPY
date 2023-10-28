@@ -9,3 +9,4 @@ build/
 app/app/release
 app/arm64/release
 app/x64/release
+apk构建.txt
