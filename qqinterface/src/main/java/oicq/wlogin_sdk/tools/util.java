@@ -2,6 +2,9 @@ package oicq.wlogin_sdk.tools;
 
 import android.content.Context;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public class util {
     public static byte[] getGuidFromFile(Context ctx) {
         throw new UnsupportedOperationException();
@@ -40,4 +43,7 @@ public class util {
         return null;
     }
 
+    public static String buf_to_string(@NotNull byte[] bytes) {
+        return null;
+    }
 }

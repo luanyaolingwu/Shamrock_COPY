@@ -1,38 +1,117 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.shamrock.remote.api
 
+import android.app.ActivityManager
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.os.Process
 import com.tencent.mobileqq.qsec.qsecdandelionsdk.Dandelion
+import com.tencent.qphone.base.util.BaseApplication
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.util.pipeline.PipelineContext
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.io.core.BytePacketBuilder
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.entries.Status
 import moe.fuqiuluo.shamrock.tools.EMPTY_BYTE_ARRAY
+import moe.fuqiuluo.shamrock.tools.EmptyJsonObject
 import moe.fuqiuluo.shamrock.tools.fetchGetOrThrow
 import moe.fuqiuluo.shamrock.tools.fetchOrNull
 import moe.fuqiuluo.shamrock.tools.fetchOrThrow
 import moe.fuqiuluo.shamrock.tools.fetchPostOrThrow
 import moe.fuqiuluo.shamrock.tools.getOrPost
 import moe.fuqiuluo.shamrock.tools.hex2ByteArray
+import moe.fuqiuluo.shamrock.tools.json
 import moe.fuqiuluo.shamrock.tools.respond
 import moe.fuqiuluo.shamrock.tools.toHexString
 import moe.fuqiuluo.shamrock.xposed.ipc.ShamrockIpc
 import moe.fuqiuluo.shamrock.xposed.ipc.bytedata.IByteData
 import moe.fuqiuluo.shamrock.xposed.ipc.qsign.IQSigner
+import mqq.app.MobileQQ
 import java.nio.ByteBuffer
 
 private var signer: IQSigner? = null
 private var byteData: IByteData? = null
 
+private fun getMsfServiceInfo(): ActivityManager.RunningServiceInfo? {
+    val context = MobileQQ.getContext()
+    val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    val runningServices = activityManager.getRunningServices(Int.MAX_VALUE)
+    for (serviceInfo in runningServices) {
+        val serviceName = serviceInfo.service.className
+        if (serviceName == "com.tencent.mobileqq.msf.service.MsfService") {
+            return serviceInfo
+        }
+    }
+    return null
+}
+
+private fun isMsfServiceAlive(): Boolean {
+    return getMsfServiceInfo() != null
+}
+
 fun Routing.qsign() {
+    getOrPost("/reset_qsign") {
+        val context = MobileQQ.getContext()
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val runningServices = activityManager.getRunningServices(Int.MAX_VALUE)
+
+        for (serviceInfo in runningServices) {
+            val serviceName = serviceInfo.service.className
+            if (serviceName == "com.tencent.mobileqq.msf.service.MsfService") {
+                Process.killProcess(serviceInfo.pid)
+            }
+        }
+
+        GlobalScope.launch(Dispatchers.Main) {
+            val componentName = ComponentName(BaseApplication.getContext().packageName, "com.tencent.mobileqq.msf.service.MsfService")
+            val intent = Intent()
+            intent.component = componentName
+            intent.putExtra("to_SenderProcessName", "com.tencent.mobileqq")
+            BaseApplication.getContext().startService(intent)
+        }
+
+        call.respond(OldApiResult(0, "重新启动MSF", data = EmptyJsonObject))
+    }
+
+    getOrPost("/get_running_service") {
+        val context = MobileQQ.getContext()
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val runningServices = activityManager.getRunningServices(Int.MAX_VALUE)
+        val output = mutableListOf<JsonElement>()
+        for (serviceInfo in runningServices) {
+            val serviceName = serviceInfo.service.className
+            val pid = serviceInfo.pid
+            val uid = serviceInfo.uid
+            output.add(mapOf(
+                "service" to serviceName,
+                "pid" to pid,
+                "uid" to uid
+            ).json)
+        }
+        call.respondText(output.json.toString())
+    }
+
     get("/get_cmd_whitelist") {
+        if (!isMsfServiceAlive()) {
+            call.respond(OldApiResult(-2, "MSF服务未启动", null))
+            return@get
+        }
         if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
             if (!initSigner()) {
                 respond(false, Status.InternalHandlerError)
@@ -44,6 +123,10 @@ fun Routing.qsign() {
     }
 
     getOrPost("/get_xw_debug_id") {
+        if (!isMsfServiceAlive()) {
+            call.respond(OldApiResult(-2, "MSF服务未启动", null))
+            return@getOrPost
+        }
         if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
             if (!initSigner()) {
                 respond(false, Status.InternalHandlerError)
@@ -130,6 +213,10 @@ fun Routing.qsign() {
     }
 
     get("/get_byte") {
+        if (!isMsfServiceAlive()) {
+            call.respond(OldApiResult(-2, "MSF服务未启动", null))
+            return@get
+        }
         if (byteData == null || byteData?.asBinder()?.isBinderAlive == false) {
             val binder = ShamrockIpc.get(ShamrockIpc.IPC_BYTEDATA)
             if (binder == null) {
@@ -166,6 +253,10 @@ fun Routing.qsign() {
     }
 
     get("/friend_sign") {
+        if (!isMsfServiceAlive()) {
+            call.respond(OldApiResult(-2, "MSF服务未启动", null))
+            return@get
+        }
         if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
             if (!initSigner()) {
                 respond(false, Status.InternalHandlerError)
@@ -190,6 +281,10 @@ fun Routing.qsign() {
     }
 
     get("/group_sign") {
+        if (!isMsfServiceAlive()) {
+            call.respond(OldApiResult(-2, "MSF服务未启动", null))
+            return@get
+        }
         if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
             if (!initSigner()) {
                 respond(false, Status.InternalHandlerError)
@@ -200,7 +295,7 @@ fun Routing.qsign() {
         val addUin = fetchOrThrow("group_uin")
         val source = fetchOrThrow("source")
         val subsource = fetchOrThrow("sub_source")
-        val uin = fetchOrThrow("uin")!!.toLong()
+        val uin = fetchOrThrow("uin").toLong()
 
         val sign = signer!!.energy("add_group", BytePacketBuilder().also {
             it.writeLong(uin)
@@ -293,6 +388,9 @@ private data class Sign(
 )
 
 private suspend fun initSigner(): Boolean {
+    if (!isMsfServiceAlive()) {
+        return false
+    }
     val binder = ShamrockIpc.get(ShamrockIpc.IPC_QSIGN)
     if (binder == null) {
         //respond(false, Status.InternalHandlerError)
@@ -312,6 +410,10 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.requestSign(
     seq: Int,
     buffer: ByteArray,
 ) {
+    if (!isMsfServiceAlive()) {
+        call.respond(OldApiResult(-2, "MSF服务未启动", null))
+        return
+    }
     if (signer == null || signer?.asBinder()?.isBinderAlive == false) {
         if (!initSigner()) {
             respond(false, Status.InternalHandlerError)

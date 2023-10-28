@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import moe.fuqiuluo.shamrock.utils.MD5
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import mqq.app.AppRuntime
 import mqq.app.MobileQQ
 import java.io.File
@@ -26,7 +27,7 @@ internal abstract class FileTransfer {
         wait: Boolean = true,
         builder: (TransferRequest) -> Unit
     ): Boolean {
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+        val runtime = AppRuntimeFetcher.appRuntime
         val transferRequest = TransferRequest()
         transferRequest.needSendMsg = false
         transferRequest.mSelfUin = runtime.account
@@ -50,7 +51,7 @@ internal abstract class FileTransfer {
         wait: Boolean = true,
         builder: (TransferRequest) -> Unit
     ): Boolean {
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+        val runtime = AppRuntimeFetcher.appRuntime
         val transferRequest = TransferRequest()
         transferRequest.needSendMsg = false
         transferRequest.mSelfUin = runtime.account

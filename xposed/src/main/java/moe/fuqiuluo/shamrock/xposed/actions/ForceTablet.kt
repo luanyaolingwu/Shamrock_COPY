@@ -12,6 +12,7 @@ import moe.fuqiuluo.shamrock.xposed.loader.LuoClassloader
 
 internal class ForceTablet: IAction {
     override fun invoke(ctx: Context) {
+        if (!PlatformUtils.isMqqPackage()) return
         if (ShamrockConfig.forceTablet()) {
             if (PlatformUtils.isMainProcess()) {
                 LogCenter.log("强制协议类型 (PAD)", toast = true)

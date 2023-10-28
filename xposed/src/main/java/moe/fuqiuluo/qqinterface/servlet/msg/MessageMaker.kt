@@ -61,6 +61,7 @@ import moe.fuqiuluo.shamrock.utils.MediaType
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import moe.fuqiuluo.shamrock.xposed.helper.NTServiceFetcher
 import moe.fuqiuluo.shamrock.xposed.helper.msgService
 import mqq.app.MobileQQ
@@ -309,7 +310,7 @@ internal object MessageMaker {
         }
         sendTo.recv_uin.set(peerId.toLong())
         reqBody.batch_send_req.add(sendTo)
-        val app = MobileQQ.getMobileQQ().waitAppRuntime() as QQAppInterface
+        val app = AppRuntimeFetcher.appRuntime as QQAppInterface
         val to = ToServiceMsg("mobileqq.service", app.currentAccountUin, "OidbSvc.0xdc2_34")
         val oidb = oidb_sso.OIDBSSOPkg()
         oidb.uint32_command.set(0xdc2)

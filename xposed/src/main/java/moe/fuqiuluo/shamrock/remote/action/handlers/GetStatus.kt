@@ -6,11 +6,12 @@ import moe.fuqiuluo.shamrock.remote.entries.Status
 import moe.fuqiuluo.shamrock.remote.entries.resultToString
 import moe.fuqiuluo.shamrock.remote.service.data.BotStatus
 import moe.fuqiuluo.shamrock.remote.service.data.Self
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import mqq.app.MobileQQ
 
 internal object GetStatus: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+        val runtime = AppRuntimeFetcher.appRuntime
         val curUin = runtime.currentAccountUin
         return resultToString(true, Status.Ok, listOf(
             BotStatus(

@@ -15,6 +15,7 @@ import moe.fuqiuluo.shamrock.tools.hookMethod
 import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.utils.PlatformUtils
 
 internal class HookWrapperCodec: IAction {
     private val IgnoredCmd = arrayOf(

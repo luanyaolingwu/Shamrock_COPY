@@ -22,24 +22,21 @@ internal object ShamrockIpc {
         IPC_QSIGN to QSignGenerator,
         IPC_BYTEDATA to ByteDataCreator
     )
-    private val mLock = Mutex()
 
     suspend fun get(name: String?): IBinder? {
         return if (PlatformUtils.isMsfProcess()) {
             IpcChannel[name]
         } else {
-            mLock.withLock {
-                MobileQQ.getContext().broadcast("msf") {
-                    putExtra("__cmd", "fetch_ipc")
-                    putExtra("ipc_name", name)
-                }
-                withTimeoutOrNull(3000) {
-                    suspendCoroutine { continuation ->
-                        DynamicReceiver.register("ipc_callback", IPCRequest {
-                            val bundle = it.getBundleExtra("ipc")!!
-                            val binder = bundle.getBinder("binder")
-                            continuation.resume(binder)
-                        })
+            withTimeoutOrNull(3000) {
+                suspendCoroutine { continuation ->
+                    DynamicReceiver.register("ipc_callback", IPCRequest {
+                        val bundle = it.getBundleExtra("ipc")!!
+                        val binder = bundle.getBinder("binder")
+                        continuation.resume(binder)
+                    })
+                    MobileQQ.getContext().broadcast("msf") {
+                        putExtra("__cmd", "fetch_ipc")
+                        putExtra("ipc_name", name)
                     }
                 }
             }

@@ -38,8 +38,8 @@ class PullConfig: IAction {
                 ))
             })
             DynamicReceiver.register("checkAndStartService", IPCRequest {
-                if (moe.fuqiuluo.shamrock.remote.HTTPServer.isServiceStarted) {
-                    moe.fuqiuluo.shamrock.remote.HTTPServer.isServiceStarted = false
+                if (HTTPServer.isServiceStarted) {
+                    HTTPServer.isServiceStarted = false
                 }
                 initAppService(MobileQQ.getContext())
             })
@@ -51,15 +51,15 @@ class PullConfig: IAction {
                 when (it.getStringExtra("type")) {
                     "port" -> {
                         ctx.toast("动态修改HTTP端口成功。")
-                        moe.fuqiuluo.shamrock.remote.HTTPServer.changePort(it.getIntExtra("port", 5700))
+                        HTTPServer.changePort(it.getIntExtra("port", 5700))
                     }
                     "ws_port" -> {
                         ctx.toast("动态修改WS端口不支持。")
                     }
                     "restart" -> {
-                        if(moe.fuqiuluo.shamrock.remote.HTTPServer.isServiceStarted) {
+                        if(HTTPServer.isServiceStarted) {
                             ctx.toast("重启HTTPServer完成。")
-                            moe.fuqiuluo.shamrock.remote.HTTPServer.restart()
+                            HTTPServer.restart()
                         }
                     }
                 }

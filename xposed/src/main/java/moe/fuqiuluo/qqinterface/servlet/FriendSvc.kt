@@ -1,13 +1,16 @@
+@file:OptIn(DelicateCoroutinesApi::class)
 package moe.fuqiuluo.qqinterface.servlet
 
 import com.tencent.mobileqq.data.Friends
 import com.tencent.mobileqq.friend.api.IFriendDataService
 import com.tencent.mobileqq.friend.api.IFriendHandlerService
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import moe.fuqiuluo.qqinterface.servlet.BaseSvc
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import mqq.app.AppRuntime
 import mqq.app.MobileQQ
 import kotlin.coroutines.resume
@@ -15,7 +18,7 @@ import kotlin.coroutines.resume
 internal object FriendSvc: BaseSvc() {
 
     suspend fun getFriendList(refresh: Boolean): Result<List<Friends>> {
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+        val runtime = AppRuntimeFetcher.appRuntime
         val service = runtime.getRuntimeService(IFriendDataService::class.java, "all")
         if(refresh || !service.isInitFinished) {
             if(!requestFriendList(runtime, service)) {

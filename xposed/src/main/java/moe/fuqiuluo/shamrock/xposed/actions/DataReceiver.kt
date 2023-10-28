@@ -28,6 +28,10 @@ internal fun Context.toast(msg: String, flag: Int = Toast.LENGTH_SHORT) {
 internal class DataReceiver: IAction {
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun invoke(ctx: Context) {
+        kotlin.runCatching {
+            MobileQQ.getMobileQQ().unregisterReceiver(DynamicReceiver)
+        }
+
         if (PlatformUtils.isMainProcess()) {
             GlobalUi = Handler(ctx.mainLooper)
             GlobalScope.launch {
@@ -46,6 +50,7 @@ internal class DataReceiver: IAction {
         } else if (PlatformUtils.isMsfProcess()) {
             val intentFilter = IntentFilter()
             intentFilter.addAction("moe.fuqiuluo.msf.dynamic")
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 MobileQQ.getMobileQQ().registerReceiver(
                     DynamicReceiver, intentFilter,

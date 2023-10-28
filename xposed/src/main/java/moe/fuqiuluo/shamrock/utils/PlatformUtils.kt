@@ -42,6 +42,10 @@ internal object PlatformUtils {
         return MobileQQ.getMobileQQ().qqProcessName == "com.tencent.mobileqq"
     }
 
+    fun isMqqPackage(): Boolean {
+        return MobileQQ.getMobileQQ().qqProcessName.startsWith("com.tencent.mobileqq")
+    }
+
     fun isTim(): Boolean {
         return MobileQQ.getMobileQQ().qqProcessName == "com.tencent.tim"
     }

@@ -45,10 +45,11 @@ internal object NTServiceFetcher {
 
             initNTKernelListener(msgService, groupService)
             antiBackgroundMode(sessionService)
-            hookGuildListener(sessionService)
+            //hookGuildListener(sessionService)
         }
     }
 
+    /*
     private fun hookGuildListener(sessionService: IQQNTWrapperSession) {
         val guildService = sessionService.guildService
         XposedBridge.hookMethod(guildService::addKernelGuildListener.javaMethod, object: XC_MethodHook() {
@@ -59,6 +60,7 @@ internal object NTServiceFetcher {
             }
         })
     }
+    */
 
     private inline fun isInitForNt(hash: Int): Boolean {
         return hash == curKernelHash
@@ -71,8 +73,9 @@ internal object NTServiceFetcher {
             LogCenter.log("Register MSG listener successfully.")
             msgService.addMsgListener(AioListener)
 
-            groupService.addKernelGroupListener(GroupEventListener)
-            LogCenter.log("Register Group listener successfully.")
+            // 接口缺失 暂不使用
+            //groupService.addKernelGroupListener(GroupEventListener)
+            //LogCenter.log("Register Group listener successfully.")
 
             PrimitiveListener.registerListener()
         } catch (e: Throwable) {

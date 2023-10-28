@@ -5,6 +5,7 @@ import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.tools.EmptyJsonString
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import mqq.app.MobileQQ
 
 internal object GetGuildServiceProfile: IActionHandler() {
@@ -13,7 +14,7 @@ internal object GetGuildServiceProfile: IActionHandler() {
     }
 
     operator fun invoke(echo: JsonElement = EmptyJsonString): String {
-        val service = MobileQQ.getMobileQQ().waitAppRuntime()
+        val service = AppRuntimeFetcher.appRuntime
             .getRuntimeService(IGPSService::class.java, "all")
         if (!service.isGProSDKInitCompleted) {
             return error("GPro服务没有初始化", echo = echo)

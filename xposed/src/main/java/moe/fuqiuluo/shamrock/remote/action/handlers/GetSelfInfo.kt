@@ -6,12 +6,13 @@ import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.remote.entries.Status
 import moe.fuqiuluo.shamrock.remote.entries.resultToString
 import moe.fuqiuluo.shamrock.remote.service.data.UserDetail
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import mqq.app.MobileQQ
 
 internal object GetSelfInfo: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         //val accounts = MobileQQ.getMobileQQ().allAccounts
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime() as QQAppInterface
+        val runtime = AppRuntimeFetcher.appRuntime as QQAppInterface
         val curUin = runtime.currentAccountUin
         //val account = accounts.firstOrNull { it.uin == curUin }
 

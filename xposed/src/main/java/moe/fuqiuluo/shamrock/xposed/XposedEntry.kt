@@ -32,9 +32,9 @@ internal class XposedEntry: IXposedHookLoadPackage {
 
     override fun handleLoadPackage(param: XC_LoadPackage.LoadPackageParam) {
         when (param.packageName) {
-            moe.fuqiuluo.shamrock.xposed.PACKAGE_NAME_QQ -> entryMQQ(param.classLoader)
+            PACKAGE_NAME_QQ -> entryMQQ(param.classLoader)
             "android" -> FuckAMS.injectAMS(param.classLoader)
-            moe.fuqiuluo.shamrock.xposed.PACKAGE_NAME_TIM -> entryTim(param.classLoader)
+            PACKAGE_NAME_TIM -> entryTim(param.classLoader)
         }
     }
 
@@ -105,13 +105,13 @@ internal class XposedEntry: IXposedHookLoadPackage {
     }
 
     private fun execStartupInit(ctx: Context) {
-        if (moe.fuqiuluo.shamrock.xposed.XposedEntry.Companion.sec_static_stage_inited) return
+        if (sec_static_stage_inited) return
 
         val classLoader = ctx.classLoader.also { requireNotNull(it) }
 
         LuoClassloader.hostClassLoader = classLoader
 
-        if(injectClassloader(moe.fuqiuluo.shamrock.xposed.XposedEntry::class.java.classLoader)) {
+        if(injectClassloader(XposedEntry::class.java.classLoader)) {
             if ("1" != System.getProperty("qxbot_flag")) {
                 System.setProperty("qxbot_flag", "1")
             } else return
@@ -123,7 +123,7 @@ internal class XposedEntry: IXposedHookLoadPackage {
             // MSG LISTENER 进程运行在主进程
             // API 也应该开放在主进程
 
-            moe.fuqiuluo.shamrock.xposed.XposedEntry.Companion.sec_static_stage_inited = true
+            sec_static_stage_inited = true
 
             if (PlatformUtils.isTim()) {
                 MMKVFetcher.initMMKV(ctx)

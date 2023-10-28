@@ -5,6 +5,7 @@ import moe.fuqiuluo.shamrock.remote.service.data.profile.ProfileProtocolConst
 import com.tencent.mobileqq.profilecard.api.IProfileProtocolService
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import mqq.app.MobileQQ
 
 internal object SetProfileCard: IActionHandler() {
@@ -19,19 +20,19 @@ internal object SetProfileCard: IActionHandler() {
         val age = session.getIntOrNull("age")
 
         val bundle = Bundle()
-        val service = MobileQQ.getMobileQQ().waitAppRuntime()
+        val service = AppRuntimeFetcher.appRuntime
             .getRuntimeService(IProfileProtocolService::class.java, "all")
-        bundle.putString(moe.fuqiuluo.shamrock.remote.service.data.profile.ProfileProtocolConst.KEY_NICK, nickName)
-        bundle.putString(moe.fuqiuluo.shamrock.remote.service.data.profile.ProfileProtocolConst.KEY_COMPANY, company)
-        bundle.putString(moe.fuqiuluo.shamrock.remote.service.data.profile.ProfileProtocolConst.KEY_EMAIL, email)
-        bundle.putString(moe.fuqiuluo.shamrock.remote.service.data.profile.ProfileProtocolConst.KEY_COLLEGE, college)
-        bundle.putString(moe.fuqiuluo.shamrock.remote.service.data.profile.ProfileProtocolConst.KEY_PERSONAL_NOTE, personalNote)
+        bundle.putString(ProfileProtocolConst.KEY_NICK, nickName)
+        bundle.putString(ProfileProtocolConst.KEY_COMPANY, company)
+        bundle.putString(ProfileProtocolConst.KEY_EMAIL, email)
+        bundle.putString(ProfileProtocolConst.KEY_COLLEGE, college)
+        bundle.putString(ProfileProtocolConst.KEY_PERSONAL_NOTE, personalNote)
 
         if (birthday != null) {
-            bundle.putInt(moe.fuqiuluo.shamrock.remote.service.data.profile.ProfileProtocolConst.KEY_BIRTHDAY, birthday.toInt())
+            bundle.putInt(ProfileProtocolConst.KEY_BIRTHDAY, birthday.toInt())
         }
         if (age != null) {
-            bundle.putInt(moe.fuqiuluo.shamrock.remote.service.data.profile.ProfileProtocolConst.KEY_AGE, age.toInt())
+            bundle.putInt(ProfileProtocolConst.KEY_AGE, age.toInt())
         }
 
         service.setProfileDetail(bundle)

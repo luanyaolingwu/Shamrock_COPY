@@ -114,7 +114,7 @@ internal object MessageHelper {
 
     fun generateMsgId(chatType: Int): Pair<Int, Long> {
         val msgId = createMessageUniseq(chatType, System.currentTimeMillis())
-        val hashCode: Int = convertMsgIdToMsgHash(chatType, msgId)
+        val hashCode: Int = generateMsgIdHash(chatType, msgId)
         return hashCode to msgId
     }
 
@@ -126,10 +126,6 @@ internal object MessageHelper {
     fun getMsgMappingBySeq(chatType: Int, msgSeq: Int): MessageMapping? {
         val db = MessageDB.getInstance()
         return db.messageMappingDao().queryByMsgSeq(chatType, msgSeq)
-    }
-
-    inline fun convertMsgIdToMsgHash(chatType: Int, msgId: Long): Int {
-        return generateMsgIdHash(chatType, msgId)
     }
 
     fun removeMsgByHashCode(hashCode: Int) {
@@ -173,7 +169,7 @@ internal object MessageHelper {
         return arrayList.jsonArray
     }
 
-    fun encodeCQCode(msg: ArrayList<HashMap<String, JsonElement>>): String {
+    fun encodeCQCode(msg: List<Map<String, JsonElement>>): String {
         return nativeEncodeCQCode(msg.map {
             val params = hashMapOf<String, String>()
             it.forEach { (key, value) ->

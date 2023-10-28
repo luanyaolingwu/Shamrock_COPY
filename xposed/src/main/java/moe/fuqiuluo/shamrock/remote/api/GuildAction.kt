@@ -13,12 +13,13 @@ import moe.fuqiuluo.shamrock.remote.entries.EmptyObject
 import moe.fuqiuluo.shamrock.remote.service.listener.KernelGuildListener
 import moe.fuqiuluo.shamrock.tools.getOrPost
 import moe.fuqiuluo.shamrock.tools.respond
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import moe.fuqiuluo.shamrock.xposed.helper.NTServiceFetcher
 import mqq.app.MobileQQ
 
 fun Routing.guildAction() {
     getOrPost("/get_guild_service_profile") {
-        val service = MobileQQ.getMobileQQ().waitAppRuntime()
+        val service = AppRuntimeFetcher.appRuntime
             .getRuntimeService(IGPSService::class.java, "all")
         val tinyId = service.selfTinyId
 

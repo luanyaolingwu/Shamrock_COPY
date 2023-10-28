@@ -9,6 +9,7 @@ import moe.fuqiuluo.shamrock.remote.entries.Status
 import moe.fuqiuluo.shamrock.tools.fetchPost
 import moe.fuqiuluo.shamrock.tools.respond
 import moe.fuqiuluo.shamrock.utils.MD5
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import mqq.app.MobileQQ
 import kotlin.random.Random
 import kotlin.random.nextLong
@@ -24,7 +25,7 @@ fun Routing.registerBDH() {
         file.writeBytes(picBytes)
         val sender = fetchPost("sender")
 
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+        val runtime = AppRuntimeFetcher.appRuntime
         val transferRequest = TransferRequest()
         transferRequest.needSendMsg = false
         transferRequest.mSelfUin = runtime.account

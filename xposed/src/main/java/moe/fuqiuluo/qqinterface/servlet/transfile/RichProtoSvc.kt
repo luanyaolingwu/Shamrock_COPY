@@ -21,6 +21,7 @@ import moe.fuqiuluo.shamrock.tools.hex2ByteArray
 import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.tools.toHexString
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import mqq.app.MobileQQ
 import tencent.im.oidb.oidb_sso
 import kotlin.coroutines.resume
@@ -120,7 +121,7 @@ internal object RichProtoSvc: BaseSvc() {
         fileUUId: String
     ): String {
         return suspendCancellableCoroutine {
-            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val runtime = AppRuntimeFetcher.appRuntime
             val richProtoReq = RichProto.RichProtoReq()
             val downReq: RichProto.RichProtoReq.ShortVideoDownReq = RichProto.RichProtoReq.ShortVideoDownReq()
             downReq.selfUin = runtime.currentAccountUin
@@ -163,7 +164,7 @@ internal object RichProtoSvc: BaseSvc() {
         fileUUId: String
     ): String {
         return suspendCancellableCoroutine {
-            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val runtime = AppRuntimeFetcher.appRuntime
             val richProtoReq = RichProto.RichProtoReq()
             val downReq: RichProto.RichProtoReq.ShortVideoDownReq = RichProto.RichProtoReq.ShortVideoDownReq()
             downReq.selfUin = runtime.currentAccountUin
@@ -205,7 +206,7 @@ internal object RichProtoSvc: BaseSvc() {
         fileUUId: String
     ): String {
         return suspendCancellableCoroutine {
-            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val runtime = AppRuntimeFetcher.appRuntime
             val richProtoReq = RichProto.RichProtoReq()
             val pttDownReq: RichProto.RichProtoReq.C2CPttDownReq = RichProto.RichProtoReq.C2CPttDownReq()
             pttDownReq.selfUin = runtime.currentAccountUin
@@ -244,7 +245,7 @@ internal object RichProtoSvc: BaseSvc() {
         fileUUId: String
     ): String {
         return suspendCancellableCoroutine {
-            val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+            val runtime = AppRuntimeFetcher.appRuntime
             val richProtoReq = RichProto.RichProtoReq()
             val groupPttDownReq: RichProto.RichProtoReq.GroupPttDownReq = RichProto.RichProtoReq.GroupPttDownReq()
             groupPttDownReq.selfUin = runtime.currentAccountUin

@@ -12,6 +12,7 @@ import moe.fuqiuluo.shamrock.remote.entries.CommonResult
 import moe.fuqiuluo.shamrock.remote.entries.CurrentAccount
 import moe.fuqiuluo.shamrock.remote.entries.Status
 import moe.fuqiuluo.shamrock.tools.*
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import mqq.app.MobileQQ
 
 fun Routing.profileRouter() {
@@ -42,7 +43,7 @@ fun Routing.profileRouter() {
 
     getOrPost("/get_account_info") {
         val accounts = MobileQQ.getMobileQQ().allAccounts
-        val runtime = MobileQQ.getMobileQQ().waitAppRuntime()
+        val runtime = AppRuntimeFetcher.appRuntime
         val curUin = runtime.currentAccountUin
         val account = accounts?.firstOrNull { it.uin == curUin }
         if (!runtime.isLogin || account == null || !account.isLogined) {

@@ -13,6 +13,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import moe.fuqiuluo.proto.protobufOf
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
+import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import moe.fuqiuluo.shamrock.xposed.helper.PacketHandler
 import moe.fuqiuluo.shamrock.xposed.helper.internal.DynamicReceiver
 import moe.fuqiuluo.shamrock.xposed.helper.internal.IPCRequest
@@ -22,13 +23,13 @@ import kotlin.concurrent.timer
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-abstract class BaseSvc {
+internal abstract class BaseSvc {
     companion object {
         val currentUin: String
             get() = app.currentAccountUin
 
         val app: QQAppInterface
-            get() = MobileQQ.getMobileQQ().waitAppRuntime() as QQAppInterface
+            get() = AppRuntimeFetcher.appRuntime as QQAppInterface
 
         fun createToServiceMsg(cmd: String): ToServiceMsg {
             return ToServiceMsg("mobileqq.service", app.currentAccountUin, cmd)
