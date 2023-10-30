@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import moe.fuqiuluo.shamrock.R
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
 import moe.fuqiuluo.shamrock.ui.tools.IosSwitch
 
 @Composable
@@ -39,7 +40,7 @@ fun NoticeBox(
             .fillMaxWidth()
             .indication(remember { MutableInteractionSource() }, null)
             .background(
-                color = Color(0xFFf4f4f4),
+                color = GlobalColor.NoticeBox,
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable(enabled = onClick != null) {
@@ -63,12 +64,12 @@ fun NoticeBox(
                     .height(20.dp),
                 painter = painterResource(id = R.drawable.round_warning_24),
                 contentDescription = "WarningIcon",
-                tint = Color(0xFF838383)
+                tint = GlobalColor.NoticeBoxIcon
             )
             Text(
                 text = text,
                 fontSize = 11.sp,
-                color = Color(0xff6c6c6c)
+                color = GlobalColor.NoticeBoxText
             )
         }
     }
@@ -81,13 +82,13 @@ fun ActionBox(
     title: String,
     content: @Composable (textColor: Color) -> Unit
 ) {
-    val textColor = Color(0xff6c6c6c)
+    val textColor = GlobalColor.NoticeBoxText
     Box(
         modifier = modifier
             .fillMaxWidth()
             .indication(remember { MutableInteractionSource() }, null)
             .background(
-                color = Color(0xFFf4f4f4),
+                color = GlobalColor.NoticeBox,
                 shape = RoundedCornerShape(12.dp)
             )
     ) {
@@ -133,7 +134,7 @@ fun ActionBox(
 fun ActionSwitch(
     text: String,
     isSwitch: Boolean,
-    onValueChanged: (Boolean) -> Unit,
+    onValueChanged: (Boolean) -> Boolean,
 ) {
     Row(
         modifier = Modifier

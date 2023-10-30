@@ -121,6 +121,9 @@ public final class MsgConstant {
     public static final int KCHATTYPETEMPWPA = 117;
     public static final int KCHATTYPEUNKNOWN = 0;
     public static final int KCHATTYPEWEIYUN = 40;
+
+
+
     public static final int KCOMMONREDENVELOPEMSGTYPEINMSGBOX = 1007;
     public static final int KDOWNSOURCETYPEAIOINNER = 1;
     public static final int KDOWNSOURCETYPEBIGSCREEN = 2;

@@ -1,3 +1,13 @@
+import com.android.build.api.dsl.ApplicationExtension
+
+fun gitCommitHash(): String {
+    val builder = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+    val process = builder.start()
+    val reader = process.inputReader()
+    val hash = reader.readText().trim()
+    return if (hash.isNotEmpty()) ".$hash" else ""
+}
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -6,14 +16,15 @@ plugins {
 
 android {
     namespace = "moe.fuqiuluo.shamrock"
+    ndkVersion = "25.1.8937393"
     compileSdk = 33
 
     defaultConfig {
         applicationId = "moe.fuqiuluo.shamrock"
         minSdk = 24
         targetSdk = 33
-        versionCode = 3
-        versionName = "1.0.0"
+        versionCode = (System.currentTimeMillis() / 1000).toInt()
+        versionName = "1.0.5-dev" + gitCommitHash()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -35,12 +46,50 @@ android {
             )
         }
     }
+
+    android.applicationVariants.all {
+        outputs.map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
+            .forEach {
+                val abi = it.outputFileName.split("-")[1].split(".apk")[0]
+                val abiName = when (abi) {
+                    "app" -> "all"
+                    "x64" -> "x86_64"
+                    else -> abi
+                }
+                it.outputFileName = "Shamrock-v${versionName}-${abiName}.apk"
+            }
+    }
+
+    flavorDimensions.add("mode")
+
+    productFlavors {
+        create("app") {
+            dimension = "mode"
+            ndk {
+                abiFilters.add("arm64-v8a")
+                abiFilters.add("x86_64")
+            }
+        }
+        create("arm64") {
+            dimension = "mode"
+            ndk {
+                abiFilters.add("arm64-v8a")
+            }
+        }
+        create("x64") {
+            dimension = "mode"
+            ndk {
+                abiFilters.add("x86_64")
+            }
+        }
+    }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -49,30 +98,59 @@ android {
         kotlinCompilerExtensionVersion = "1.4.3"
     }
     packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
         resources {
-            excludes +=  "/META-INF/{AL2.0,LGPL2.1}"
-            excludes +=  "/META-INF/*"
-            excludes +=  "/META-INF/NOTICE.txt"
-            excludes +=  "/META-INF/DEPENDENCIES.txt"
-            excludes +=  "/META-INF/NOTICE"
-            excludes +=  "/META-INF/LICENSE"
-            excludes +=  "/META-INF/DEPENDENCIES"
-            excludes +=  "/META-INF/notice.txt"
-            excludes +=  "/META-INF/dependencies.txt"
-            excludes +=  "/META-INF/LGPL2.1"
-            excludes +=  "/META-INF/ASL2.0"
-            excludes +=  "/META-INF/INDEX.LIST"
-            excludes +=  "/META-INF/io.netty.versions.properties"
-            excludes +=  "/META-INF/INDEX.LIST"
-            excludes +=  "/META-INF/LICENSE.txt"
-            excludes +=  "/META-INF/license.txt"
-            excludes +=  "/META-INF/*.kotlin_module"
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/*"
+            excludes += "/META-INF/NOTICE.txt"
+            excludes += "/META-INF/DEPENDENCIES.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/notice.txt"
+            excludes += "/META-INF/dependencies.txt"
+            excludes += "/META-INF/LGPL2.1"
+            excludes += "/META-INF/ASL2.0"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/io.netty.versions.properties"
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/license.txt"
+            excludes += "/META-INF/*.kotlin_module"
+            excludes += "/META-INF/services/reactor.blockhound.integration.BlockHoundIntegration"
         }
     }
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
             version = "3.22.1"
+        }
+    }
+
+    configureAppSigningConfigsForRelease(project)
+}
+
+fun configureAppSigningConfigsForRelease(project: Project) {
+    val keystorePath: String? = System.getenv("KEYSTORE_PATH")
+    if (keystorePath.isNullOrBlank()) {
+        return
+    }
+    project.configure<ApplicationExtension> {
+        signingConfigs {
+            create("release") {
+                storeFile = file(System.getenv("KEYSTORE_PATH"))
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+                enableV2Signing = true
+            }
+        }
+        buildTypes {
+            release {
+                signingConfig = signingConfigs.findByName("release")
+            }
         }
     }
 }

@@ -25,9 +25,8 @@ public final class ArkElement {
         return "ArkElement{bytesData=" + this.bytesData + ",linkInfo=" + this.linkInfo + ",subElementType=" + this.subElementType + ",}";
     }
 
-    public ArkElement(String str, LinkInfo linkInfo, Integer num) {
-        this.bytesData = "";
-        this.bytesData = str;
+    public ArkElement(String data, LinkInfo linkInfo, Integer num) {
+        this.bytesData = data;
         this.linkInfo = linkInfo;
         this.subElementType = num;
     }

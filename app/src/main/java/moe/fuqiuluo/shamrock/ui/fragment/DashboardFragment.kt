@@ -4,14 +4,11 @@ package moe.fuqiuluo.shamrock.ui.fragment
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,9 +23,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,28 +34,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.edit
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import coil.size.Size
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import moe.fuqiuluo.shamrock.R
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime
 import moe.fuqiuluo.shamrock.ui.app.Level
-import moe.fuqiuluo.shamrock.ui.theme.TabSelectedColor
-import moe.fuqiuluo.shamrock.ui.theme.TabUnSelectedColor
+import moe.fuqiuluo.shamrock.ui.app.ShamrockConfig
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
+import moe.fuqiuluo.shamrock.ui.theme.ThemeColor
 import moe.fuqiuluo.shamrock.ui.tools.InputDialog
-import moe.fuqiuluo.shamrock.ui.tools.toast
-
 
 @Composable
 fun DashboardFragment(
@@ -67,7 +60,6 @@ fun DashboardFragment(
 ) {
     val scope = rememberCoroutineScope()
     val ctx = LocalContext.current
-    val preferences = ctx.getSharedPreferences("config", 0)
 
     Column(
         modifier = Modifier
@@ -77,16 +69,118 @@ fun DashboardFragment(
     ) {
         AccountCard(nick, uin)
         InformationCard(ctx)
-        APIInfoCard(scope, ctx, preferences)
-        FunctionCard(scope, ctx, preferences, "功能设置")
+        APIInfoCard(ctx)
+        FunctionCard(scope, ctx, "功能设置")
+        SSLCard(ctx)
+    }
+}
+
+@Composable
+private fun SSLCard(ctx: Context) {
+    ActionBox(
+        modifier = Modifier.padding(top = 12.dp),
+        painter = painterResource(id = R.drawable.baseline_security_24),
+        title = "SSL配置"
+    ) {
+        Column {
+            Divider(
+                modifier = Modifier,
+                color = GlobalColor.Divider,
+                thickness = 0.2.dp
+            )
+
+            val sslPort = remember { mutableStateOf(ShamrockConfig.getSSLPort(ctx).toString()) }
+            TextItem(
+                title = "SSL端口",
+                desc = "端口范围在0~65565，并确保可用。",
+                text = sslPort,
+                hint = "请输入端口号",
+                error = "端口范围应在0~65565",
+                checker = {
+                    it.isNotBlank() && kotlin.runCatching { it.toInt() in 0..65565 }.getOrDefault(false)
+                },
+                confirm = {
+                    val newPort = sslPort.value.toInt()
+                    ShamrockConfig.setSSLPort(ctx, newPort)
+                    AppRuntime.log("设置SSL(HTTP)端口为$newPort，立即生效尝试中。")
+                }
+            )
+
+            val keyStore = remember { mutableStateOf(ShamrockConfig.getSSLKeyPath(ctx)) }
+            TextItem(
+                title = "SSL证书",
+                desc = "BKS签名的证书。",
+                text = keyStore,
+                hint = "输入证书路径",
+                error = "证书路径不合法或不存在",
+                checker = {
+                    it.isNotBlank()
+                },
+                confirm = {
+                    val new = keyStore.value
+                    ShamrockConfig.setSSLKeyPath(ctx, new)
+                    AppRuntime.log("设置SSL证书为[$new]。")
+                }
+            )
+
+            val alias = remember { mutableStateOf(ShamrockConfig.getSSLAlias(ctx)) }
+            TextItem(
+                title = "SSL别名",
+                desc = "BKS签名的别名，确保大小写区分正确。",
+                text = alias,
+                hint = "输入签名别名",
+                error = "别名不合法",
+                checker = {
+                    it.isNotBlank()
+                },
+                confirm = {
+                    val new = alias.value
+                    ShamrockConfig.setSSLAlias(ctx, new)
+                    AppRuntime.log("设置SSL别名为[$new]。")
+                }
+            )
+
+            val sslPwd = remember { mutableStateOf(ShamrockConfig.getSSLPwd(ctx)) }
+            TextItem(
+                title = "SSL密码",
+                desc = "BKS签名的密码。",
+                text = sslPwd,
+                hint = "输入签名密码",
+                error = "密码不合法",
+                checker = {
+                    it.isNotBlank()
+                },
+                confirm = {
+                    val new = sslPwd.value
+                    ShamrockConfig.setSSLPwd(ctx, new)
+                    AppRuntime.log("设置SSL密码为[$new]。")
+                }
+            )
+
+            val sslPrivatePwd = remember { mutableStateOf(ShamrockConfig.getSSLPrivatePwd(ctx)) }
+            TextItem(
+                title = "SSL Private密码",
+                desc = "BKS签名的Private密码。",
+                text = sslPrivatePwd,
+                hint = "输入Private密码",
+                error = "密码不合法",
+                checker = {
+                    it.isNotBlank()
+                },
+                confirm = {
+                    val new = sslPrivatePwd.value
+                    ShamrockConfig.setSSLPrivatePwd(ctx, new)
+                    AppRuntime.log("设置SSL Private密码为[$new]。")
+                }
+            )
+
+        }
     }
 }
 
 @Composable
 private fun APIInfoCard(
-    scope: CoroutineScope,
-    ctx: Context,
-    preferences: SharedPreferences
+    ctx: Context
 ) {
     ActionBox(
         modifier = Modifier.padding(top = 12.dp),
@@ -96,128 +190,101 @@ private fun APIInfoCard(
         Column {
             Divider(
                 modifier = Modifier,
-                color = TabUnSelectedColor,
+                color = GlobalColor.Divider,
                 thickness = 0.2.dp
             )
 
-            val port = remember { mutableStateOf(preferences.getInt("port", 5700).toString()) }
-
-            val dialogPortInputState = InputDialog(
-                openDialog = remember { mutableStateOf(false) },
+            val wsPort = remember { mutableStateOf(ShamrockConfig.getWsPort(ctx).toString()) }
+            val port = remember { mutableStateOf(ShamrockConfig.getHttpPort(ctx).toString()) }
+            TextItem(
                 title = "主动HTTP端口",
                 desc = "端口范围在0~65565，并确保可用。",
-                isError = remember { mutableStateOf(false) },
                 text = port,
                 hint = "请输入端口号",
-                keyboardType = KeyboardType.Number,
-                errorText = "端口范围应在0~65565",
-            ) {
-                it.isNotBlank() && it.toInt() in 0 .. 65565
-            }
-            InfoItem(
-                title = "主动HTTP监听端口",
-                content = port.value
-            ) {
-                dialogPortInputState.show(
-                    confirm = {
-                        val newPort = port.value.toInt()
-                        preferences.edit { putInt("port", newPort) }
-                        scope.toast(ctx, "也许需要重启QQ生效")
-                        AppRuntime.log("设置主动HTTP监听端口为$newPort，也许需要重启QQ生效哦。")
-                    },
-                    cancel = {
-                        scope.toast(ctx, "取消修改")
-                    }
-                )
-            }
+                error = "端口范围应在0~65565",
+                checker = {
+                    it.isNotBlank() && kotlin.runCatching { it.toInt() in 0..65565 }.getOrDefault(false) && wsPort.value != it
+                },
+                confirm = {
+                    val newPort = port.value.toInt()
+                    ShamrockConfig.setHttpPort(ctx, newPort)
+                    AppRuntime.log("设置主动HTTP监听端口为$newPort，立即生效尝试中。")
+                }
+            )
 
-            val wsPort = remember { mutableStateOf(preferences.getInt("ws_port", 5800).toString()) }
-            val dialogWsPortInputState = InputDialog(
-                openDialog = remember { mutableStateOf(false) },
+            TextItem(
                 title = "主动WebSocket端口",
-                desc = "端口范围在0~65565，请确保可用。",
-                isError = remember { mutableStateOf(false) },
+                desc = "端口范围在0~65565，并确保可用。",
                 text = wsPort,
                 hint = "请输入端口号",
-                keyboardType = KeyboardType.Number,
-                errorText = "端口范围应在0~65565",
-            ) {
-                it.isNotBlank() && it.toInt() in 0 .. 65565
-            }
-            InfoItem(
-                title = "主动WebSocket端口",
-                content = wsPort.value
-            ) {
-                dialogWsPortInputState.show(
-                    confirm = {
-                        val newPort = wsPort.value.toInt()
-                        preferences.edit { putInt("ws_port", newPort) }
-                        scope.toast(ctx, "重启QQ生效")
-                        AppRuntime.log("设置主动WebSocket监听端口为$newPort，重启QQ生效。")
-                    },
-                    cancel = {
-                        scope.toast(ctx, "取消修改")
-                    }
-                )
-            }
+                error = "端口范围应在0~65565",
+                checker = {
+                    it.isNotBlank() && kotlin.runCatching { it.toInt() in 0..65565 }.getOrDefault(false) && it != port.value
+                },
+                confirm = {
+                    val newPort = wsPort.value.toInt()
+                    ShamrockConfig.setWsPort(ctx, newPort)
+                    AppRuntime.log("设置主动WebSocket监听端口为$newPort。")
+                }
+            )
 
-            val webHookAddress = remember { mutableStateOf(preferences.getString("http_addr", "shamrock.moe:80")!!) }
-            val dialogWebHookAddressInputState = InputDialog(
-                openDialog = remember { mutableStateOf(false) },
+            val webHookAddress = remember { mutableStateOf(ShamrockConfig.getHttpAddr(ctx)) }
+            TextItem(
                 title = "回调HTTP地址",
-                desc = "无需携带’http://‘，例如：shamrock.moe:80。",
-                isError = remember { mutableStateOf(false) },
+                desc = "例如：http://shamrock.moe:80。",
                 text = webHookAddress,
-                hint = "shamrock.moe:80",
-                keyboardType = KeyboardType.Text,
-                errorText = "输入的地址不合法",
-            ) {
-                it.isNotBlank() && !it.startsWith("http://") && !it.startsWith("https://") && !it.startsWith("ws://")
-            }
-            InfoItem(
-                title = "被动HTTP回调地址",
-                content = webHookAddress.value
-            ) {
-                dialogWebHookAddressInputState.show(
-                    confirm = {
-                        preferences.edit { putString("http_addr", webHookAddress.value) }
-                        scope.toast(ctx, "重启QQ生效")
-                        AppRuntime.log("设置回调HTTP地址为[${webHookAddress.value}]，重启QQ生效。")
-                    },
-                    cancel = {
-                        scope.toast(ctx, "取消修改")
+                hint = "请输入回调地址",
+                error = "输入的地址不合法",
+                checker = {
+                    it.isNotBlank()
+                },
+                confirm = {
+                    if (it.startsWith("http://") || it.startsWith("https://")) {
+                        ShamrockConfig.setHttpAddr(ctx, webHookAddress.value)
+                        AppRuntime.log("设置回调HTTP地址为[${webHookAddress.value}]。")
+                    } else {
+                        Toast.makeText(ctx, "回调地址不合法", Toast.LENGTH_SHORT).show()
+                        webHookAddress.value = ""
                     }
-                )
-            }
+                }
+            )
 
-            val wsAddress = remember { mutableStateOf(preferences.getString("ws_addr", "shamrock.moe:81")!!) }
-            val dialogWsAddressInputState = InputDialog(
-                openDialog = remember { mutableStateOf(false) },
+            val wsAddress = remember { mutableStateOf(ShamrockConfig.getWsAddr(ctx)) }
+            TextItem(
                 title = "被动WebSocket地址",
-                desc = "无需携带‘ws://’，例如：shamrock.moe:81。",
-                isError = remember { mutableStateOf(false) },
+                desc = "例如：ws://shamrock.moe:81，多个使用逗号分隔。",
                 text = wsAddress,
-                hint = "shamrock.moe:81",
-                keyboardType = KeyboardType.Text,
-                errorText = "输入的地址不合法",
-            ) {
-                it.isNotBlank() && !it.startsWith("http://") && !it.startsWith("https://") && !it.startsWith("ws://")
-            }
-            InfoItem(
-                title = "被动WebSocket地址",
-                content = wsAddress.value
-            ) {
-                dialogWsAddressInputState.show(
-                    confirm = {
-                        preferences.edit { putString("ws_addr", wsAddress.value) }
-                        scope.toast(ctx, "重启QQ生效")
-                        AppRuntime.log("设置被动WebSocket服务端地址为[${wsAddress.value}]，重启QQ生效。")
-                    },
-                    cancel = {
-                        scope.toast(ctx, "取消修改")
+                hint = "请输入被动地址",
+                error = "输入的地址不合法",
+                checker = {
+                    it.isNotBlank()
+                },
+                confirm = {
+                    if (it.startsWith("ws://") || it.startsWith("wss://")) {
+                        ShamrockConfig.setWsAddr(ctx, wsAddress.value)
+                        AppRuntime.log("设置被动WebSocket地址为[${wsAddress.value}]。")
+                    } else {
+                        Toast.makeText(ctx, "被动WebSocket地址不合法", Toast.LENGTH_SHORT).show()
+                        wsAddress.value = ""
                     }
-                )
-            }
+                }
+            )
+
+            val authToken = remember { mutableStateOf(ShamrockConfig.getToken(ctx)) }
+            TextItem(
+                title = "鉴权Token",
+                desc = "用于鉴权的Token。",
+                text = authToken,
+                hint = "请填写鉴权token",
+                error = "输入的参数不合法",
+                checker = {
+                    it.length in 0 .. 36
+                },
+                confirm = {
+                    ShamrockConfig.setToken(ctx, authToken.value)
+                    AppRuntime.log("设置鉴权Token为[${authToken.value}]。")
+                }
+            )
 
             InfoItem(
                 title = "累计调用次数",
@@ -231,7 +298,6 @@ private fun APIInfoCard(
 private fun FunctionCard(
     scope: CoroutineScope,
     ctx: Context,
-    preferences: SharedPreferences,
     title: String
 ) {
     ActionBox(
@@ -242,61 +308,66 @@ private fun FunctionCard(
         Column {
             Divider(
                 modifier = Modifier,
-                color = TabUnSelectedColor,
+                color = GlobalColor.Divider,
                 thickness = 0.2.dp
             )
 
             Function(
                 title = "强制平板模式",
                 desc = "强制QQ使用平板模式，实现共存登录。",
-                descColor = TabSelectedColor,
-                isSwitch = preferences.getBoolean("tablet", false)
+                isSwitch = ShamrockConfig.isTablet(ctx)
             ) {
-                preferences.edit { putBoolean("tablet", it) }
-                scope.toast(ctx, "重启QQ生效")
+                ShamrockConfig.setTablet(ctx, it)
+                return@Function true
             }
 
             Function(
                 title = "HTTP回调",
                 desc = "OneBot标准的HTTPAPI回调，Shamrock作为Client。",
-                descColor = TabSelectedColor,
-                isSwitch = preferences.getBoolean("webhook", false)
+                isSwitch = ShamrockConfig.isWebhook(ctx)
             ) {
-                preferences.edit { putBoolean("webhook", it) }
-                scope.toast(ctx, "重启QQ生效")
+                ShamrockConfig.setWebhook(ctx, it)
+                return@Function true
+            }
+
+            Function(
+                title = "消息格式为CQ码",
+                desc = "HTTPAPI回调的消息格式，关闭则为消息段。",
+                isSwitch = ShamrockConfig.isUseCQCode(ctx)
+            ) {
+                ShamrockConfig.setUseCQCode(ctx, it)
+                return@Function true
             }
 
             Function(
                 title = "主动WebSocket",
                 desc = "OneBot标准WebSocket，Shamrock作为Server。",
-                descColor = TabSelectedColor,
-                isSwitch = preferences.getBoolean("ws", false)
+                isSwitch = ShamrockConfig.isWs(ctx)
             ) {
-                preferences.edit { putBoolean("ws", it) }
-                scope.toast(ctx, "重启QQ生效")
+                ShamrockConfig.setWs(ctx, it)
+                return@Function true
             }
 
             Function(
                 title = "被动WebSocket",
                 desc = "OneBot标准WebSocket，Shamrock作为Client。",
-                descColor = TabSelectedColor,
-                isSwitch = preferences.getBoolean("ws_client", false)
+                isSwitch = ShamrockConfig.isWsClient(ctx)
             ) {
-                preferences.edit { putBoolean("ws_client", it) }
-                scope.toast(ctx, "重启QQ生效")
-
+                ShamrockConfig.setWsClient(ctx, it)
+                return@Function true
             }
 
+            /*
             Function(
                 title = "专业级接口",
                 desc = "如果你不知道你在做什么，请不要开启本功能。",
                 descColor = Color.Red,
-                isSwitch = preferences.getBoolean("pro_api", false)
+                isSwitch = ShamrockConfig.isPro(ctx)
             ) {
-                preferences.edit { putBoolean("pro_api", it) }
-                scope.toast(ctx, "重启QQ生效")
+                ShamrockConfig.setPro(ctx, it)
                 AppRuntime.log("专业级API = $it", Level.WARN)
-            }
+                return@Function true
+            }*/
         }
     }
 }
@@ -305,9 +376,9 @@ private fun FunctionCard(
 private fun Function(
     title: String,
     desc: String? = null,
-    descColor: Color? = null,
+    descColor: Color? = GlobalColor.NoticeBoxText,
     isSwitch: Boolean,
-    onClick: (Boolean) -> Unit
+    onClick: (Boolean) -> Boolean
 ) {
     Column(
         modifier = Modifier
@@ -323,7 +394,7 @@ private fun Function(
         }
         ActionSwitch(
             text = title,
-            isSwitch = isSwitch
+            isSwitch = isSwitch,
         ) {
             onClick(it)
         }
@@ -340,7 +411,7 @@ private fun InformationCard(ctx: Context) {
         Column {
             Divider(
                 modifier = Modifier,
-                color = TabUnSelectedColor,
+                color = GlobalColor.Divider,
                 thickness = 0.2.dp
             )
 
@@ -363,8 +434,8 @@ private fun InformationCard(ctx: Context) {
 @Composable
 private fun InfoItem(
     modifier: Modifier = Modifier,
-    titleColor: Color = Color(0xFF5A5A5A),
-    contentColor: Color = Color(0xFF5A5A5A),
+    titleColor: Color = GlobalColor.NoticeBoxText,
+    contentColor: Color = GlobalColor.NoticeBoxText,
     title: String,
     content: String,
     doubleClick: ((String) -> Unit)? = null
@@ -376,7 +447,7 @@ private fun InfoItem(
             .combinedClickable(onDoubleClick = {
                 doubleClick?.invoke(content)
             }) {
-               // nothing
+                true
             }
         ,
         verticalAlignment = Alignment.CenterVertically
@@ -410,7 +481,7 @@ private fun AccountCard(
             .fillMaxWidth()
             .background(
                 Brush.linearGradient(
-                    listOf(Color(0xFF2196F3), Color(0xFF00BCD4))
+                    listOf(ThemeColor.ColorAccountCardStart, ThemeColor.ColorAccountCardEnd)
                 ), shape = RoundedCornerShape(12.dp)
             ),
         verticalAlignment = Alignment.CenterVertically
@@ -466,6 +537,48 @@ private fun AccountCard(
                 fontSize = 14.sp
             )
         }
+    }
+}
+
+@Composable
+private inline fun TextItem(
+    title: String,
+    desc: String,
+    text: MutableState<String>,
+    hint: String,
+    error: String,
+    noinline checker: (String) -> Boolean,
+    crossinline
+    confirm: (String) -> Unit,
+    crossinline cancel: () -> Unit = {
+
+    }
+) {
+    val dialogPortInputState = InputDialog(
+        openDialog = remember { mutableStateOf(false) },
+        title = title,
+        desc = desc,
+        isError = remember { mutableStateOf(false) },
+        text = text,
+        hint = hint,
+        keyboardType = KeyboardType.Text,
+        errorText = error,
+        checker = checker
+    )
+    InfoItem(
+        title = title,
+        content = text.value.ifEmpty { "未配置" },
+        titleColor = GlobalColor.DataBoxTextLight,
+        contentColor = if (text.value.isEmpty()) GlobalColor.DataBoxTextDark else GlobalColor.DataBoxTextLight
+    ) {
+        dialogPortInputState.show(
+            confirm = {
+                confirm(text.value)
+            },
+            cancel = {
+                cancel()
+            }
+        )
     }
 }
 

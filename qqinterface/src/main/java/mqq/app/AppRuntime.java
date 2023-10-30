@@ -77,7 +77,6 @@ public abstract class AppRuntime {
     }
 
     public abstract String getCurrentAccountUin();
-
     public String getCurrentUin() {
         return !"0".equals(getCurrentAccountUin()) ? getCurrentAccountUin() : "";
     }

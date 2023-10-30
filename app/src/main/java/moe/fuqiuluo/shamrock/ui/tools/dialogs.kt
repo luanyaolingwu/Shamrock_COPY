@@ -24,9 +24,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
 import moe.fuqiuluo.shamrock.ui.theme.ShamrockTheme
-import moe.fuqiuluo.shamrock.ui.theme.TabSelectedColor
-import moe.fuqiuluo.shamrock.ui.theme.TabUnSelectedColor
 
 data class InputDialogState(
     val isOpen: MutableState<Boolean>,
@@ -76,7 +75,7 @@ fun InputDialog(
             Text(
                 text = title,
                 fontSize = 16.sp,
-                color = TabSelectedColor
+                color = GlobalColor.NoticeBoxText
             )
         },
         text = {
@@ -158,14 +157,14 @@ fun NoticeTextDialog(
                 Text(
                     text = title,
                     fontSize = 16.sp,
-                    color = TabSelectedColor
+                    color = GlobalColor.NoticeBoxText
                 )
             },
             text = {
                 Text(
                     text,
                     fontSize = 14.sp,
-                    color = TabUnSelectedColor
+                    color = GlobalColor.NoticeBoxText
                 )
             },
             confirmButton = {

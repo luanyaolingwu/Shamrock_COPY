@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+
 package moe.fuqiuluo.shamrock
 
 import android.annotation.SuppressLint
@@ -6,7 +7,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.ColorRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -49,13 +49,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -63,28 +63,25 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import moe.fuqiuluo.shamrock.ui.app.AppRuntime
-import moe.fuqiuluo.shamrock.ui.app.Level
 import moe.fuqiuluo.shamrock.ui.app.Logger
 import moe.fuqiuluo.shamrock.ui.app.RuntimeState
 import moe.fuqiuluo.shamrock.ui.fragment.DashboardFragment
 import moe.fuqiuluo.shamrock.ui.fragment.HomeFragment
 import moe.fuqiuluo.shamrock.ui.fragment.LabFragment
 import moe.fuqiuluo.shamrock.ui.fragment.LogFragment
-import moe.fuqiuluo.shamrock.ui.service.broadcast
+import moe.fuqiuluo.shamrock.ui.service.internal.broadcastToModule
+import moe.fuqiuluo.shamrock.ui.theme.GlobalColor
 import moe.fuqiuluo.shamrock.ui.theme.LocalString
+import moe.fuqiuluo.shamrock.ui.theme.RANDOM_SUB_TITLE
+import moe.fuqiuluo.shamrock.ui.theme.RANDOM_TITLE
 import moe.fuqiuluo.shamrock.ui.theme.ShamrockTheme
-import moe.fuqiuluo.shamrock.ui.theme.TabDividerColor
-import moe.fuqiuluo.shamrock.ui.theme.TabSelectedColor
-import moe.fuqiuluo.shamrock.ui.theme.TabUnSelectedColor
-import moe.fuqiuluo.shamrock.ui.theme.ToolbarColor
 import moe.fuqiuluo.shamrock.ui.tools.NoIndication
 import moe.fuqiuluo.shamrock.ui.tools.ShamrockTab
-import java.lang.StringBuilder
+import moe.fuqiuluo.shamrock.ui.tools.getShamrockVersion
 
-class MainActivity: ComponentActivity() {
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -97,7 +94,7 @@ class MainActivity: ComponentActivity() {
                 isAppearanceLightStatusBars = true
             }
             WindowCompat.setDecorFitsSystemWindows(window, true)
-            broadcast { putExtra("cmd", "fetchPort") }
+            broadcastToModule { putExtra("__cmd", "fetchPort") }
         }
     }
 }
@@ -113,22 +110,29 @@ private fun AppMainView() {
     LaunchedEffect(systemUiController, statusBarDarkIcons, navigationBarDarkIcons) {
         systemUiController.statusBarDarkContentEnabled = statusBarDarkIcons
         systemUiController.navigationBarDarkContentEnabled = navigationBarDarkIcons
-        systemUiController.setStatusBarColor(Color.White)
+        systemUiController.setStatusBarColor(GlobalColor.StatusBar)
     }
+
+    val context = LocalContext.current
 
     // Home
     val isFined = remember { mutableStateOf(false) }
-    val coreVersion = remember { mutableStateOf("1.0.0") }
+    val coreVersion = remember { mutableStateOf(getShamrockVersion(context)) }
     val coreName = remember { mutableStateOf("Xposed") }
-    val coreCode = remember { mutableIntStateOf(1000) }
+    val voiceSwitch = remember { mutableStateOf(false) }
 
     if (!AppRuntime.isInit) {
         AppRuntime.state = remember {
-            RuntimeState(isFined, coreVersion, coreCode, coreName)
+            RuntimeState(isFined, coreVersion, coreName, voiceSwitch)
         }
 
         AppRuntime.logger = remember {
-            Logger(mutableStateOf(StringBuilder()), mutableListOf())
+            Logger(
+                StringBuffer(),
+                mutableIntStateOf(0),
+                mutableListOf(),
+                mutableStateOf(AnnotatedString(""))
+            )
         }
 
         AppRuntime.AccountInfo.also {
@@ -170,17 +174,11 @@ private fun AppMainView() {
             )
 
             Scaffold(
-                topBar = { ToolBar(
-                    title = arrayOf(
-                        "Clover", "CuteKitty", "Shamrock",
-                        "Threeleaf", "CuteCat", "FuckingCat",
-                        "XVideos", "Onlyfans", "Pornhub",
-                        "Xposed", "LittleFox", "Springboot",
-                        "Kotlin", "Rust & Android", "Dashabi",
-                        "YYDS", "Amd Yes", "Gayhub",
-                        "Yuzukkity", "HongKongDoll", "Xinrao"
-                    ).random()
-                ) }
+                topBar = {
+                    ToolBar(
+                        title = RANDOM_TITLE.random()
+                    )
+                }
             ) {
                 val topPadding = it.calculateTopPadding()
                 Column(
@@ -190,16 +188,14 @@ private fun AppMainView() {
                     TabRow(
                         modifier = Modifier
                             .width(1080.dp)
-                            .background(Color.White)
-                            .absolutePadding(left = 70.dp, right = 70.dp)
-                        ,
+                            .background(GlobalColor.Toolbar)
+                            .absolutePadding(left = 70.dp, right = 70.dp),
                         selectedTabIndex = state.currentPage,
-                        divider = {  },
-                        containerColor = Color.White,
+                        divider = { },
                         indicator = {
                             TabRowDefaults.Indicator(
                                 Modifier.tabIndicatorOffset(it[state.currentPage]),
-                                color = TabSelectedColor,
+                                color = GlobalColor.TabItem,
                                 height = (3.3).dp
                             )
                         },
@@ -207,7 +203,6 @@ private fun AppMainView() {
                         TitlesWithIcon.forEachIndexed { index, titleWithIcon ->
                             AnimatedTab(scope, state, index, titleWithIcon)
                         }
-
                     }
 
                     Divider(
@@ -219,15 +214,15 @@ private fun AppMainView() {
 
                     HorizontalPager(
                         modifier = Modifier
-                            .padding(top = 8.dp)
-                        ,
+                            .padding(top = 8.dp),
                         state = state,
                     ) { page ->
-                        when(page) {
+                        when (page) {
                             0 -> HomeFragment(AppRuntime.state)
                             1 -> AppRuntime.AccountInfo.let {
                                 DashboardFragment(it.nick.value, it.uin.value)
                             }
+
                             2 -> LogFragment(AppRuntime.logger)
                             3 -> LabFragment()
                         }
@@ -241,58 +236,48 @@ private fun AppMainView() {
 @Composable
 private fun ToolBar(title: String) {
     TopAppBar(
-        title = { Column {
-            Text(
-                text = title,
-                color = ToolbarColor,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = arrayOf(
-                    "A Framework Base On Xposed",
-                    "今天吃什么好呢?",
-                    "遇事不决，量子力学!",
-                    "Just kkb?",
-                    "いいよ，こいよ",
-                    "伊已逝 吾亦逝",
-                    "忆久意久 把义领",
-                    "喵帕斯!",
-                    "Creeper?",
-                    "Make American Great Again!",
-                    "TXHookPro",
-                    "曾经有人失去了那个她",
-                    "欲买桂花同载酒，终不似，少年游。",
-                    "抚千窟为佑 看长安落花",
-                    "どこにもない",
-                    "春日和 かかってらしゃい"
-                ).random(),
-                color = ToolbarColor,
-                fontSize = 14.sp
-            )
-        } },
+        title = {
+            Column {
+                Text(
+                    text = title,
+                    color = GlobalColor.ToolbarText,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = RANDOM_SUB_TITLE.random(),
+                    color = GlobalColor.ToolbarText,
+                    fontSize = 14.sp
+                )
+            }
+        },
         modifier = Modifier
             .fillMaxWidth(),
         colors = topAppBarColors(
             titleContentColor = Color.Black,
-            containerColor = Color.White,
-            scrolledContainerColor = Color.White,
-            navigationIconContentColor = Color.White
+            containerColor = GlobalColor.Toolbar,
+            scrolledContainerColor = GlobalColor.Toolbar,
+            navigationIconContentColor = GlobalColor.Toolbar
         )
     )
 }
 
 private val SELECTED_TABLE = arrayOf(
-    1,    2,
-    4,    8,
-    16,   32,
-    64,   128,
-    256,  512,
+    1, 2,
+    4, 8,
+    16, 32,
+    64, 128,
+    256, 512,
     1024, 2048
 )
 
 @Composable
 @SuppressLint("AutoboxingStateValueProperty")
-private fun AnimatedTab(scope: CoroutineScope, state: PagerState, index: Int, titleWithIcon: Pair<String, Int>) {
+private fun AnimatedTab(
+    scope: CoroutineScope,
+    state: PagerState,
+    index: Int,
+    titleWithIcon: Pair<String, Int>
+) {
     val curSelected = index == state.currentPage
     val lastSelectedState = remember {
         mutableIntStateOf(0)
@@ -314,11 +299,12 @@ private fun AnimatedTab(scope: CoroutineScope, state: PagerState, index: Int, ti
     if (curSelected) {
         text = {
             AnimatedVisibility(visibleState = MutableTransitionState(false).also {
-                it.targetState = isFirst || lastSelectedState.value and selectedConst == selectedConst
+                it.targetState =
+                    isFirst || lastSelectedState.value and selectedConst == selectedConst
             }, enter = enter, exit = exit, modifier = Modifier) {
                 Text(
                     text = titleWithIcon.first,
-                    color = TabSelectedColor,
+                    color = GlobalColor.TabItem,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier
@@ -350,9 +336,11 @@ private fun AnimatedTab(scope: CoroutineScope, state: PagerState, index: Int, ti
 
     ShamrockTab(
         selected = curSelected,
-        onClick = { scope.launch {
-            state.scrollToPage(index, 0f)
-        } },
+        onClick = {
+            scope.launch {
+                state.scrollToPage(index, 0f)
+            }
+        },
         text = text,
         icon = icon,
         selectedContentColor = Color.Transparent,

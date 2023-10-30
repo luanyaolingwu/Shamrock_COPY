@@ -15,12 +15,24 @@ dependencyResolutionManagement {
         maven (url = "https://dl.bintray.com/kotlin/kotlin-eap" )
         maven (url = "https://api.xposed.info/" )
         maven (url = "https://jitpack.io" )
-        //noinspection JcenterRepositoryObsolete
-        jcenter()
+    }
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url = uri("https://storage.googleapis.com/r8-releases/raw")
+        }
+    }
+    dependencies {
+        classpath("com.android.tools:r8:8.2.26")
     }
 }
 
 rootProject.name = "Shamrock"
-include(":app")
-include(":xposed")
-include(":qqinterface")
+include(
+    ":app",
+    ":xposed",
+    ":qqinterface"
+)
