@@ -183,7 +183,7 @@ internal object ShamrockConfig {
 
     fun isPro(): Boolean {
         val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
-        return mmkv.getBoolean("dev", false)
+        return mmkv.getBoolean("pro_api", false)
     }
 
     operator fun set(key: String, value: String) {
