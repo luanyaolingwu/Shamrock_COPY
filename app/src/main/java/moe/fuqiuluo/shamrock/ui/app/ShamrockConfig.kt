@@ -278,7 +278,7 @@ object ShamrockConfig {
             "use_cqcode" to preferences.getBoolean("use_cqcode", false),
             "ws_addr" to preferences.getString("ws_addr", ""),
             "ssl_alias" to preferences.getString("ssl_alias", ""),
-            "pro_api" to preferences.getBoolean("pro_api", false),
+            "pro_api" to preferences.getBoolean("pro_api", true),
             "token" to preferences.getString("token", null),
             "ssl_pwd" to preferences.getString("ssl_pwd", ""),
             "inject_packet" to preferences.getBoolean("inject_packet", false),

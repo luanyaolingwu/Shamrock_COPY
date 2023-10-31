@@ -1,4 +1,3 @@
-@file:OptIn(DelicateCoroutinesApi::class)
 package moe.fuqiuluo.shamrock.xposed.actions
 
 import android.content.Context
