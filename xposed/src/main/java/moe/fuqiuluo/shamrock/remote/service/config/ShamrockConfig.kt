@@ -177,7 +177,7 @@ internal object ShamrockConfig {
         return mmkv.getInt("ssl_port", getPort())
     }
 
-    fun isDev(): Boolean {
+    fun isPro(): Boolean {
         val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
         return mmkv.getBoolean("dev", false)
     }
