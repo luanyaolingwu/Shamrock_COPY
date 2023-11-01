@@ -69,7 +69,7 @@ internal class InitRemoteService : IAction {
     private fun startWebSocketServer() {
         GlobalScope.launch {
             try {
-                val server = WebSocketService(ShamrockConfig.getActiveWebSocketConfig()?.port ?: 5700)
+                val server = WebSocketService(ShamrockConfig.getActiveWebSocketConfig()?.port ?: 9015)
                 server.start()
             } catch (e: Throwable) {
                 LogCenter.log(e.stackTraceToString(), Level.ERROR)

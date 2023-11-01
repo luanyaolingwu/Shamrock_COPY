@@ -51,7 +51,7 @@ class PullConfig: IAction {
                 when (it.getStringExtra("type")) {
                     "port" -> {
                         ctx.toast("动态修改HTTP端口成功。")
-                        HTTPServer.changePort(it.getIntExtra("port", 5700))
+                        HTTPServer.changePort(it.getIntExtra("port", 9015))
                     }
                     "ws_port" -> {
                         ctx.toast("动态修改WS端口不支持。")
