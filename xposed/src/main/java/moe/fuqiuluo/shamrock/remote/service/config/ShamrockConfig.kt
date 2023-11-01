@@ -33,14 +33,14 @@ internal object ShamrockConfig {
         val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
         mmkv.apply {
             putBoolean(  "tablet",     intent.getBooleanExtra("tablet", false))                 // 强制平板模式
-            putInt(      "port",       intent.getIntExtra("port", 5700))                         // 主动HTTP端口
+            putInt(      "port",       intent.getIntExtra("port", 5700))                        // 主动HTTP端口
             putBoolean(  "ws",         intent.getBooleanExtra("ws", false))                     // 主动WS开关
             putBoolean(  "http",       intent.getBooleanExtra("http", false))                   // HTTP回调开关
-            putString(   "http_addr",  intent.getStringExtra("http_addr"))                                  // WebHook回调地址
+            putString(   "http_addr",  intent.getStringExtra("http_addr"))                      // WebHook回调地址
             putBoolean(  "ws_client",  intent.getBooleanExtra("ws_client", false))              // 被动WS开关
             putBoolean(  "use_cqcode", intent.getBooleanExtra("use_cqcode", false))             // 使用CQ码
             putBoolean(  "inject_packet",    intent.getBooleanExtra("inject_packet", false))    // 拦截无用包
-            putBoolean(  "debug",    intent.getBooleanExtra("debug", false))    // 调试模式
+            putBoolean(  "debug",    intent.getBooleanExtra("debug", false))                    // 调试模式
 
             Config.defaultToken = intent.getStringExtra("token")
 
@@ -183,7 +183,7 @@ internal object ShamrockConfig {
 
     fun isPro(): Boolean {
         val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
-        return mmkv.getBoolean("pro_api", false)
+        return mmkv.getBoolean("pro", false)
     }
 
     operator fun set(key: String, value: String) {

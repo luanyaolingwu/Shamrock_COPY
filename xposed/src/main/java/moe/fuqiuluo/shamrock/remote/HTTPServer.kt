@@ -10,7 +10,6 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.engine.sslConnector
 import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -63,8 +62,10 @@ internal object HTTPServer {
             weatherAction()
             otherAction()
             guildAction()
-            qsign()
-            //obtainProtocolData()
+            if (ShamrockConfig.isPro()) {
+                qsign()
+                obtainProtocolData()
+            }
         }
     }
 
@@ -140,7 +141,6 @@ internal object HTTPServer {
         return server.application.isActive
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     fun changePort(port: Int) {
         if (currServerPort == port && isServiceStarted) return
         GlobalScope.launch {
@@ -156,7 +156,6 @@ internal object HTTPServer {
         }
     }
     
-    @OptIn(DelicateCoroutinesApi::class)
     fun restart() {
         if(!isServiceStarted) return
         val post = currServerPort

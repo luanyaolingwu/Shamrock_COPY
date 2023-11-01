@@ -1,3 +1,4 @@
+@file:OptIn(DelicateCoroutinesApi::class)
 package moe.fuqiuluo.shamrock.remote.service
 
 import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
