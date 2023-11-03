@@ -70,7 +70,17 @@ internal class InitRemoteService : IAction {
     private fun startWebSocketServer() {
         GlobalScope.launch {
             try {
-                val server = WebSocketService(ShamrockConfig.getActiveWebSocketConfig()?.port ?: 9015)
+                val config = ShamrockConfig.getActiveWebSocketConfig() ?: return@launch
+                config.address ?: kotlin.run {
+                    LogCenter.log("WebSocketServer地址不合法", Level.ERROR)
+                    return@launch
+                }
+                config.port ?: kotlin.run {
+                    LogCenter.log("WebSocketServer端口不合法", Level.ERROR)
+                    return@launch
+                }
+                require(config.port in 0 .. 65536) { "WebSocketServer端口不合法" }
+                val server = WebSocketService(config.address, config.port!!)
                 server.start()
             } catch (e: Throwable) {
                 LogCenter.log(e.stackTraceToString(), Level.ERROR)
@@ -82,13 +92,11 @@ internal class InitRemoteService : IAction {
         GlobalScope.launch {
             try {
                 if (url.startsWith("ws://") || url.startsWith("wss://")) {
-                    var wsClient = WebSocketClientService(url, wsHeaders)
+                    val wsClient = WebSocketClientService(url, wsHeaders)
                     wsClient.connect()
                     timer(initialDelay = 5000L, period = 5000L) {
                         if (wsClient.isClosed || wsClient.isClosing) {
-                            wsClient.cancelFlowJobs()
-                            wsClient = WebSocketClientService(url, wsHeaders)
-                            wsClient.connect()
+                            wsClient.reconnect()
                         }
                     }
                 } else {
