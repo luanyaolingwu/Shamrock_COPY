@@ -5,7 +5,9 @@ import moe.fuqiuluo.shamrock.helper.MessageHelper
 import com.tencent.qqnt.kernel.nativeinterface.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.convert.toCQCode
 import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
 import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
@@ -17,6 +19,8 @@ import moe.fuqiuluo.shamrock.remote.service.data.push.MessageTempSource
 import moe.fuqiuluo.shamrock.remote.service.data.push.PostType
 import java.util.ArrayList
 import java.util.HashMap
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 internal object AioListener: IKernelMsgListener {
     override fun onRecvMsg(msgList: ArrayList<MsgRecord>) {
@@ -98,7 +102,7 @@ internal object AioListener: IKernelMsgListener {
         }
     }
 
-    override fun onAddSendMsg(record: MsgRecord) {
+    override fun onAddSendMsg(tmpRecord: MsgRecord) {
         GlobalScope.launch {
             try {
                 val msgHash = MessageHelper.generateMsgIdHash(record.chatType, record.msgId)
@@ -149,6 +153,7 @@ internal object AioListener: IKernelMsgListener {
                     MessageDB.getInstance().messageMappingDao()
                         .updateMsgSeqByMsgHash(msgHash, record.msgSeq.toInt())
                 }
+
 
                 if (!ShamrockConfig.enableSelfMsg())
                     return@launch
