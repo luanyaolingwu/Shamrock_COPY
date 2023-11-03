@@ -25,7 +25,7 @@ internal object ShamrockConfig {
         return mmkv.getBoolean("isInit", false)
     }
 
-    fun updateConfig(config: ServiceConfig = Config) {
+    private fun updateConfig(config: ServiceConfig = Config) {
         ConfigDir.resolve("config.json").writeText(GlobalJson5.encodeToString(config))
     }
 
@@ -53,18 +53,11 @@ internal object ShamrockConfig {
                 it.port = wsPort
             }
 
-            val newPassiveWebSocketList = intent.getStringExtra("ws_addr")?.split(",", "|", "，")?.filter { address ->
-                Config.passiveWebSocket?.any {
-                    it.address == address
-                } != true
+            Config.passiveWebSocket = intent.getStringExtra("ws_addr")?.split(",", "|", "，")?.filter { address ->
+                address.isNotBlank() && (address.startsWith("ws://") || address.startsWith("wss://"))
             }?.map {
                 ConnectionConfig(address = it)
             }?.toMutableList()
-            if (Config.passiveWebSocket == null) {
-                Config.passiveWebSocket = newPassiveWebSocketList
-            } else {
-                Config.passiveWebSocket?.addAll(newPassiveWebSocketList ?: emptyList())
-            }
 
             putString(   "key_store",      intent.getStringExtra("key_store"))                                // 证书路径
             putString(   "ssl_pwd",      intent.getStringExtra("ssl_pwd"))                                    // 证书密码
