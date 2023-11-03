@@ -5,21 +5,18 @@ import moe.fuqiuluo.shamrock.helper.MessageHelper
 import com.tencent.qqnt.kernel.nativeinterface.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.convert.toCQCode
 import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
 import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.helper.db.MessageDB
 import moe.fuqiuluo.shamrock.remote.service.api.GlobalEventTransmitter
 import moe.fuqiuluo.shamrock.remote.service.data.push.MessageTempSource
 import moe.fuqiuluo.shamrock.remote.service.data.push.PostType
 import java.util.ArrayList
 import java.util.HashMap
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 internal object AioListener: IKernelMsgListener {
     override fun onRecvMsg(msgList: ArrayList<MsgRecord>) {
@@ -101,29 +98,10 @@ internal object AioListener: IKernelMsgListener {
         }
     }
 
-    override fun onAddSendMsg(tmpRecord: MsgRecord) {
+    override fun onAddSendMsg(record: MsgRecord) {
         GlobalScope.launch {
             try {
-                val msgHash = MessageHelper.generateMsgIdHash(tmpRecord.chatType, tmpRecord.msgId)
-
-                val record = suspendCoroutine<MsgRecord?> {
-                    GlobalScope.launch {
-                        while (true) {
-                            MsgSvc.getMsgByQMsgId(tmpRecord.chatType, tmpRecord.peerUin.toString(), tmpRecord.msgId).onSuccess { record ->
-                                if (record.sendStatus == MsgConstant.KSENDSTATUSSUCCESS ||
-                                    record.sendStatus == MsgConstant.KSENDSTATUSSUCCESSNOSEQ
-                                ) {
-                                    it.resume(record)
-                                } else if (record.sendStatus == MsgConstant.KSENDSTATUSFAILED) {
-                                    it.resume(null)
-                                }
-                            }.onFailure { _ ->
-                                it.resume(null)
-                            }
-                            delay(50)
-                        }
-                    }
-                } ?: return@launch
+                val msgHash = MessageHelper.generateMsgIdHash(record.chatType, record.msgId)
 
                 MessageHelper.saveMsgMapping(
                     hash = msgHash,
@@ -139,9 +117,44 @@ internal object AioListener: IKernelMsgListener {
                 if (rawMsg.isEmpty()) return@launch
 
                 LogCenter.log("发送消息($msgHash | ${record.msgSeq} | ${record.msgId}): $rawMsg")
+            } catch (e: Throwable) {
+                LogCenter.log(e.stackTraceToString(), Level.WARN)
+            }
+        }
+    }
+
+    override fun onMsgInfoListUpdate(msgList: ArrayList<MsgRecord>?) {
+        msgList?.forEach { record ->
+            GlobalScope.launch {
+                if (record.sendStatus == MsgConstant.KSENDSTATUSFAILED
+                    || record.sendStatus == MsgConstant.KSENDSTATUSSENDING) {
+                    return@launch
+                }
+
+                val msgHash = MessageHelper.generateMsgIdHash(record.chatType, record.msgId)
+
+                val mapping = MessageHelper.getMsgMappingByHash(msgHash)
+                if (mapping == null) {
+                    MessageHelper.saveMsgMapping(
+                        hash = msgHash,
+                        qqMsgId = record.msgId,
+                        chatType = record.chatType,
+                        subChatType = record.chatType,
+                        peerId = record.peerUin.toString(),
+                        msgSeq = record.msgSeq.toInt(),
+                        time = record.msgTime
+                    )
+                } else {
+                    LogCenter.log("Update message info from ${mapping.msgSeq} to ${record.msgSeq}", Level.INFO)
+                    MessageDB.getInstance().messageMappingDao()
+                        .updateMsgSeqByMsgHash(msgHash, record.msgSeq.toInt())
+                }
 
                 if (!ShamrockConfig.enableSelfMsg())
                     return@launch
+
+                val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
+                if (rawMsg.isEmpty()) return@launch
 
                 when (record.chatType) {
                     MsgConstant.KCHATTYPEGROUP -> {
@@ -159,10 +172,18 @@ internal object AioListener: IKernelMsgListener {
                     }
                     else -> LogCenter.log("不支持SELF PUSH事件: ${record.chatType}")
                 }
-            } catch (e: Throwable) {
-                LogCenter.log(e.stackTraceToString(), Level.WARN)
             }
         }
+    }
+
+    override fun onTempChatInfoUpdate(tempChatInfo: TempChatInfo) {
+
+    }
+
+    override fun onMsgAbstractUpdate(arrayList: ArrayList<MsgAbstract>?) {
+        //arrayList?.forEach {
+        //    LogCenter.log("onMsgAbstractUpdate($it)", Level.WARN)
+        //}
     }
 
     override fun onRecvMsgSvrRspTransInfo(
@@ -363,11 +384,7 @@ internal object AioListener: IKernelMsgListener {
         //LogCenter.log("onLineDev($arrayList)")
     }
 
-    override fun onLogLevelChanged(j2: Long) {
-
-    }
-
-    override fun onMsgAbstractUpdate(arrayList: ArrayList<MsgAbstract>?) {
+    override fun onLogLevelChanged(newLevel: Long) {
 
     }
 
@@ -387,16 +404,12 @@ internal object AioListener: IKernelMsgListener {
 
     }
 
-    override fun onMsgInfoListUpdate(arrayList: ArrayList<MsgRecord>?) {
-
-    }
-
     override fun onMsgQRCodeStatusChanged(i2: Int) {
 
     }
 
-    override fun onMsgRecall(i2: Int, str: String?, j2: Long) {
-        LogCenter.log("onMsgRecall($i2, $str, $j2)")
+    override fun onMsgRecall(chatType: Int, peerId: String?, msgId: Long) {
+        LogCenter.log("onMsgRecall($chatType, $peerId, $msgId)")
     }
 
     override fun onMsgSecurityNotify(msgRecord: MsgRecord?) {
@@ -437,10 +450,6 @@ internal object AioListener: IKernelMsgListener {
 
     override fun onSysMsgNotification(i2: Int, j2: Long, j3: Long, arrayList: ArrayList<Byte>?) {
         LogCenter.log("onSysMsgNotification($i2, $j2, $j3, $arrayList)", Level.DEBUG)
-    }
-
-    override fun onTempChatInfoUpdate(tempChatInfo: TempChatInfo?) {
-
     }
 
     override fun onUnreadCntAfterFirstView(hashMap: HashMap<Int, ArrayList<UnreadCntInfo>>?) {
