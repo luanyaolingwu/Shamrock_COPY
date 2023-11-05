@@ -82,8 +82,6 @@ fun HomeFragment(
                     A：也许未来的某个时刻，会加强检测吧。亦或许你发了什么不干净的东西呢。
                     Q：Shamrock有模块冲突？
                     A：目前没有发现模块冲突。
-                    Q：哼 (￢︿̫̿￢☆)
-                    A：啊啊啊啊啊啊啊啊啊啊啊啊
                     Q：Shamrock需求权限？
                     A：Shamrock使用到了Net权限，去实现HTTPAPI和WebSocket的一些请求，请确保你所设置的端口未被占用。当你使用来自一些Android机器人框架的插件，请确保本APP的存活，否则将无法运行；当你使用来自OneBot标准的相关接口时，无需保证APP的存活。
                     Q：Shamrock运行原理？

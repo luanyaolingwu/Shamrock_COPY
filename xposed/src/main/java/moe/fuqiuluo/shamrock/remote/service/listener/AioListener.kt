@@ -181,9 +181,9 @@ internal object AioListener: IKernelMsgListener {
     }
 
     override fun onMsgAbstractUpdate(arrayList: ArrayList<MsgAbstract>?) {
-        arrayList?.forEach {
-            LogCenter.log("onMsgAbstractUpdate($it)", Level.WARN)
-        }
+        //arrayList?.forEach {
+        //    LogCenter.log("onMsgAbstractUpdate($it)", Level.WARN)
+        //}
     }
 
     override fun onRecvMsgSvrRspTransInfo(

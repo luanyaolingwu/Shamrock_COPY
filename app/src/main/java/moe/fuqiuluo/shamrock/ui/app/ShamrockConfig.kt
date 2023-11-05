@@ -17,7 +17,7 @@ object ShamrockConfig {
 
     fun getSSLPort(ctx: Context): Int {
         val preferences = ctx.getSharedPreferences("config", 0)
-        return preferences.getInt("ssl_port", 9016)
+        return preferences.getInt("ssl_port", 5701)
     }
 
     fun setSSLPort(ctx: Context, port: Int) {
@@ -164,7 +164,7 @@ object ShamrockConfig {
 
     fun getHttpPort(ctx: Context): Int {
         val preferences = ctx.getSharedPreferences("config", 0)
-        return preferences.getInt("port", 9015)
+        return preferences.getInt("port", 5700)
     }
 
     fun setHttpPort(ctx: Context, v: Int) {
@@ -254,31 +254,31 @@ object ShamrockConfig {
         preferences.edit().putBoolean("enable_self_msg", v).apply()
     }
 
-//    fun isEchoNumber(ctx: Context): Boolean {
-//        val preferences = ctx.getSharedPreferences("config", 0)
-//        return preferences.getBoolean("echo_number", false)
-//    }
-//
-//    fun setEchoNumber(ctx: Context, v: Boolean) {
-//        val preferences = ctx.getSharedPreferences("config", 0)
-//        preferences.edit().putBoolean("echo_number", v).apply()
-//    }
+    fun isEchoNumber(ctx: Context): Boolean {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getBoolean("echo_number", false)
+    }
+
+    fun setEchoNumber(ctx: Context, v: Boolean) {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        preferences.edit().putBoolean("echo_number", v).apply()
+    }
 
     fun getConfigMap(ctx: Context): Map<String, Any?> {
         val preferences = ctx.getSharedPreferences("config", 0)
         return mapOf(
             "tablet" to preferences.getBoolean("tablet", false),
-            "port" to preferences.getInt("port", 9015),
+            "port" to preferences.getInt("port", 5700),
             "ws" to preferences.getBoolean("ws", false),
             "ws_port" to preferences.getInt("ws_port", 5800),
-            "ssl_port" to preferences.getInt("ssl_port", 9016),
+            "ssl_port" to preferences.getInt("ssl_port", 5701),
             "http" to preferences.getBoolean("webhook", false),
             "http_addr" to preferences.getString("http_addr", ""),
             "ws_client" to preferences.getBoolean("ws_client", false),
             "use_cqcode" to preferences.getBoolean("use_cqcode", false),
             "ws_addr" to preferences.getString("ws_addr", ""),
             "ssl_alias" to preferences.getString("ssl_alias", ""),
-            "pro_api" to preferences.getBoolean("pro_api", true),
+            "pro_api" to preferences.getBoolean("pro_api", false),
             "token" to preferences.getString("token", null),
             "ssl_pwd" to preferences.getString("ssl_pwd", ""),
             "inject_packet" to preferences.getBoolean("inject_packet", false),

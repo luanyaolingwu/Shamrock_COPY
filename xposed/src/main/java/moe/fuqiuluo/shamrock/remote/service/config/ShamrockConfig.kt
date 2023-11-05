@@ -33,15 +33,14 @@ internal object ShamrockConfig {
         val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
         mmkv.apply {
             putBoolean(  "tablet",     intent.getBooleanExtra("tablet", false))                 // 强制平板模式
-            putInt(      "port",       intent.getIntExtra("port", 9015))                        // 主动HTTP端口
+            putInt(      "port",       intent.getIntExtra("port", 5700))                         // 主动HTTP端口
             putBoolean(  "ws",         intent.getBooleanExtra("ws", false))                     // 主动WS开关
             putBoolean(  "http",       intent.getBooleanExtra("http", false))                   // HTTP回调开关
-            putString(   "http_addr",  intent.getStringExtra("http_addr"))                      // WebHook回调地址
+            putString(   "http_addr",  intent.getStringExtra("http_addr"))                                  // WebHook回调地址
             putBoolean(  "ws_client",  intent.getBooleanExtra("ws_client", false))              // 被动WS开关
             putBoolean(  "use_cqcode", intent.getBooleanExtra("use_cqcode", false))             // 使用CQ码
-            putBoolean(  "pro_api",    intent.getBooleanExtra("pro_api", false))                // 调试API开关
             putBoolean(  "inject_packet",    intent.getBooleanExtra("inject_packet", false))    // 拦截无用包
-            putBoolean(  "debug",    intent.getBooleanExtra("debug", false))                    // 调试模式
+            putBoolean(  "debug",    intent.getBooleanExtra("debug", false))    // 调试模式
 
             Config.defaultToken = intent.getStringExtra("token")
 
@@ -59,15 +58,15 @@ internal object ShamrockConfig {
                 ConnectionConfig(address = it)
             }?.toMutableList()
 
-            putString(   "key_store",      intent.getStringExtra("key_store"))                                // 证书路径
-            putString(   "ssl_pwd",      intent.getStringExtra("ssl_pwd"))                                    // 证书密码
-            putString(   "ssl_private_pwd",      intent.getStringExtra("ssl_private_pwd"))                    // 证书私钥密码
-            putString(   "ssl_alias",      intent.getStringExtra("ssl_alias"))                                // 证书别名
-            putInt(      "ssl_port",    intent.getIntExtra("ssl_port", 9016))                      // 主动HTTP端口
+            putString(   "key_store",      intent.getStringExtra("key_store"))  // 证书路径
+            putString(   "ssl_pwd",      intent.getStringExtra("ssl_pwd"))  // 证书密码
+            putString(   "ssl_private_pwd",      intent.getStringExtra("ssl_private_pwd"))  // 证书私钥密码
+            putString(   "ssl_alias",      intent.getStringExtra("ssl_alias"))  // 证书别名
+            putInt(      "ssl_port",    intent.getIntExtra("ssl_port", 5701))                         // 主动HTTP端口
 
-            putBoolean("auto_clear", intent.getBooleanExtra("auto_clear", false))                 // 自动清理
+            putBoolean("auto_clear", intent.getBooleanExtra("auto_clear", false)) // 自动清理
 
-            putBoolean("enable_self_msg", intent.getBooleanExtra("enable_self_msg", false))       // 推送自己发的消息
+            putBoolean("enable_self_msg", intent.getBooleanExtra("enable_self_msg", false)) // 推送自己发的消息
 
             putBoolean("isInit", true)
         }
@@ -110,8 +109,7 @@ internal object ShamrockConfig {
     }
 
     fun getToken(): String {
-        val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
-        return mmkv.getString("token", "") ?: ""
+        return Config.defaultToken ?: ""
     }
 
     fun useCQ(): Boolean {
@@ -136,7 +134,7 @@ internal object ShamrockConfig {
 
     fun getPort(): Int {
         val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
-        return mmkv.getInt("port", 9015)
+        return mmkv.getInt("port", 5700)
     }
 
     fun isInjectPacket(): Boolean {
@@ -181,9 +179,9 @@ internal object ShamrockConfig {
         return mmkv.getInt("ssl_port", getPort())
     }
 
-    fun isPro(): Boolean {
+    fun isDev(): Boolean {
         val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
-        return mmkv.getBoolean("pro_api", false)
+        return mmkv.getBoolean("dev", false)
     }
 
     operator fun set(key: String, value: String) {

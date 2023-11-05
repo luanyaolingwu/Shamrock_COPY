@@ -19,8 +19,7 @@ val RANDOM_TITLE = arrayOf(
     "Xposed", "LittleFox", "Springboot",
     "Kotlin", "Rust & Android", "Dashabi",
     "YYDS", "Amd Yes", "Gayhub",
-    "Yuzukkity", "HongKongDoll", "Xinrao",
-    "404 Not Found","TX.SB","Minecraft"
+    "Yuzukkity", "HongKongDoll", "Xinrao"
 )
 val RANDOM_SUB_TITLE = arrayOf(
     "A Framework Base On Xposed",
@@ -38,8 +37,7 @@ val RANDOM_SUB_TITLE = arrayOf(
     "欲买桂花同载酒，终不似，少年游。",
     "抚千窟为佑 看长安落花",
     "どこにもない",
-    "春日和 かかってらしゃい",
-    "java.lang.NullPointerException"
+    "春日和 かかってらしゃい"
 )
 
 val LocalString: VarString

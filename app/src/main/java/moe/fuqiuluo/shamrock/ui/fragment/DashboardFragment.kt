@@ -257,7 +257,7 @@ private fun APIInfoCard(
                 hint = "请输入被动地址",
                 error = "输入的地址不合法",
                 checker = {
-                    it.startsWith("ws://") || it.startsWith("wss://") || it.isBlank()
+                          true
                 },
                 confirm = {
                     if (it.startsWith("ws://") || it.startsWith("wss://") || it.isBlank()) {
@@ -357,17 +357,17 @@ private fun FunctionCard(
                 return@Function true
             }
 
-
+            /*
             Function(
-                title = "Specialized API",
-                desc = "⚠:Non-essential features will be enabled and may be risky\n(如果你不知道你在做什么，请不要开启。)",
-                descColor = Color.Green,
+                title = "专业级接口",
+                desc = "如果你不知道你在做什么，请不要开启本功能。",
+                descColor = Color.Red,
                 isSwitch = ShamrockConfig.isPro(ctx)
             ) {
                 ShamrockConfig.setPro(ctx, it)
                 AppRuntime.log("专业级API = $it", Level.WARN)
                 return@Function true
-            }
+            }*/
         }
     }
 }
