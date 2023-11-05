@@ -257,7 +257,8 @@ private fun APIInfoCard(
                 hint = "请输入被动地址",
                 error = "输入的地址不合法",
                 checker = {
-                    it.startsWith("ws://") || it.startsWith("wss://") || it.isBlank()
+                          true
+                    //it.startsWith("ws://") || it.startsWith("wss://") || it.isBlank()
                 },
                 confirm = {
                     if (it.startsWith("ws://") || it.startsWith("wss://") || it.isBlank()) {

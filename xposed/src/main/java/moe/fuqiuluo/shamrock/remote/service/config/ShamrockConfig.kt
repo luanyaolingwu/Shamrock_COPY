@@ -110,8 +110,7 @@ internal object ShamrockConfig {
     }
 
     fun getToken(): String {
-        val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
-        return mmkv.getString("token", "") ?: ""
+        return Config.defaultToken ?: ""
     }
 
     fun useCQ(): Boolean {

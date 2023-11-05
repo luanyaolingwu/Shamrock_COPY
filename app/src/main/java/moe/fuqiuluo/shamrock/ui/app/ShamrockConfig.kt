@@ -254,15 +254,15 @@ object ShamrockConfig {
         preferences.edit().putBoolean("enable_self_msg", v).apply()
     }
 
-//    fun isEchoNumber(ctx: Context): Boolean {
-//        val preferences = ctx.getSharedPreferences("config", 0)
-//        return preferences.getBoolean("echo_number", false)
-//    }
-//
-//    fun setEchoNumber(ctx: Context, v: Boolean) {
-//        val preferences = ctx.getSharedPreferences("config", 0)
-//        preferences.edit().putBoolean("echo_number", v).apply()
-//    }
+    fun isEchoNumber(ctx: Context): Boolean {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getBoolean("echo_number", false)
+    }
+
+    fun setEchoNumber(ctx: Context, v: Boolean) {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        preferences.edit().putBoolean("echo_number", v).apply()
+    }
 
     fun getConfigMap(ctx: Context): Map<String, Any?> {
         val preferences = ctx.getSharedPreferences("config", 0)

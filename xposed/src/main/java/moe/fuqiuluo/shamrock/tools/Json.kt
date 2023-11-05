@@ -30,9 +30,10 @@ val GlobalJson = Json {
 val GlobalJson5 = Json5 {
     prettyPrint = true
     indentationWidth = 2
-    useSingleQuotes = true
-    quoteMemberNames = true
-    encodeDefaults = true
+    //使用单引号
+    //useSingleQuotes = true
+    //quoteMemberNames = true
+    //encodeDefaults = true
 }
 
 val String.asJson: JsonElement
