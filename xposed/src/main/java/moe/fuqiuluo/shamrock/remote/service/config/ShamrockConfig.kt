@@ -209,4 +209,8 @@ internal object ShamrockConfig {
         val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
         mmkv.putFloat(key, value)
     }
+
+    fun isAntiTrace(): Boolean {
+        return Config.antiTrace
+    }
 }
