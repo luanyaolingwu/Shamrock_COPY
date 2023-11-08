@@ -44,7 +44,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="基于 Xposed 实现 OneBot 标准的 QQ 机器人框架" />
+            android:value="@string/XPosed_Module_Description" />
         <meta-data
             android:name="xposedminversion"
             android:value="23" />
