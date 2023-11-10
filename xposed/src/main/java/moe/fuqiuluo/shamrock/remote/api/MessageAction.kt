@@ -8,6 +8,7 @@ import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import moe.fuqiuluo.shamrock.helper.db.MessageDB
 import moe.fuqiuluo.shamrock.remote.action.handlers.*
 import moe.fuqiuluo.shamrock.tools.fetchGetOrNull
 import moe.fuqiuluo.shamrock.tools.fetchGetOrThrow
@@ -22,17 +23,46 @@ import moe.fuqiuluo.shamrock.tools.isJsonData
 import moe.fuqiuluo.shamrock.tools.isJsonString
 
 fun Routing.messageAction() {
+    post("/send_group_forward_msg") {
+        val groupId = fetchPostOrNull("group_id")
+        val messages = fetchPostJsonArray("messages")
+        call.respondText(SendGroupForwardMsg(messages, groupId ?: ""))
+    }
+
+    post("/send_private_forward_msg") {
+        val userId = fetchPostOrNull("user_id")
+        val messages = fetchPostJsonArray("messages")
+        call.respondText(SendPrivateForwardMsg(messages, userId ?: ""))
+    }
+
+    getOrPost("/get_forward_msg") {
+        val id = fetchOrThrow("id")
+        call.respondText(GetForwardMsg(id))
+    }
+
     getOrPost("/get_group_msg_history") {
         val peerId = fetchOrThrow("group_id")
         val cnt = fetchOrNull("count")?.toInt() ?: 20
-        call.respondText(GetHistoryMsg("group", peerId, cnt))
+        val startId = fetchOrNull("message_seq")?.toInt()?.let {
+            if (it == 0) return@let 0L
+            MessageDB.getInstance()
+                .messageMappingDao()
+                .queryByMsgHashId(it)?.qqMsgId
+        } ?: 0L
+        call.respondText(GetHistoryMsg("group", peerId, cnt, startId))
     }
 
     getOrPost("/get_history_msg") {
         val msgType = fetchOrThrow("message_type")
         val peerId = fetchOrThrow(if (msgType == "group") "group_id" else "user_id")
         val cnt = fetchOrNull("count")?.toInt() ?: 20
-        call.respondText(GetHistoryMsg(msgType, peerId, cnt))
+        val startId = fetchOrNull("message_seq")?.toInt()?.let {
+            if (it == 0) return@let 0L
+            MessageDB.getInstance()
+                .messageMappingDao()
+                .queryByMsgHashId(it)?.qqMsgId
+        } ?: 0L
+        call.respondText(GetHistoryMsg(msgType, peerId, cnt, startId))
     }
 
     getOrPost("/clear_msgs") {

@@ -6,6 +6,7 @@ import com.tencent.qqnt.kernel.nativeinterface.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.convert.toCQCode
 import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
 import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
@@ -16,9 +17,13 @@ import moe.fuqiuluo.shamrock.remote.service.api.GlobalEventTransmitter
 import moe.fuqiuluo.shamrock.remote.service.data.push.MessageTempSource
 import moe.fuqiuluo.shamrock.remote.service.data.push.PostType
 import java.util.ArrayList
-import java.util.HashMap
+import java.util.Collections
+import kotlin.collections.HashMap
 
 internal object AioListener: IKernelMsgListener {
+    // 通过MSG SEQ临时监听器
+    internal val messageLessListenerMap = Collections.synchronizedMap(HashMap<Long, MsgRecord.() -> Unit>())
+
     override fun onRecvMsg(msgList: ArrayList<MsgRecord>) {
         if (msgList.isEmpty()) return
 
@@ -32,6 +37,15 @@ internal object AioListener: IKernelMsgListener {
     private suspend fun handleMsg(record: MsgRecord) {
         try {
             if (record.chatType == MsgConstant.KCHATTYPEGUILD) return // TODO: 频道消息暂不处理
+
+            messageLessListenerMap.firstNotNullOfOrNull {
+                if(it.key == record.msgSeq) it else null
+            }?.let {
+                it.value(record)
+                messageLessListenerMap.remove(it.key)
+            }
+
+            if (record.msgSeq < 0) return
 
             val msgHash = MessageHelper.generateMsgIdHash(record.chatType, record.msgId)
 
@@ -48,6 +62,10 @@ internal object AioListener: IKernelMsgListener {
             val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
             if (rawMsg.isEmpty()) return
 
+            //if (rawMsg.contains("forward")) {
+            //    LogCenter.log(record.extInfoForUI.decodeToString(), Level.WARN)
+            //}
+
             when (record.chatType) {
                 MsgConstant.KCHATTYPEGROUP -> {
                     LogCenter.log("群消息(group = ${record.peerName}(${record.peerUin}), uin = ${record.senderUin}, id = $msgHash|${record.msgSeq}, msg = $rawMsg)")
@@ -63,7 +81,7 @@ internal object AioListener: IKernelMsgListener {
                     }
                 }
                 MsgConstant.KCHATTYPEC2C -> {
-                    LogCenter.log("私聊消息(private = ${record.senderUin}, id = $msgHash|${record.msgSeq}, msg = $rawMsg)")
+                    LogCenter.log("私聊消息(private = ${record.senderUin}, id = [$msgHash | ${record.msgId} | ${record.msgSeq}], msg = $rawMsg)")
                     ShamrockConfig.getPrivateRule()?.let { rule ->
                         if (rule.black?.contains(record.peerUin) == true) return
                         if (rule.white?.contains(record.peerUin) == false) return
@@ -102,6 +120,7 @@ internal object AioListener: IKernelMsgListener {
 
     override fun onAddSendMsg(record: MsgRecord) {
         if (record.chatType == MsgConstant.KCHATTYPEGUILD) return // TODO: 频道消息暂不处理
+        if (record.peerUin == TicketSvc.getLongUin()) return // 发给自己的消息不处理
 
         GlobalScope.launch {
             try {

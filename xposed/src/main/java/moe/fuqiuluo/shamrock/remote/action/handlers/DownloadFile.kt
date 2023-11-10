@@ -15,16 +15,17 @@ import moe.fuqiuluo.shamrock.utils.MD5
 internal object DownloadFile: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val url = session.getStringOrNull("url")
+        val name = session.getStringOrNull("name")
         val b64 = session.getStringOrNull("base64")
         val threadCnt = session.getIntOrNull("thread_cnt") ?: 3
-        val headers = if (session.isArray("headers")) {
+        val headers = if (session.has("headers")) (if (session.isArray("headers")) {
             session.getArray("headers").map {
                 it.asString
             }
         } else {
             session.getString("headers").split("\r\n")
-        }
-        return invoke(url, b64, threadCnt, headers, session.echo)
+        }) else emptyList()
+        return invoke(url, b64, threadCnt, headers, name, session.echo)
     }
 
     suspend operator fun invoke(
@@ -32,6 +33,7 @@ internal object DownloadFile: IActionHandler() {
         base64: String?,
         threadCnt: Int,
         headers: List<String>,
+        name: String?,
         echo: JsonElement = EmptyJsonString
     ): String {
         if (url != null) {
@@ -47,7 +49,7 @@ internal object DownloadFile: IActionHandler() {
             }
             return invoke(url, threadCnt, headerMap, echo)
         } else if (base64 != null) {
-            return invoke(base64, echo)
+            return invoke(base64, name, echo)
         } else {
             return noParam("url/base64", echo)
         }
@@ -55,6 +57,7 @@ internal object DownloadFile: IActionHandler() {
 
     operator fun invoke(
         base64: String,
+        name: String?,
         echo: JsonElement
     ): String {
         kotlin.runCatching {
@@ -63,7 +66,12 @@ internal object DownloadFile: IActionHandler() {
                 it.writeBytes(bytes)
             }
         }.onSuccess {
-            val tmp = FileUtils.renameByMd5(it)
+            val tmp = if (name == null)
+                FileUtils.renameByMd5(it)
+            else it.parentFile!!.resolve(name).also { target ->
+                it.renameTo(target)
+                it.delete()
+            }
             return ok(data = DownloadResult(
                 file = tmp.absolutePath,
                 md5 = MD5.genFileMd5Hex(tmp.absolutePath)
