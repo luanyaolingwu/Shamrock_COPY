@@ -23,7 +23,7 @@ internal object GetTroopMemberList : IActionHandler() {
         echo: JsonElement = EmptyJsonString
     ): String {
         val memberList = GroupSvc.getGroupMemberList(groupId, refresh).onFailure {
-            return error(it.message ?: "unknown error", echo)
+            return error(it.message ?: "unknown error", echo, arrayResult = true)
         }.getOrThrow()
 
         return ok(arrayListOf<SimpleTroopMemberInfo>().apply {
@@ -53,7 +53,6 @@ internal object GetTroopMemberList : IActionHandler() {
                             role = when {
                                 GroupSvc.getOwner(groupId)
                                     .toString() == info.memberuin -> MemberRole.Owner
-
                                 info.memberuin.toLong() in GroupSvc.getAdminList(groupId) -> MemberRole.Admin
                                 else -> MemberRole.Member
                             },
