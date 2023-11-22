@@ -29,7 +29,7 @@ internal object ActionManager {
 
             // GroupActions
             ModifyTroopName, LeaveTroop, KickTroopMember, BanTroopMember, SetGroupWholeBan, SetGroupAdmin,
-            ModifyTroopMemberName, SetGroupUnique, GetTroopHonor, GroupPoke,
+            ModifyTroopMemberName, SetGroupUnique, GetTroopHonor, GroupPoke, SetEssenceMessage, DeleteEssenceMessage,
 
             // MSG ACTIONS
             SendMessage, DeleteMessage, GetMsg, GetForwardMsg, SendGroupForwardMsg, SendGroupMessage, SendPrivateMessage,
@@ -39,6 +39,9 @@ internal object ActionManager {
             GetRecord, GetImage, UploadGroupFile, CreateGroupFileFolder, DeleteGroupFolder,
             DeleteGroupFile, GetGroupFileSystemInfo, GetGroupRootFiles, GetGroupSubFiles,
             GetGroupFileUrl, UploadPrivateFile,
+
+            //REQUEST ACTION
+            SetFriendAddRequest, SetGroupAddRequest,
 
             // GUILD
             GetGuildServiceProfile,

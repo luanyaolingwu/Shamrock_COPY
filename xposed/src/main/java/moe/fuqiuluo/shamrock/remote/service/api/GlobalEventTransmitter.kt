@@ -240,7 +240,7 @@ internal object GlobalEventTransmitter: BaseSvc() {
                 type = noticeType,
                 subType = noticeSubType,
                 operatorId = operation,
-                userId = operation,
+                userId = target,
                 senderId = operation,
                 target = target,
                 groupId = groupCode
@@ -317,6 +317,8 @@ internal object GlobalEventTransmitter: BaseSvc() {
             operator: Long,
             reason: String,
             groupCode: Long,
+
+            flag: String,
             subType: NoticeSubType
         ): Boolean {
             pushNotice(NoticeEvent(
@@ -327,7 +329,8 @@ internal object GlobalEventTransmitter: BaseSvc() {
                 operatorId = operator,
                 tip = reason,
                 groupId = groupCode,
-                subType = subType
+                subType = subType,
+                flag = flag
             ))
             return true
         }
@@ -367,7 +370,8 @@ internal object GlobalEventTransmitter: BaseSvc() {
             return true
         }
 
-        suspend fun transFriendApply(time: Long, operation: Long, tipText: String): Boolean {
+
+        suspend fun transFriendApply(time: Long, operation: Long, tipText: String, flag: String): Boolean {
             pushNotice(NoticeEvent(
                 time = time,
                 selfId = app.longAccountUin,
@@ -375,7 +379,9 @@ internal object GlobalEventTransmitter: BaseSvc() {
                 type = NoticeType.FriendApply,
                 operatorId = operation,
                 userId = operation,
-                tip = tipText
+                tip = tipText,
+                flag = flag
+
             ))
             return true
         }
