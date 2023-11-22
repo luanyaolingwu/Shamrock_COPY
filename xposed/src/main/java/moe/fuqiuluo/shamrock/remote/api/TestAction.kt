@@ -25,7 +25,7 @@ import kotlin.coroutines.suspendCoroutine
 
 fun Routing.testAction() {
     if(ShamrockVersion.contains("dev")) {
-        LogCenter.log("testAction is enabled.", Level.WARN)
+        LogCenter.log("测试用功能处于开启状态！", Level.WARN)
     } else {
         return
     }
