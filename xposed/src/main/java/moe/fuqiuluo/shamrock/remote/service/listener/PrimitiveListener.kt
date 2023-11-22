@@ -357,7 +357,6 @@ internal object PrimitiveListener {
                     LogCenter.log("入群申请推送失败！", Level.WARN)
                     LogCenter.log(err.stackTraceToString(), Level.ERROR)
                 }
-
             }
             528 -> {
                 val groupCode = pb[1, 3, 2, 2, 3].asULong
