@@ -71,7 +71,10 @@ internal object GlobalEventTransmitter: BaseSvc() {
                     font = 0,
                     sender = Sender(
                         userId = record.senderUin,
-                        nickname = record.sendNickName,
+                        nickname = record.sendNickName
+                            .ifBlank { record.sendMemberName }
+                            .ifBlank { record.sendRemarkName }
+                            .ifBlank { record.peerName },
                         card = record.sendMemberName,
                         role = when (record.senderUin) {
                             GroupSvc.getOwner(record.peerUin.toString()) -> MemberRole.Owner
@@ -101,7 +104,7 @@ internal object GlobalEventTransmitter: BaseSvc() {
             var nickName = record.sendNickName
             if (nickName.isNullOrBlank()) {
                 CardSvc.getProfileCard(record.senderUin.toString()).onSuccess {
-                    nickName = it.strNick ?: ""
+                    nickName = it.strNick ?: record.peerName
                 }
             }
             transMessageEvent(record,
@@ -327,6 +330,7 @@ internal object GlobalEventTransmitter: BaseSvc() {
                 postType = PostType.Notice,
                 type = NoticeType.GroupApply,
                 operatorId = operator,
+                userId = operator,
                 tip = reason,
                 groupId = groupCode,
                 subType = subType,

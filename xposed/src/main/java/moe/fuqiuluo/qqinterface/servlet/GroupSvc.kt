@@ -8,8 +8,6 @@ import com.tencent.mobileqq.app.QQAppInterface
 import com.tencent.mobileqq.data.troop.TroopInfo
 import com.tencent.mobileqq.data.troop.TroopMemberInfo
 import com.tencent.mobileqq.pb.ByteStringMicro
-import com.tencent.mobileqq.qroute.QRoute
-import com.tencent.mobileqq.relation.api.IAddFriendTempApi
 import com.tencent.mobileqq.troop.api.ITroopInfoService
 import com.tencent.mobileqq.troop.api.ITroopMemberInfoService
 import com.tencent.protofile.join_group_link.join_group_link
@@ -26,17 +24,16 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import moe.fuqiuluo.proto.ProtoUtils
 import moe.fuqiuluo.proto.asInt
-import moe.fuqiuluo.proto.asList
-import moe.fuqiuluo.proto.asLong
 import moe.fuqiuluo.proto.asUtf8String
 import moe.fuqiuluo.proto.protobufOf
+import moe.fuqiuluo.qqinterface.servlet.entries.ProhibitedMemberInfo
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.tools.ifNullOrEmpty
 import moe.fuqiuluo.shamrock.tools.putBuf32Long
 import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import moe.fuqiuluo.shamrock.xposed.helper.NTServiceFetcher
-import mqq.app.MobileQQ
+import tencent.im.oidb.cmd0x899.oidb_0x899
 import tencent.im.oidb.cmd0x89a.oidb_0x89a
 import tencent.im.oidb.cmd0x8a0.oidb_0x8a0
 import tencent.im.oidb.cmd0x8fc.Oidb_0x8fc
@@ -62,6 +59,28 @@ internal object GroupSvc: BaseSvc() {
     private lateinit var METHOD_REQ_TROOP_LIST: Method
     private lateinit var METHOD_REQ_TROOP_MEM_LIST: Method
     private lateinit var METHOD_REQ_MODIFY_GROUP_NAME: Method
+
+    suspend fun getProhibitedMemberList(groupId: Long): Result<List<ProhibitedMemberInfo>> {
+        val buffer = sendOidbAW("OidbSvc.0x899_0", 2201, 0, oidb_0x899.ReqBody().apply {
+            uint64_group_code.set(groupId)
+            uint64_start_uin.set(0)
+            uint32_identify_flag.set(6)
+            memberlist_opt.set(oidb_0x899.memberlist().apply {
+                uint64_member_uin.set(0)
+                uint32_shutup_timestap.set(0)
+            })
+        }.toByteArray()) ?: return Result.failure(RuntimeException("[oidb] timeout"))
+        val body = oidb_sso.OIDBSSOPkg()
+        body.mergeFrom(buffer.slice(4))
+        if(body.uint32_result.get() != 0) {
+            return Result.failure(RuntimeException(body.str_error_msg.get()))
+        }
+
+        val resp = oidb_0x899.RspBody().mergeFrom(body.bytes_bodybuffer.get().toByteArray())
+        return Result.success(resp.rpt_memberlist.get().map {
+            ProhibitedMemberInfo(it.uint64_member_uin.get(), it.uint32_shutup_timestap.get())
+        })
+    }
 
     fun poke(groupId: String, userId: String) {
         sendOidb("OidbSvc.0xed3", 3795, 1, protobufOf(
@@ -158,10 +177,8 @@ internal object GroupSvc: BaseSvc() {
             3 to rand
         ).toByteArray()
         val buffer = sendOidbAW("OidbSvc.0xeac_1", 3756, 1, array)
+            ?: return Pair(false, "unknown error")
         val body = oidb_sso.OIDBSSOPkg()
-        if (buffer == null) {
-            return Pair(false, "unknown error")
-        }
         body.mergeFrom(buffer.slice(4))
         val result = ProtoUtils.decodeFromByteArray(body.bytes_bodybuffer.get().toByteArray())
         return if (result.has(1)) {
@@ -583,7 +600,15 @@ internal object GroupSvc: BaseSvc() {
     }
 
     // ProfileService.Pb.ReqSystemMsgAction.Group
-    suspend fun requestGroupRequest(msgSeq: Long, uin: Long, gid: Long, msg: String? = "", approve: Boolean? = true, notSee: Boolean? = false): Result<String>{
+    suspend fun requestGroupRequest(
+        msgSeq: Long,
+        uin: Long,
+        gid: Long,
+        msg: String? = "",
+        approve: Boolean? = true,
+        notSee: Boolean? = false,
+        subType: String
+    ): Result<String>{
 //        val app = AppRuntimeFetcher.appRuntime
 //        if (app !is AppInterface)
 //            throw RuntimeException("AppRuntime cannot cast to AppInterface")
@@ -600,20 +625,44 @@ internal object GroupSvc: BaseSvc() {
 //            app
 //        )
         // 实在找不到接口了 发pb吧
-        val buffer = protobufOf(
-            1 to 2,
-            2 to msgSeq,
-            3 to uin,
-            4 to 1,
-            5 to 2,
-            6 to 30024,
-            7 to 1,
-            8 to mapOf(
-                1 to if (approve != false) 11 else 12,
-                2 to gid
-            ),
-            9 to 1000
-        ).toByteArray()
+        val buffer: ByteArray
+        when (subType) {
+            "invite" -> {
+                buffer = protobufOf(
+                    1 to 1,
+                    2 to msgSeq,
+                    3 to uin, // self
+                    4 to 1,
+                    5 to 3,
+                    6 to 10016,
+                    7 to 2,
+                    8 to mapOf(
+                        1 to if (approve != false) 11 else 12,
+                        2 to gid
+                    ),
+                    9 to 1000
+                ).toByteArray()
+            }
+            "add" -> {
+                buffer = protobufOf(
+                    1 to 2,
+                    2 to msgSeq,
+                    3 to uin,
+                    4 to 1,
+                    5 to 2,
+                    6 to 30024,
+                    7 to 1,
+                    8 to mapOf(
+                        1 to if (approve != false) 11 else 12,
+                        2 to gid
+                    ),
+                    9 to 1000
+                ).toByteArray()
+            }
+            else -> {
+                return Result.failure(Exception("不支持的sub_type"))
+            }
+        }
         val respBuffer = sendBufferAW("ProfileService.Pb.ReqSystemMsgAction.Group", true, buffer)
             ?: return Result.failure(Exception("操作失败"))
         val result = ProtoUtils.decodeFromByteArray(respBuffer.slice(4))

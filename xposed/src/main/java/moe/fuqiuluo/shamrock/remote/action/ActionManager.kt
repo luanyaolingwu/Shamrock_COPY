@@ -18,6 +18,7 @@ internal object ActionManager {
         arrayOf(
             // Framework Info
             TestHandler, GetLatestEvents, GetSupportedActions, GetStatus, GetVersionInfo, GetSelfInfo, GetLoginInfo,
+            SwitchAccount,
 
             // UserActions
             GetProfileCard, GetFriendList, SendLike, GetUid, GetUinByUid, ScanQRCode, SetProfileCard,
@@ -30,6 +31,7 @@ internal object ActionManager {
             // GroupActions
             ModifyTroopName, LeaveTroop, KickTroopMember, BanTroopMember, SetGroupWholeBan, SetGroupAdmin,
             ModifyTroopMemberName, SetGroupUnique, GetTroopHonor, GroupPoke, SetEssenceMessage, DeleteEssenceMessage,
+            GetGroupSystemMsg, GetProhibitedMemberList,
 
             // MSG ACTIONS
             SendMessage, DeleteMessage, GetMsg, GetForwardMsg, SendGroupForwardMsg, SendGroupMessage, SendPrivateMessage,
