@@ -8,6 +8,8 @@ import com.tencent.mobileqq.app.QQAppInterface
 import com.tencent.mobileqq.data.troop.TroopInfo
 import com.tencent.mobileqq.data.troop.TroopMemberInfo
 import com.tencent.mobileqq.pb.ByteStringMicro
+import com.tencent.mobileqq.qroute.QRoute
+import com.tencent.mobileqq.relation.api.IAddFriendTempApi
 import com.tencent.mobileqq.troop.api.ITroopInfoService
 import com.tencent.mobileqq.troop.api.ITroopMemberInfoService
 import com.tencent.protofile.join_group_link.join_group_link
