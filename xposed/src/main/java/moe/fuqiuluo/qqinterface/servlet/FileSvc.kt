@@ -10,8 +10,11 @@ import moe.fuqiuluo.shamrock.tools.EMPTY_BYTE_ARRAY
 import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.tools.toHexString
 import moe.fuqiuluo.shamrock.utils.DeflateTools
+import moe.fuqiuluo.shamrock.xposed.helper.NTServiceFetcher
 import tencent.im.oidb.cmd0x6d8.oidb_0x6d8
 import tencent.im.oidb.oidb_sso
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 internal object FileSvc: BaseSvc() {
     fun createFileFolder(groupId: String, folderName: String) {
