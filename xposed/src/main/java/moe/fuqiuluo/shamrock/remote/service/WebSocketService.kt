@@ -21,7 +21,11 @@ import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import java.net.URI
 
-internal class WebSocketService(host: String, port: Int): WebSocketTransmitServlet(host, port) {
+internal class WebSocketService(
+    host: String,
+    port: Int,
+    heartbeatInterval: Long,
+): WebSocketTransmitServlet(host, port, heartbeatInterval) {
     private val eventJobList = mutableSetOf<Job>()
 
     override fun submitFlowJob(job: Job) {
@@ -84,7 +88,6 @@ internal class WebSocketService(host: String, port: Int): WebSocketTransmitServl
     private fun pushMetaLifecycle() {
         GlobalScope.launch {
             val runtime = AppRuntimeFetcher.appRuntime
-            val curUin = runtime.currentAccountUin
             pushTo(PushMetaEvent(
                 time = System.currentTimeMillis() / 1000,
                 selfId = app.longAccountUin,
@@ -92,9 +95,9 @@ internal class WebSocketService(host: String, port: Int): WebSocketTransmitServl
                 type = MetaEventType.LifeCycle,
                 subType = MetaSubType.Connect,
                 status = BotStatus(
-                    Self("qq", curUin.toLong()), runtime.isLogin, status = "正常", good = true
+                    Self("qq", runtime.longAccountUin), runtime.isLogin, status = "正常", good = true
                 ),
-                interval = 15000
+                interval = heartbeatInterval
             ))
         }
     }

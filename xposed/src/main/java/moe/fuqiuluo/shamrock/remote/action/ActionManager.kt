@@ -31,11 +31,11 @@ internal object ActionManager {
             // GroupActions
             ModifyTroopName, LeaveTroop, KickTroopMember, BanTroopMember, SetGroupWholeBan, SetGroupAdmin,
             ModifyTroopMemberName, SetGroupUnique, GetTroopHonor, GroupPoke, SetEssenceMessage, DeleteEssenceMessage,
-            GetGroupSystemMsg, GetProhibitedMemberList,
+            GetGroupSystemMsg, GetProhibitedMemberList, GetEssenceMessageList, GetGroupNotice, SendGroupNotice,
 
             // MSG ACTIONS
-            SendMessage, DeleteMessage, GetMsg, GetForwardMsg, SendGroupForwardMsg, SendGroupMessage, SendPrivateMessage,
-            ClearMsgs, GetHistoryMsg, GetGroupMsgHistory, SendPrivateForwardMsg,
+            SendMessage, DeleteMessage, GetMsg, GetForwardMsg, SendPrivateForwardMessage, SendGroupMessage, SendPrivateMessage,
+            ClearMsgs, GetHistoryMsg, GetGroupMsgHistory, SendGroupForwardMessage,
 
             // RESOURCE ACTION
             GetRecord, GetImage, UploadGroupFile, CreateGroupFileFolder, DeleteGroupFolder,
@@ -193,8 +193,8 @@ internal class ActionSession {
         return params[key].asBoolean
     }
 
-    fun <T: Boolean?> getBooleanOrDefault(key: String, default: T? = null): T {
-        return (params[key].asBooleanOrNull as? T) ?: default as T
+    fun getBooleanOrDefault(key: String, default: Boolean? = null): Boolean {
+        return params[key].asBooleanOrNull ?: default as Boolean
     }
 
     fun getObject(key: String): JsonObject {

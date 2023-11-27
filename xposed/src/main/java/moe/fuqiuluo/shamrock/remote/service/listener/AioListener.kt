@@ -15,6 +15,7 @@ import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.helper.db.MessageDB
 import moe.fuqiuluo.shamrock.remote.service.api.GlobalEventTransmitter
+import moe.fuqiuluo.shamrock.remote.service.api.RichMediaUploadHandler
 import moe.fuqiuluo.shamrock.remote.service.data.push.MessageTempSource
 import moe.fuqiuluo.shamrock.remote.service.data.push.PostType
 import mqq.app.MobileQQ
@@ -177,7 +178,7 @@ internal object AioListener: IKernelMsgListener {
                         .updateMsgSeqByMsgHash(msgHash, record.msgSeq.toInt())
                 }
 
-                if (!ShamrockConfig.enableSelfMsg())
+                if (!ShamrockConfig.enableSelfMsg() || record.senderUin != TicketSvc.getLongUin())
                     return@launch
 
                 val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
@@ -347,6 +348,11 @@ internal object AioListener: IKernelMsgListener {
         }
     }
 
+    override fun onRichMediaUploadComplete(notifyInfo: FileTransNotifyInfo) {
+        //LogCenter.log("onRichMediaUploadComplete($notifyInfo)", Level.DEBUG)
+        RichMediaUploadHandler.notify(notifyInfo)
+    }
+
     override fun onRecvOnlineFileMsg(arrayList: ArrayList<MsgRecord>?) {
         LogCenter.log(("onRecvOnlineFileMsg" + arrayList?.joinToString { ", " }), Level.DEBUG)
     }
@@ -356,10 +362,6 @@ internal object AioListener: IKernelMsgListener {
     }
 
     override fun onRichMediaProgerssUpdate(fileTransNotifyInfo: FileTransNotifyInfo) {
-
-    }
-
-    override fun onRichMediaUploadComplete(fileTransNotifyInfo: FileTransNotifyInfo) {
 
     }
 

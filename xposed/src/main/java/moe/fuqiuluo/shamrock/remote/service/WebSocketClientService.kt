@@ -7,15 +7,15 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import moe.fuqiuluo.shamrock.remote.service.api.WebSocketClientServlet
-import moe.fuqiuluo.shamrock.remote.service.data.push.*
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.remote.service.api.GlobalEventTransmitter
 
 internal class WebSocketClientService(
     override val address: String,
+    heartbeatInterval: Long,
     wsHeaders: Map<String, String>
-) : WebSocketClientServlet(address, wsHeaders) {
+) : WebSocketClientServlet(address, heartbeatInterval, wsHeaders) {
     private val eventJobList = mutableSetOf<Job>()
 
     override fun submitFlowJob(job: Job) {
@@ -34,7 +34,7 @@ internal class WebSocketClientService(
             }
         })
         submitFlowJob(GlobalScope.launch {
-            GlobalEventTransmitter.onRequestEvent() { event ->
+            GlobalEventTransmitter.onRequestEvent { event ->
                 pushTo(event)
             }
         })

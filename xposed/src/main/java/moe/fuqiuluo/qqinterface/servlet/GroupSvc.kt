@@ -15,7 +15,22 @@ import com.tencent.mobileqq.troop.api.ITroopMemberInfoService
 import com.tencent.protofile.join_group_link.join_group_link
 import com.tencent.qphone.base.remote.ToServiceMsg
 import com.tencent.qqnt.kernel.nativeinterface.MemberInfo
+import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import friendlist.stUinInfo
+import io.ktor.client.call.body
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitForm
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
+import io.ktor.http.headers
+import io.ktor.http.parameters
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -24,15 +39,34 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.decodeFromStream
+import kotlinx.serialization.json.jsonObject
 import moe.fuqiuluo.proto.ProtoUtils
 import moe.fuqiuluo.proto.asInt
 import moe.fuqiuluo.proto.asUtf8String
 import moe.fuqiuluo.proto.protobufOf
 import moe.fuqiuluo.qqinterface.servlet.entries.ProhibitedMemberInfo
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.helper.MessageHelper
+import moe.fuqiuluo.shamrock.remote.service.data.EssenceMessage
+import moe.fuqiuluo.shamrock.remote.service.data.GroupAnnouncement
+import moe.fuqiuluo.shamrock.remote.service.data.GroupAnnouncementMessage
+import moe.fuqiuluo.shamrock.remote.service.data.GroupAnnouncementMessageImage
+import moe.fuqiuluo.shamrock.tools.EmptyJsonArray
+import moe.fuqiuluo.shamrock.tools.GlobalClient
+import moe.fuqiuluo.shamrock.tools.asInt
+import moe.fuqiuluo.shamrock.tools.asJsonArrayOrNull
+import moe.fuqiuluo.shamrock.tools.asJsonObject
+import moe.fuqiuluo.shamrock.tools.asLong
+import moe.fuqiuluo.shamrock.tools.asString
+import moe.fuqiuluo.shamrock.tools.asStringOrNull
 import moe.fuqiuluo.shamrock.tools.ifNullOrEmpty
 import moe.fuqiuluo.shamrock.tools.putBuf32Long
 import moe.fuqiuluo.shamrock.tools.slice
+import moe.fuqiuluo.shamrock.utils.FileUtils
 import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import moe.fuqiuluo.shamrock.xposed.helper.NTServiceFetcher
 import tencent.im.oidb.cmd0x899.oidb_0x899
@@ -286,7 +320,7 @@ internal object GroupSvc: BaseSvc() {
 
     fun getOwner(groupId: String): Long {
         val groupInfo = getGroupInfo(groupId)
-        return groupInfo.troopowneruin.toLong()
+        return groupInfo.troopowneruin?.toLong() ?: 0
     }
 
     fun isOwner(groupId: String): Boolean {
@@ -611,21 +645,6 @@ internal object GroupSvc: BaseSvc() {
         notSee: Boolean? = false,
         subType: String
     ): Result<String>{
-//        val app = AppRuntimeFetcher.appRuntime
-//        if (app !is AppInterface)
-//            throw RuntimeException("AppRuntime cannot cast to AppInterface")
-//        val service = QRoute.api(IAddFriendTempApi::class.java)
-//        val action = `structmsg$SystemMsgActionInfo`()
-//        action.type.set(if (approve != false) 11 else 12)
-//        action.group_code.set(gid)
-//        action.msg.set(msg)
-//        val snInfo = `structmsg$AddFrdSNInfo`()
-//        snInfo.uint32_not_see_dynamic.set(if (notSee != false) 1 else 0)
-////        snInfo.uint32_set_sn.set(0)
-//        action.addFrdSNInfo.set(snInfo)
-//        service.sendFriendSystemMsgAction(2, msgSeq * 1000, uin, 1, 2, 30024, 1, action, 0, `structmsg$StructMsg`(), false,
-//            app
-//        )
         // 实在找不到接口了 发pb吧
         val buffer: ByteArray
         when (subType) {
@@ -656,7 +675,9 @@ internal object GroupSvc: BaseSvc() {
                     7 to 1,
                     8 to mapOf(
                         1 to if (approve != false) 11 else 12,
-                        2 to gid
+                        2 to gid,
+                        50 to msg,
+                        53 to if (notSee != false) 1 else 0
                     ),
                     9 to 1000
                 ).toByteArray()
@@ -672,14 +693,17 @@ internal object GroupSvc: BaseSvc() {
             if (result[1, 1].asInt == 0) {
                 Result.success(result[2].asUtf8String)
             } else {
-                Result.failure(Exception(result[2].asUtf8String))
+                Result.failure(Exception(result[1, 2].asUtf8String))
             }
         } else {
             Result.failure(Exception("操作失败"))
         }
     }
 
-    suspend fun requestGroupSystemMsgNew(msgNum: Int, latestFriendSeq: Long = 0, latestGroupSeq: Long = 0, retryCnt: Int = 3): List<StructMsg>? {
+    suspend fun requestGroupSystemMsgNew(msgNum: Int, reqMsgType: Int = 1, latestFriendSeq: Long = 0, latestGroupSeq: Long = 0, retryCnt: Int = 5): List<StructMsg> {
+        if (retryCnt < 0) {
+            return ArrayList()
+        }
         val req = ReqSystemMsgNew()
         req.msg_num.set(msgNum)
         req.latest_friend_seq.set(latestFriendSeq)
@@ -708,17 +732,181 @@ internal object GroupSvc: BaseSvc() {
         req.is_get_frd_ribbon.set(false)
         req.is_get_grp_ribbon.set(false)
         req.friend_msg_type_flag.set(1)
-        req.uint32_req_msg_type.set(1)
+        req.uint32_req_msg_type.set(reqMsgType)
         req.uint32_need_uid.set(1)
         val respBuffer = sendBufferAW("ProfileService.Pb.ReqSystemMsgNew.Group", true, req.toByteArray())
-        return if (respBuffer == null && retryCnt >= 0) {
-            requestGroupSystemMsgNew(msgNum, latestFriendSeq, latestGroupSeq, retryCnt - 1)
-        } else if (respBuffer == null) {
+        return if (respBuffer == null) {
             ArrayList()
         } else {
-            val msg = RspSystemMsgNew()
-            msg.mergeFrom(respBuffer.slice(4))
-            return msg.groupmsgs.get()
+            try {
+                val msg = RspSystemMsgNew()
+                msg.mergeFrom(respBuffer.slice(4))
+                return msg.groupmsgs.get().orEmpty()
+            } catch (err: Throwable) {
+                requestGroupSystemMsgNew(msgNum, reqMsgType, latestFriendSeq, latestGroupSeq, retryCnt - 1)
+            }
+        }
+    }
+
+
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun getEssenceMessageList(groupId: Long, page: Int = 0, pageSize: Int = 20): Result<List<EssenceMessage>>{
+//        GlobalClient.get()
+        val cookie = TicketSvc.getCookie("qun.qq.com")
+        val bkn = TicketSvc.getBkn(TicketSvc.getRealSkey(TicketSvc.getUin()))
+        val url = "https://qun.qq.com/cgi-bin/group_digest/digest_list?bkn=${bkn}&group_code=${groupId}&page_start=${page}&page_limit=${pageSize}"
+        val response = GlobalClient.get(url) {
+            header("Cookie", cookie)
+        }
+        val body = Json.decodeFromStream<JsonElement>(response.body())
+        if (body.jsonObject["retcode"].asInt == 0) {
+            val data = body.jsonObject["data"].asJsonObject
+            val list = data["msg_list"].asJsonArrayOrNull
+                ?: // is_end
+                return Result.success(ArrayList())
+            return Result.success(list.map {
+                val obj = it.jsonObject
+                val msgSeq = obj["msg_seq"].asInt
+                val msg = EssenceMessage(
+                    senderId = obj["sender_uin"].asString.toLong(),
+                    senderNick = obj["sender_nick"].asString,
+                    senderTime = obj["sender_time"].asLong,
+                    operatorId = obj["add_digest_uin"].asString.toLong(),
+                    operatorNick = obj["add_digest_nick"].asString,
+                    operatorTime = obj["add_digest_time"].asLong,
+                    messageId = 0,
+                    messageSeq = msgSeq,
+                    messageContent = obj["msg_content"] ?: EmptyJsonArray
+                )
+                val mapping = MessageHelper.getMsgMappingBySeq(MsgConstant.KCHATTYPEGROUP, msgSeq)
+                if (mapping != null) {
+                    msg.messageId = mapping.msgHashId
+                }
+                msg
+            })
+        } else {
+            return Result.failure(Exception(body.jsonObject["retmsg"].asStringOrNull))
+        }
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun getGroupAnnouncements(groupId: Long): Result<List<GroupAnnouncement>>{
+        val cookie = TicketSvc.getCookie("qun.qq.com")
+        val bkn = TicketSvc.getBkn(TicketSvc.getRealSkey(TicketSvc.getUin()))
+        val url = "https://web.qun.qq.com/cgi-bin/announce/get_t_list?bkn=${bkn}&qid=${groupId}&ft=23&s=-1&n=20"
+        val response = GlobalClient.get(url) {
+            header("Cookie", cookie)
+        }
+        val body = Json.decodeFromStream<JsonElement>(response.body())
+        if (body.jsonObject["ec"].asInt == 0) {
+            val list = body.jsonObject["feeds"].asJsonArrayOrNull
+                ?: return Result.success(ArrayList())
+            return Result.success(list.map {
+                val obj = it.jsonObject
+                GroupAnnouncement(
+                    senderId = obj["u"].asLong,
+                    publishTime = obj["pubt"].asLong,
+                    message = GroupAnnouncementMessage(
+                        text = obj["msg"].asJsonObject["text"].asString,
+                        images = obj["msg"].asJsonObject["pics"].asJsonArrayOrNull?.map {
+                            GroupAnnouncementMessageImage(
+                                id = it.jsonObject["id"].asString,
+                                width = it.jsonObject["w"].asString,
+                                height = it.jsonObject["h"].asString,
+                            )
+                        } ?: ArrayList()
+                    )
+                )
+            })
+        } else {
+            return Result.failure(Exception(body.jsonObject["em"].asStringOrNull))
+        }
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun uploadImageTroopNotice(image: String): Result<GroupAnnouncementMessageImage> {
+        val file = FileUtils.parseAndSave(image)
+        val cookie = TicketSvc.getCookie("qun.qq.com")
+        val bkn = TicketSvc.getBkn(TicketSvc.getRealSkey(TicketSvc.getUin()))
+        val response = GlobalClient.post("https://web.qun.qq.com/cgi-bin/announce/upload_img") {
+            headers {
+                header("Cookie", cookie)
+            }
+            contentType(ContentType.MultiPart.FormData)
+            setBody(MultiPartFormDataContent(
+                // 黑人问号 ktor默认formdata传的tx不认。默认是name=bkn，非要写成name="bkn"才认？
+                formData {
+                    append("filename", "001.png", Headers.build {
+                        append(HttpHeaders.ContentDisposition, "name=\"filename\"")
+                    })
+                    append("source", "troopNotice", Headers.build {
+                        append(HttpHeaders.ContentDisposition, "name=\"source\"")
+                    })
+                    append("bkn", bkn, Headers.build {
+                        append(HttpHeaders.ContentDisposition, "name=\"bkn\"")
+                    })
+                    append("m", "0", Headers.build {
+                        append(HttpHeaders.ContentDisposition, "name=\"m\"")
+                    })
+                    append("pic_up", file.readBytes(), Headers.build {
+                        append(HttpHeaders.ContentType, "image/png")
+                        append(HttpHeaders.ContentDisposition, "name=\"pic_up\" filename=\"001.png\"")
+
+                    })
+                }
+            ))
+        }
+        val body = Json.decodeFromStream<JsonElement>(response.body())
+        if (body.jsonObject["ec"].asInt == 0) {
+            var idJsonStr = body.jsonObject["id"].asStringOrNull
+            return if (idJsonStr != null) {
+                idJsonStr = idJsonStr.replace("&quot;", "\"")
+                val idJson = Json.decodeFromString<JsonElement>(idJsonStr)
+                LogCenter.log(idJson.toString())
+                Result.success(GroupAnnouncementMessageImage(
+                    height = idJson.asJsonObject["h"].asString,
+                    width = idJson.asJsonObject["w"].asString,
+                    id = idJson.asJsonObject["id"].asString,
+                ))
+            } else {
+                Result.failure(Exception("图片上传失败"))
+            }
+        } else {
+            return Result.failure(Exception(body.jsonObject["em"].asStringOrNull))
+        }
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    suspend fun addQunNotice(groupId: Long, text: String, image: GroupAnnouncementMessageImage?) : Result<Boolean> {
+        val cookie = TicketSvc.getCookie("qun.qq.com")
+        val bkn = TicketSvc.getBkn(TicketSvc.getRealSkey(TicketSvc.getUin()))
+        val response = GlobalClient.submitForm(
+            url = "https://web.qun.qq.com/cgi-bin/announce/add_qun_notice",
+            formParameters = parameters {
+                append("qid", groupId.toString())
+                append("bkn", bkn)
+                append("text", text)
+                append("pinned", "0")
+                append("type", "1")
+                // todo allow custom settings
+                append("settings", "{\"is_show_edit_card:\"1,\"tip_window_type\":1,\"confirm_required\":1}")
+                if (null != image) {
+                    append("pic", image.id)
+                    append("imgWidth", image.width)
+                    append("imgHeight", image.height)
+                }
+            },
+            block = {
+                headers {
+                    header("Cookie", cookie)
+                }
+            }
+        )
+        val body = Json.decodeFromStream<JsonElement>(response.body())
+        return if (body.jsonObject["ec"].asInt == 0) {
+            Result.success(true)
+        } else {
+            Result.failure(Exception(body.jsonObject["em"].asStringOrNull))
         }
     }
 }

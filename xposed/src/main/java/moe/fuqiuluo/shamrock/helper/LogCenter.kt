@@ -13,6 +13,7 @@ import moe.fuqiuluo.shamrock.utils.FileUtils
 import moe.fuqiuluo.shamrock.xposed.actions.toast
 import moe.fuqiuluo.shamrock.xposed.helper.internal.DataRequester
 import mqq.app.MobileQQ
+import java.io.File
 import java.util.Date
 
 internal enum class Level(
@@ -26,19 +27,53 @@ internal enum class Level(
 
 @SuppressLint("SimpleDateFormat")
 internal object LogCenter {
+    private val logFileBaseName = MobileQQ.getMobileQQ().qqProcessName.replace(":", ".") + "_${
+        // 格式化时间 
+        SimpleDateFormat("yyyy-MM-dd").format(Date())
+    }_"
     private val LogFile = MobileQQ.getContext().getExternalFilesDir(null)!!
         .parentFile!!.resolve("Tencent/Shamrock/log").also {
             if (it.exists()) it.delete()
             it.mkdirs()
+        }.let {
+            var i = 1
+            lateinit var result: File
+            while (true) {
+                result = it.resolve("$logFileBaseName$i.log")
+                if (result.exists()) {
+                    i++
+                } else {
+                    break
+                }
+            }
+            return@let result
         }
-        .resolve(MobileQQ.getMobileQQ().qqProcessName.replace(":", ".") + "_${
-            // 格式化时间 
-            SimpleDateFormat("yyyy-MM-dd").format(Date())
-        }_" + ".log")
+
     private val format = SimpleDateFormat("[HH:mm:ss] ")
 
-    fun log(string: String, level: Level = Level.INFO, toast: Boolean = false) =
-        log({ string }, level, toast)
+    fun log(string: String, level: Level = Level.INFO, toast: Boolean = false) {
+        if (!ShamrockConfig.isDebug() && level == Level.DEBUG) {
+            return
+        }
+
+        if (toast) {
+            MobileQQ.getContext().toast(string)
+        }
+        // 把日志广播到主进程
+        GlobalScope.launch(Dispatchers.Default) {
+            DataRequester.request("send_message", bodyBuilder = {
+                put("string", string)
+                put("level", level.id)
+            })
+        }
+
+        if (!LogFile.exists()) {
+            LogFile.createNewFile()
+        }
+        val format = "%s%s %s\n".format(format.format(Date()), level.name, string)
+
+        LogFile.appendText(format)
+    }
 
     fun log(
         string: () -> String,

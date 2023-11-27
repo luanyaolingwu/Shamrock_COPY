@@ -18,6 +18,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Shamrock"
         android:zygotePreloadName="@string/app_name"
+        android:multiArch="true"
+        android:extractNativeLibs="true"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
@@ -47,7 +49,7 @@
             android:value="@string/XPosed_Module_Description" />
         <meta-data
             android:name="xposedminversion"
-            android:value="23" />
+            android:value="93" />
         <meta-data
             android:name="xposedscope"
             android:resource="@array/xposed_scope" />
