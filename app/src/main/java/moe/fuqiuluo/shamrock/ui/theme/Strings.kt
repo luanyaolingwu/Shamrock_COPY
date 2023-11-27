@@ -58,19 +58,38 @@ val LocalString: VarString
 private open class Chūnibyō: Default() {
     init {
         TitlesWithIcon = arrayOf(
-            "玄天" to R.drawable.round_home_24,
-            "天穹" to R.drawable.round_dashboard_24,
-            "无极" to R.drawable.round_monitor_heart_24,
-            "飘渺" to R.drawable.round_logo_dev_24
+            "喵窝" to R.drawable.round_home_24,
+            "喵况" to R.drawable.round_dashboard_24,
+            "喵咪" to R.drawable.round_monitor_heart_24,
+            "喵嘻" to R.drawable.round_logo_dev_24
         )
-        frameworkYes = "仙路已通"
-        frameworkNo = "鬼怪横行"
-        frameworkYesLite = "五行已备"
-        frameworkNoLite = "需待东风"
-        legalWarning = "白榆，北辰，曜魄，应星，云川当方位不乱，即可作于无极之域。\n" +
-                "执明起，至除免于灾祸。\n" +
-                "元冥浩浩，非凡不可动之。"
-        labWarning = "寒酥降矣，梅熟日久，莫不可测。"
+        frameworkYes = "在玩毛线球"
+        frameworkNo = "寻找毛线球"
+        frameworkYesLite = "开心喵 ~"
+        frameworkNoLite = "哭哭喵 ~"
+        legalWarning = "只能作用在8.9.68或者更高的版本上哦，不然会出问题的。\n" +
+        "还有，这个软件只是用来学习和交流的，不要用来做坏事哦，要是被发现了，依凌可不负责。\n" +
+        "还有还有，这个软件是很多好心大哥哥大姐姐一起做的，他们都很厉害，也很好心，你要尊重他们哦。\n" +
+        "如果你犯错了，要负全责的哦~ 所以，答应猫猫，不要用于违规用途哦~"
+        labWarning = "实验室功能，有很多新奇的东西，不过也有很多危险的东西，你要小心点哦，不要乱动，不然会出大事的。"
+        logTitle = "喵咪"
+        testName = "未闻猫名"
+        logCentralLoadSuccessfully = "喵咪 - 喵力已满，可以开始玩耍了 o(*￣▽￣*)ブ"
+        logCentralLoadFailed = "喵咪 - 喵力不足，需要充电 ＞﹏＜"
+        functionSetting = "喵喵功能"
+        sslSetting = "喵力加密"
+        warnTitle = "喵喵提醒"
+        b2Mode = "喵喵模式"
+        b2ModeDesc = "你已经召唤过依凌啦~ 肉球再点一下猫猫就要离开了哦~"
+        restartToast = "重启之后才会生效喵！"
+        showDebugLog = "喵咪Plus"
+        showDebugLogDesc = "这个功能会让猫猫变得更健谈，可能会有点乱的喵。 qwq"
+        antiTrace = "喵喵隐身"
+        antiTraceDesc = "有坏人想伤害跟猫猫，猫猫会尽量保护自己的 (开启隐身之后记得重新打开QQ哦)"
+        injectPacket = "喵喵拦截"
+        injectPacketDesc = "防止部分过敏原接触Master，防止过敏"
+        persistentText = "喵喵保护"
+        persistentTextDesc = "喵喵会一直陪着Master，直到永远 永远~"
     }
 }
 
@@ -86,7 +105,24 @@ private open class Default: VarString(
             "同时声明本项目仅用于学习与交流，请于24小时内删除。\n" +
             "同时开源贡献者均享受免责条例。",
     labWarning = "实验室功能，可能会导致出乎意料的BUG!",
-    "日志"
+    logTitle = "日志",
+    testName = "测试昵称",
+    logCentralLoadSuccessfully = "日志框架激活成功，开放操作许可。",
+    logCentralLoadFailed = "日志框架处于未激活状态，请检查。",
+    functionSetting = "功能设置",
+    sslSetting = "SSL配置",
+    warnTitle = "温馨提示",
+    b2Mode = "中二病模式",
+    b2ModeDesc = "也许会导致奇怪的问题，大抵就是你看不懂罢了。",
+    restartToast = "重启生效哦！",
+    showDebugLog = "显示调试日志",
+    showDebugLogDesc = "会导致日志刷屏。",
+    antiTrace = "防止调用栈检测",
+    antiTraceDesc = "防止QQ进行堆栈跟踪检测，需要重新启动QQ。",
+    injectPacket = "拦截QQ无用收包",
+    injectPacketDesc = "测试阶段，可能导致网络异常或掉线。",
+    persistentText = "免死金牌",
+    persistentTextDesc = "由天地之起也，须复动之。"
 )
 
 open class VarString(
@@ -101,5 +137,34 @@ open class VarString(
 
     var labWarning: String,
 
-    var logTitle: String
+//     var logTitle: String
+// )
+    var logTitle: String,
+
+    var testName: String,
+
+    var logCentralLoadSuccessfully: String,
+    var logCentralLoadFailed: String,
+
+    var functionSetting: String,
+    var sslSetting: String,
+
+    var warnTitle: String,
+
+    var b2Mode: String,
+    var b2ModeDesc: String,
+
+    var restartToast: String,
+
+    var showDebugLog: String,
+    var showDebugLogDesc: String,
+
+    var antiTrace: String,
+    var antiTraceDesc: String,
+
+    var injectPacket: String,
+    var injectPacketDesc: String,
+
+    var persistentText: String,
+    var persistentTextDesc: String
 )

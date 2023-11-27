@@ -15,6 +15,7 @@ import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.helper.db.MessageDB
 import moe.fuqiuluo.shamrock.remote.service.api.GlobalEventTransmitter
+import moe.fuqiuluo.shamrock.remote.service.api.RichMediaUploadHandler
 import moe.fuqiuluo.shamrock.remote.service.data.push.MessageTempSource
 import moe.fuqiuluo.shamrock.remote.service.data.push.PostType
 import mqq.app.MobileQQ
@@ -72,8 +73,8 @@ internal object AioListener: IKernelMsgListener {
                 MsgConstant.KCHATTYPEGROUP -> {
                     LogCenter.log("群消息(group = ${record.peerName}(${record.peerUin}), uin = ${record.senderUin}, id = $msgHash|${record.msgSeq}, msg = $rawMsg)")
                     ShamrockConfig.getGroupMsgRule()?.let { rule ->
-                        if (rule.black?.contains(record.peerUin) == true) return
-                        if (rule.white?.contains(record.peerUin) == false) return
+                        if (!rule.black.isNullOrEmpty() && rule.black.contains(record.senderUin)) return
+                        if (!rule.white.isNullOrEmpty() && !rule.white.contains(record.senderUin)) return
                     }
 
                     if(!GlobalEventTransmitter.MessageTransmitter.transGroupMessage(
@@ -85,8 +86,8 @@ internal object AioListener: IKernelMsgListener {
                 MsgConstant.KCHATTYPEC2C -> {
                     LogCenter.log("私聊消息(private = ${record.senderUin}, id = [$msgHash | ${record.msgId} | ${record.msgSeq}], msg = $rawMsg)")
                     ShamrockConfig.getPrivateRule()?.let { rule ->
-                        if (rule.black?.contains(record.peerUin) == true) return
-                        if (rule.white?.contains(record.peerUin) == false) return
+                        if (!rule.black.isNullOrEmpty() && rule.black.contains(record.senderUin)) return
+                        if (!rule.white.isNullOrEmpty() && !rule.white.contains(record.senderUin)) return
                     }
 
                     if(!GlobalEventTransmitter.MessageTransmitter.transPrivateMessage(
@@ -97,14 +98,12 @@ internal object AioListener: IKernelMsgListener {
                 }
 
                 MsgConstant.KCHATTYPETEMPC2CFROMGROUP -> {
-                    if (!ShamrockConfig.allowTempSession()) {
-                        return
-                    }
+                    if (!ShamrockConfig.allowTempSession()) return
 
                     LogCenter.log("私聊临时消息(private = ${record.senderUin}, id = $msgHash, msg = $rawMsg)")
                     ShamrockConfig.getPrivateRule()?.let { rule ->
-                        if (rule.black?.contains(record.peerUin) == true) return
-                        if (rule.white?.contains(record.peerUin) == false) return
+                        if (!rule.black.isNullOrEmpty() && rule.black.contains(record.senderUin)) return
+                        if (!rule.white.isNullOrEmpty() && !rule.white.contains(record.senderUin)) return
                     }
 
                     if(!GlobalEventTransmitter.MessageTransmitter.transPrivateMessage(
@@ -150,14 +149,14 @@ internal object AioListener: IKernelMsgListener {
 
     override fun onMsgInfoListUpdate(msgList: ArrayList<MsgRecord>?) {
         msgList?.forEach { record ->
+            if (record.chatType == MsgConstant.KCHATTYPEGUILD) return@forEach// TODO: 频道消息暂不处理
+
+            if (record.sendStatus == MsgConstant.KSENDSTATUSFAILED
+                || record.sendStatus == MsgConstant.KSENDSTATUSSENDING) {
+                return@forEach
+            }
+
             GlobalScope.launch {
-                if (record.chatType == MsgConstant.KCHATTYPEGUILD) return@launch// TODO: 频道消息暂不处理
-
-                if (record.sendStatus == MsgConstant.KSENDSTATUSFAILED
-                    || record.sendStatus == MsgConstant.KSENDSTATUSSENDING) {
-                    return@launch
-                }
-
                 val msgHash = MessageHelper.generateMsgIdHash(record.chatType, record.msgId)
 
                 val mapping = MessageHelper.getMsgMappingByHash(msgHash)
@@ -177,7 +176,7 @@ internal object AioListener: IKernelMsgListener {
                         .updateMsgSeqByMsgHash(msgHash, record.msgSeq.toInt())
                 }
 
-                if (!ShamrockConfig.enableSelfMsg())
+                if (!ShamrockConfig.enableSelfMsg() || record.senderUin != TicketSvc.getLongUin())
                     return@launch
 
                 val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
@@ -185,17 +184,23 @@ internal object AioListener: IKernelMsgListener {
 
                 when (record.chatType) {
                     MsgConstant.KCHATTYPEGROUP -> {
-                        GlobalEventTransmitter.MessageTransmitter
-                            .transGroupMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent)
+                        if(!GlobalEventTransmitter.MessageTransmitter
+                            .transGroupMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent)) {
+                            LogCenter.log("自发群消息推送失败 -> MessageTransmitter", Level.WARN)
+                        }
                     }
                     MsgConstant.KCHATTYPEC2C -> {
-                        GlobalEventTransmitter.MessageTransmitter
-                            .transPrivateMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent)
+                        if(!GlobalEventTransmitter.MessageTransmitter
+                            .transPrivateMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent)) {
+                            LogCenter.log("自发私聊消息推送失败 -> MessageTransmitter", Level.WARN)
+                        }
                     }
                     MsgConstant.KCHATTYPETEMPC2CFROMGROUP -> {
                         if (!ShamrockConfig.allowTempSession()) return@launch
-                        GlobalEventTransmitter.MessageTransmitter
-                            .transPrivateMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent, MessageTempSource.Group)
+                        if(!GlobalEventTransmitter.MessageTransmitter
+                            .transPrivateMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent, MessageTempSource.Group)) {
+                            LogCenter.log("自发私聊临时消息推送失败 -> MessageTransmitter", Level.WARN)
+                        }
                     }
                     else -> LogCenter.log("不支持SELF PUSH事件: ${record.chatType}")
                 }
@@ -347,6 +352,11 @@ internal object AioListener: IKernelMsgListener {
         }
     }
 
+    override fun onRichMediaUploadComplete(notifyInfo: FileTransNotifyInfo) {
+        //LogCenter.log("onRichMediaUploadComplete($notifyInfo)", Level.DEBUG)
+        RichMediaUploadHandler.notify(notifyInfo)
+    }
+
     override fun onRecvOnlineFileMsg(arrayList: ArrayList<MsgRecord>?) {
         LogCenter.log(("onRecvOnlineFileMsg" + arrayList?.joinToString { ", " }), Level.DEBUG)
     }
@@ -356,10 +366,6 @@ internal object AioListener: IKernelMsgListener {
     }
 
     override fun onRichMediaProgerssUpdate(fileTransNotifyInfo: FileTransNotifyInfo) {
-
-    }
-
-    override fun onRichMediaUploadComplete(fileTransNotifyInfo: FileTransNotifyInfo) {
 
     }
 

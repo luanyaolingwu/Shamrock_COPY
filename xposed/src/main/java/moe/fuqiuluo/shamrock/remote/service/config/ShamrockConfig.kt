@@ -44,6 +44,7 @@ internal object ShamrockConfig {
             putBoolean(  "debug",    intent.getBooleanExtra("debug", false))                    // 调试模式
 
             Config.defaultToken = intent.getStringExtra("token")
+            Config.antiTrace = intent.getBooleanExtra("anti_qq_trace", true)
 
             val wsPort = intent.getIntExtra("ws_port", 5800)
             Config.activeWebSocket = if (Config.activeWebSocket == null) ConnectionConfig(
@@ -67,8 +68,8 @@ internal object ShamrockConfig {
 
             putBoolean("auto_clear", intent.getBooleanExtra("auto_clear", false))                 // 自动清理
 
-            putBoolean("enable_self_msg", intent.getBooleanExtra("enable_self_msg", false)) // 推送自己发的消息
-            putBoolean("shell", intent.getBooleanExtra("shell", false)) // 开启Shell接口
+            putBoolean("enable_self_msg",    intent.getBooleanExtra("enable_self_msg", false))  // 推送自己发的消息
+            putBoolean("shell",        intent.getBooleanExtra("shell", false))                  // 开启Shell接口
 
             putBoolean("isInit", true)
         }
