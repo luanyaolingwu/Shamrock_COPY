@@ -7,6 +7,7 @@ import com.tencent.qqnt.kernel.nativeinterface.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.convert.toCQCode
 import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
@@ -65,6 +66,10 @@ internal object AioListener: IKernelMsgListener {
             val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
             if (rawMsg.isEmpty()) return
 
+            if (ShamrockConfig.aliveReply() && rawMsg == "ping") {
+                MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "pong", { _, _ ->  })
+            }
+
             //if (rawMsg.contains("forward")) {
             //    LogCenter.log(record.extInfoForUI.decodeToString(), Level.WARN)
             //}
@@ -119,6 +124,10 @@ internal object AioListener: IKernelMsgListener {
         }
     }
 
+    override fun onMsgRecall(chatType: Int, peerId: String, msgId: Long) {
+        LogCenter.log("onMsgRecall($chatType, $peerId, $msgId)")
+    }
+
     override fun onAddSendMsg(record: MsgRecord) {
         if (record.chatType == MsgConstant.KCHATTYPEGUILD) return // TODO: 频道消息暂不处理
         if (record.peerUin == TicketSvc.getLongUin()) return // 发给自己的消息不处理
@@ -137,10 +146,7 @@ internal object AioListener: IKernelMsgListener {
                     time = record.msgTime
                 )
 
-                val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
-                if (rawMsg.isEmpty()) return@launch
-
-                LogCenter.log("发送消息($msgHash | ${record.msgSeq} | ${record.msgId}): $rawMsg")
+                LogCenter.log("预发送消息($msgHash | ${record.msgSeq} | ${record.msgId})")
             } catch (e: Throwable) {
                 LogCenter.log(e.stackTraceToString(), Level.WARN)
             }
@@ -181,6 +187,7 @@ internal object AioListener: IKernelMsgListener {
 
                 val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
                 if (rawMsg.isEmpty()) return@launch
+                LogCenter.log("自发消息(target = ${record.peerUin}, id = $msgHash, msg = $rawMsg)")
 
                 when (record.chatType) {
                     MsgConstant.KCHATTYPEGROUP -> {
@@ -353,7 +360,7 @@ internal object AioListener: IKernelMsgListener {
     }
 
     override fun onRichMediaUploadComplete(notifyInfo: FileTransNotifyInfo) {
-        //LogCenter.log("onRichMediaUploadComplete($notifyInfo)", Level.DEBUG)
+        LogCenter.log("onRichMediaUploadComplete($notifyInfo)", Level.DEBUG)
         RichMediaUploadHandler.notify(notifyInfo)
     }
 
@@ -391,6 +398,14 @@ internal object AioListener: IKernelMsgListener {
 
     override fun onGroupTransferInfoUpdate(groupFileListResult: GroupFileListResult?) {
         LogCenter.log("onGroupTransferInfoUpdate: " + groupFileListResult.toString(), Level.DEBUG)
+    }
+
+    override fun onGuildInteractiveUpdate(guildInteractiveNotificationItem: GuildInteractiveNotificationItem?) {
+
+    }
+
+    override fun onGuildNotificationAbstractUpdate(guildNotificationAbstractInfo: GuildNotificationAbstractInfo?) {
+
     }
 
     override fun onHitCsRelatedEmojiResult(downloadRelateEmojiResultInfo: DownloadRelateEmojiResultInfo?) {
@@ -439,10 +454,6 @@ internal object AioListener: IKernelMsgListener {
 
     override fun onMsgQRCodeStatusChanged(i2: Int) {
 
-    }
-
-    override fun onMsgRecall(chatType: Int, peerId: String?, msgId: Long) {
-        LogCenter.log("onMsgRecall($chatType, $peerId, $msgId)")
     }
 
     override fun onMsgSecurityNotify(msgRecord: MsgRecord?) {
