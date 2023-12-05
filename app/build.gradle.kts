@@ -48,7 +48,7 @@ android {
         minSdk = 24
         targetSdk = 33
         versionCode = currentVersionCode()    //(System.currentTimeMillis() / 1000).toInt()
-        versionName = "1.0.5(" + calcVersionCode() + ")-Miao" + gitCommitHash()
+        versionName = "1.0.5-r" + calcVersionCode() + "-Miao" + gitCommitHash()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
