@@ -33,10 +33,13 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2.10.0
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SIGN_KEYSTORE_BASE64 }}
 
       - name: Build with Gradle
         run: |
-          echo ${{ secrets.SIGN_KEYSTORE_BASE64 }} | base64 -d > app/keystore.jks
+          echo $KEYSTORE_BASE64
+          echo $KEYSTORE_BASE64 | base64 -d > app/keystore.jks
           chmod +x ./gradlew
           ./gradlew :app:assembleRelease --build-cache --parallel --daemon --warning-mode all --stacktrace
           echo "APK_FILE_ALL=$(find app/build/outputs/apk/app/release -name '*.apk')" >> $GITHUB_ENV
