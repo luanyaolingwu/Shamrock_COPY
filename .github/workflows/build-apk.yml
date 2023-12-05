@@ -36,14 +36,14 @@ jobs:
 
       - name: Build with Gradle
         run: |
-          echo ${{ secrets.SIGN_KEYSTORE_BASE64 }} | base64 -d > $HOME/keystore.jks
+          echo ${{ secrets.SIGN_KEYSTORE_BASE64 }} | base64 -d > app/keystore.jks
           chmod +x ./gradlew
           ./gradlew :app:assembleRelease --build-cache --parallel --daemon --warning-mode all --stacktrace
           echo "APK_FILE_ALL=$(find app/build/outputs/apk/app/release -name '*.apk')" >> $GITHUB_ENV
           echo "APK_FILE_ARM64=$(find app/build/outputs/apk/arm64/release -name '*.apk')" >> $GITHUB_ENV
           echo "APK_FILE_X86_64=$(find app/build/outputs/apk/x64/release -name '*.apk')" >> $GITHUB_ENV
         env:
-          KEYSTORE_PATH: "$HOME/keystore.jks"
+          KEYSTORE_PATH: "keystore.jks"
           KEYSTORE_PASSWORD: ${{ secrets.SIGN_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.SIGN_ALIAS }}
           KEY_PASSWORD: ${{ secrets.SIGN_KEY_PASSWORD }}
