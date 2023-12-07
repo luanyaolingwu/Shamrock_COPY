@@ -220,6 +220,8 @@ fun LabFragment() {
                         scope.toast(ctx, LocalString.restartToast)
                         return@Function true
                     }
+                }.onFailure {
+                    AppRuntime.log("无法启用附加选项, LSPosed模块未激活或者不支持XSharedPreferences", Level.WARN)
                 }
             }
         }

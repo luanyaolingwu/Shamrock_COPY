@@ -1,28 +1,24 @@
 @file:OptIn(DelicateCoroutinesApi::class)
 package moe.fuqiuluo.shamrock.remote.service.listener
 
-import android.os.Build
-import moe.fuqiuluo.shamrock.helper.MessageHelper
 import com.tencent.qqnt.kernel.nativeinterface.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.convert.toCQCode
 import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
-import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
+import moe.fuqiuluo.shamrock.helper.MessageHelper
 import moe.fuqiuluo.shamrock.helper.db.MessageDB
 import moe.fuqiuluo.shamrock.remote.service.api.GlobalEventTransmitter
 import moe.fuqiuluo.shamrock.remote.service.api.RichMediaUploadHandler
+import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.remote.service.data.push.MessageTempSource
 import moe.fuqiuluo.shamrock.remote.service.data.push.PostType
-import mqq.app.MobileQQ
-import java.util.ArrayList
 import java.util.Collections
-import kotlin.collections.HashMap
+import kotlin.random.Random
 
 internal object AioListener: IKernelMsgListener {
     // 通过MSG SEQ临时监听器
@@ -66,8 +62,23 @@ internal object AioListener: IKernelMsgListener {
             val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
             if (rawMsg.isEmpty()) return
 
+            val random = Random.nextInt(10)  // 生成一个随机数
             if (ShamrockConfig.aliveReply() && rawMsg == "ping") {
-                MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "pong", { _, _ ->  })
+                val message = when (random) {
+                    0 -> "pong"
+                    1 -> "nya~boom~ 路由表炸惹"
+                    2 -> "呜呜~请求 timed out拉~"
+                    3 -> "nyan~在做什么呀?一直ping ping的,会坏掉的~"
+                    4 -> "5555~主人怎么才想起依凌"
+                    5 -> "呜呜~想被抱抱哦(*/////∀////*)ノ ゙"
+                    6 -> "nyan~猫猫每天最想见的人就是主人呀!"
+                    7 -> "嗷嗷嗷~和主人一起玩游戏好开心呀~"
+                    8 -> "主人不要玩弄依凌了好不好,呜呜~"
+                    9 -> "nyan~主人请多喂依凌一点鱼罐头呀~"
+                    else -> "(づ ̄∀ ̄)づ╭❤~"
+                }
+
+                MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "${message}", { _, _ -> })
             }
 
             //if (rawMsg.contains("forward")) {

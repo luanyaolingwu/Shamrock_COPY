@@ -86,7 +86,8 @@ internal object GlobalEventTransmitter: BaseSvc() {
                             .ifBlank { record.sendMemberName }
                             .ifBlank { record.peerName },
                         //card = record.sendMemberName.ifBlank { record.sendNickName },  //Dec_2_2023
-                        card = record.sendMemberName, //Dec_3_2023
+                        //card = record.sendMemberName, //Dec_3_2023
+                        card = record.sendMemberName.ifBlank { record.sendNickName }, //Dec_7_2023 改回来了,别问为什么
                         role = when (record.senderUin) {
                             GroupSvc.getOwner(record.peerUin.toString()) -> MemberRole.Owner
                             in GroupSvc.getAdminList(record.peerUin.toString()) -> MemberRole.Admin
