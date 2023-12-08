@@ -66,8 +66,8 @@ internal object AioListener: IKernelMsgListener {
             if (ShamrockConfig.aliveReply() && rawMsg == "ping") {
                 val message = when (random) {
                     0 -> "pong"
-                    1 -> "nya~boom~ 路由表炸惹"
-                    2 -> "呜呜~请求 timed out拉~"
+                    1 -> "boom~"
+                    2 -> "呜呜~请求timeout啦~"
                     3 -> "nyan~在做什么呀?一直ping ping的,会坏掉的~"
                     4 -> "5555~主人怎么才想起依凌"
                     5 -> "呜呜~想被抱抱哦(*/////∀////*)ノ ゙"
