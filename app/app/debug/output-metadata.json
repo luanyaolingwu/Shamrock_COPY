@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "moe.fuqiuluo.shamrock",
+  "variantName": "appDebug",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "attributes": [],
+      "versionCode": 698,
+      "versionName": "1.0.5-r698-Miao.11035fa",
+      "outputFile": "Shamrock-v1.0.5-r698-Miao.11035fa-all.apk"
+    }
+  ],
+  "elementType": "File"
+}
