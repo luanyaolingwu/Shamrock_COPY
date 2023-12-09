@@ -65,17 +65,21 @@ internal object AioListener: IKernelMsgListener {
             val random = Random.nextInt(10)  // 生成一个随机数
             if (ShamrockConfig.aliveReply() && rawMsg == "ping") {
                 val message = when (random) {
-                    0 -> "pong"
-                    1 -> "boom~"
-                    2 -> "呜呜~请求timeout啦~"
-                    3 -> "nyan~在做什么呀?一直ping ping的,会坏掉的~"
-                    4 -> "5555~主人怎么才想起依凌"
-                    5 -> "呜呜~想被抱抱哦(*/////∀////*)ノ ゙"
-                    6 -> "nyan~猫猫每天最想见的人就是主人呀!"
-                    7 -> "嗷嗷嗷~和主人一起玩游戏好开心呀~"
-                    8 -> "主人不要玩弄依凌了好不好,呜呜~"
-                    9 -> "nyan~主人请多喂依凌一点鱼罐头呀~"
-                    else -> "(づ ̄∀ ̄)づ╭❤~"
+                    in 0..5 -> "pong"
+                    else -> {
+                        when(Random.nextInt(10)) {
+                            0 -> "boom~"
+                            1 -> "呜呜~请求timeout啦~"
+                            2 -> "nyan~在做什么呀?一直ping ping的,会坏掉的~"
+                            3 -> "5555~主人怎么才想起依凌"
+                            4 -> "呜呜~想被抱抱哦(*/////∀////*)ノ ゙"
+                            5 -> "nyan~猫猫每天最想见的人就是主人呀!"
+                            6 -> "嗷嗷嗷~和主人一起玩游戏好开心呀~"
+                            7 -> "主人不要玩弄依凌了好不好,呜呜~"
+                            8 -> "nyan~主人请多喂依凌一点鱼罐头呀~"
+                            else -> "(づ ̄∀ ̄)づ╭♡~"
+                        }
+                    }
                 }
 
                 MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "${message}", { _, _ -> })
