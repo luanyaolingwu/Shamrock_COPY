@@ -34,6 +34,9 @@ internal object AioListener: IKernelMsgListener {
         }
     }
 
+    private var replyCount = 0
+    private var lastReplyTime = 0L
+    private var blockPingPong = 0
     private suspend fun handleMsg(record: MsgRecord) {
         try {
             if (record.chatType == MsgConstant.KCHATTYPEGUILD) return // TODO: 频道消息暂不处理
@@ -63,9 +66,10 @@ internal object AioListener: IKernelMsgListener {
             if (rawMsg.isEmpty()) return
 
             val random = Random.nextInt(10)  // 生成一个随机数
+            val currentTime = System.currentTimeMillis()
             if (ShamrockConfig.aliveReply() && rawMsg == "ping") {
                 val message = when (random) {
-                    in 0..5 -> "pong"
+                    in 0..4 -> "pong"
                     else -> {
                         when(Random.nextInt(10)) {
                             0 -> "boom~"
@@ -82,7 +86,24 @@ internal object AioListener: IKernelMsgListener {
                     }
                 }
 
-                MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "${message}", { _, _ -> })
+                if (currentTime - lastReplyTime <= 30000) {
+                    if (replyCount >= 9) {
+                        lastReplyTime = currentTime
+                        if ( blockPingPong == 0 ) {
+                            blockPingPong = 1
+                            MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "喵～回复次数太多啦，不玩了！", { _, _ -> })
+                        }
+                    } else {
+                        replyCount++
+                        lastReplyTime = currentTime
+                        MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "${message}", { _, _ -> })
+                    }
+                } else {
+                    blockPingPong = 0
+                    replyCount = 1
+                    lastReplyTime = currentTime
+                    MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "${message}", { _, _ -> })
+                }
             }
 
             //if (rawMsg.contains("forward")) {
