@@ -12,3 +12,4 @@ app/x64/release
 local.properties
 apk构建.bat
 app/app/debug/Shamrock*
+app/app/debug/output*
