@@ -277,6 +277,17 @@ fun LabFragment() {
                     return@Function true
                 }
 
+                Function(
+                    title = "同步消息推送类型异换",
+                    desc = "推送来自同号异设备消息，将同步消息作为自发消息推送。",
+                    descColor = it,
+                    isSwitch = ShamrockConfig.enableSyncMsgAsSentMsg(ctx)
+                ) {
+                    ShamrockConfig.setEnableSyncMsgAsSentMsg(ctx, it)
+                    ShamrockConfig.pushUpdate(ctx)
+                    return@Function true
+                }
+
                 /*
                 Function(
                     title = "使用纯数字ECHO",
