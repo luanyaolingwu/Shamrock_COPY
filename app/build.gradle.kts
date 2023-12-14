@@ -1,8 +1,7 @@
 import com.android.build.api.dsl.ApplicationExtension
-import java.time.LocalDate
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.io.ByteArrayOutputStream
+import java.time.LocalDate
 
 plugins {
     id("com.android.application")
@@ -19,8 +18,8 @@ android {
         applicationId = "moe.fuqiuluo.shamrock"
         minSdk = 24
         targetSdk = 34
-        versionCode = currentVersionCode()    //(System.currentTimeMillis() / 1000).toInt()
-        versionName = "1.0.5" + "-r${calcVersionCode()}" + "-Miao${gitCommitHash()}"
+        versionCode = getCurrentVersionCode()
+        versionName = "1.0.5" + "-r${getGitCommitCount()}" + "-Miao${getVersionName()}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -102,7 +101,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/*"
             excludes += "/META-INF/NOTICE.txt"
-            excludes += "/META-INF/DEPENDENCIES.txt"
+            //excludes += "/META-INF/DEPENDENCIES.txt"
             excludes += "/META-INF/NOTICE"
             excludes += "/META-INF/LICENSE"
             excludes += "/META-INF/DEPENDENCIES"
@@ -155,34 +154,21 @@ fun configureAppSigningConfigsForRelease(project: Project) {
     }
 }
 
-fun getGitCommitCount(): Int {
-    val out = ByteArrayOutputStream()
-    exec {
-        commandLine("git", "rev-list", "--count", "HEAD")
-        standardOutput = out
-    }
-    return out.toString().trim().toInt()
-}
-
 fun getGitCommitHash(): String {
-    val out = ByteArrayOutputStream()
-    exec {
-        commandLine("git", "rev-parse", "--short", "HEAD")
-        standardOutput = out
-    }
-    return out.toString().trim()
-}
-
-fun getVersionName(): String {
-    return getGitCommitHash()
-}
-
-fun gitCommitHash(): String {
     val builder = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
     val process = builder.start()
     val reader = process.inputReader()
     val hash = reader.readText().trim()
     return if (hash.isNotEmpty()) ".$hash" else ""
+}
+
+fun getGitCommitCount(): String {
+    val process = Runtime.getRuntime().exec("git rev-list --count HEAD")
+    val reader = BufferedReader(InputStreamReader(process.inputStream))
+    val commitCount = reader.readLine()?.toIntOrNull() ?: 0
+    reader.close()
+    process.waitFor()
+    return (commitCount + 1).toString()
 }
 
 fun getCurrentMonthTimestamp(): Long {
@@ -193,23 +179,18 @@ fun getCurrentMonthTimestamp(): Long {
     return (currentTimestamp - startOfMonthTimestamp) / (30 * 24 * 60 * 60)
 }
 
-fun calcVersionCode(): String {
-    val process = Runtime.getRuntime().exec("git rev-list --count HEAD")
-    val reader = BufferedReader(InputStreamReader(process.inputStream))
-    val commitCount = reader.readLine()?.toIntOrNull() ?: 0
-    reader.close()
-    process.waitFor()
-    return (commitCount + 1).toString()
+fun getCurrentVersionCode(): Int{
+    return (getCurrentMonthTimestamp()).toInt() + (getGitCommitCount()).toInt()
 }
 
-fun currentVersionCode(): Int{
-    return (getCurrentMonthTimestamp()).toInt() + (calcVersionCode()).toInt()
+fun getVersionName(): String {
+    return getGitCommitHash()
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-    implementation("androidx.activity:activity-compose:1.7.2")
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation("androidx.activity:activity-compose:1.8.2")
     implementation(platform("androidx.compose:compose-bom:2023.06.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
