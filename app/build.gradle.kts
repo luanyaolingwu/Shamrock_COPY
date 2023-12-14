@@ -2,35 +2,7 @@ import com.android.build.api.dsl.ApplicationExtension
 import java.time.LocalDate
 import java.io.BufferedReader
 import java.io.InputStreamReader
-
-fun gitCommitHash(): String {
-    val builder = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
-    val process = builder.start()
-    val reader = process.inputReader()
-    val hash = reader.readText().trim()
-    return if (hash.isNotEmpty()) ".$hash" else ""
-}
-
-fun getCurrentMonthTimestamp(): Long {
-    val currentDate = LocalDate.now()
-    val startOfMonth = currentDate.withDayOfMonth(1)
-    val startOfMonthTimestamp = startOfMonth.toEpochDay() * 24 * 60 * 60
-    val currentTimestamp = System.currentTimeMillis() / 1000
-    return (currentTimestamp - startOfMonthTimestamp) / (30 * 24 * 60 * 60)
-}
-
-fun calcVersionCode(): String {
-    val process = Runtime.getRuntime().exec("git rev-list --count HEAD")
-    val reader = BufferedReader(InputStreamReader(process.inputStream))
-    val commitCount = reader.readLine()?.toIntOrNull() ?: 0
-    reader.close()
-    process.waitFor()
-    return (commitCount + 1).toString()
-}
-
-fun currentVersionCode(): Int{
-    return (getCurrentMonthTimestamp()).toInt() + (calcVersionCode()).toInt()
-}
+import java.io.ByteArrayOutputStream
 
 plugins {
     id("com.android.application")
@@ -41,19 +13,20 @@ plugins {
 android {
     namespace = "moe.fuqiuluo.shamrock"
     ndkVersion = "25.1.8937393"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "moe.fuqiuluo.shamrock"
         minSdk = 24
-        targetSdk = 33
+        targetSdk = 34
         versionCode = currentVersionCode()    //(System.currentTimeMillis() / 1000).toInt()
-        versionName = "1.0.5-r" + calcVersionCode() + "-Miao" + gitCommitHash()
+        versionName = "1.0.5" + "-r${calcVersionCode()}" + "-Miao${gitCommitHash()}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+        @Suppress("UnstableApiUsage")
         externalNativeBuild {
             cmake {
                 cppFlags += ""
@@ -75,8 +48,7 @@ android {
     android.applicationVariants.all {
         outputs.map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach {
-                val abi = it.outputFileName.split("-")[1].split(".apk")[0]
-                val abiName = when (abi) {
+                val abiName = when (val abi = it.outputFileName.split("-")[1].split(".apk")[0]) {
                     "app" -> "all"
                     "x64" -> "x86_64"
                     else -> abi
@@ -176,8 +148,62 @@ fun configureAppSigningConfigsForRelease(project: Project) {
             release {
                 signingConfig = signingConfigs.findByName("release")
             }
+            debug {
+                signingConfig = signingConfigs.findByName("release")
+            }
         }
     }
+}
+
+fun getGitCommitCount(): Int {
+    val out = ByteArrayOutputStream()
+    exec {
+        commandLine("git", "rev-list", "--count", "HEAD")
+        standardOutput = out
+    }
+    return out.toString().trim().toInt()
+}
+
+fun getGitCommitHash(): String {
+    val out = ByteArrayOutputStream()
+    exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+        standardOutput = out
+    }
+    return out.toString().trim()
+}
+
+fun getVersionName(): String {
+    return getGitCommitHash()
+}
+
+fun gitCommitHash(): String {
+    val builder = ProcessBuilder("git", "rev-parse", "--short", "HEAD")
+    val process = builder.start()
+    val reader = process.inputReader()
+    val hash = reader.readText().trim()
+    return if (hash.isNotEmpty()) ".$hash" else ""
+}
+
+fun getCurrentMonthTimestamp(): Long {
+    val currentDate = LocalDate.now()
+    val startOfMonth = currentDate.withDayOfMonth(1)
+    val startOfMonthTimestamp = startOfMonth.toEpochDay() * 24 * 60 * 60
+    val currentTimestamp = System.currentTimeMillis() / 1000
+    return (currentTimestamp - startOfMonthTimestamp) / (30 * 24 * 60 * 60)
+}
+
+fun calcVersionCode(): String {
+    val process = Runtime.getRuntime().exec("git rev-list --count HEAD")
+    val reader = BufferedReader(InputStreamReader(process.inputStream))
+    val commitCount = reader.readLine()?.toIntOrNull() ?: 0
+    reader.close()
+    process.waitFor()
+    return (commitCount + 1).toString()
+}
+
+fun currentVersionCode(): Int{
+    return (getCurrentMonthTimestamp()).toInt() + (calcVersionCode()).toInt()
 }
 
 dependencies {

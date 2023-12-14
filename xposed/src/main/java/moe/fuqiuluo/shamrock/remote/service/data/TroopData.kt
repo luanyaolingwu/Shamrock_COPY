@@ -43,6 +43,7 @@ internal data class SimpleTroopMemberInfo(
     @SerialName("role") val role: MemberRole,
     @SerialName("unfriendly") val unfriendly: Boolean,
     @SerialName("card_changeable") val cardChangeable: Boolean,
+    @SerialName("shut_up_timestamp") val shutUpTimestamp: Long?,
 )
 
 @Serializable
