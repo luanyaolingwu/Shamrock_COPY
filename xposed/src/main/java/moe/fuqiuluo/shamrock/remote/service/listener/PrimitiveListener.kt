@@ -88,7 +88,7 @@ internal object PrimitiveListener {
                 }
             }
         } catch (e: Exception) {
-            LogCenter.log("onMsgPush(msgType: $msgType): "+e.stackTraceToString(), Level.WARN)
+            LogCenter.log("onMsgPush(msgType: $msgType, subType: $subType): "+e.stackTraceToString(), Level.WARN)
         }
     }
 
@@ -180,7 +180,7 @@ internal object PrimitiveListener {
                     newCard = it[2].asUtf8String
                 }
             }
-        val groupId = pb[1, 13, 4].asLong
+        val groupId = detail[1, 13, 4].asLong
         var oldCard = ""
         val targetQQ = ContactHelper.getUinByUidAsync(targetId).toLong()
         LogCenter.log("群组[$groupId]成员$targetQQ 群名片变动 -> $newCard")
@@ -343,7 +343,7 @@ internal object PrimitiveListener {
             }
 
             else -> {
-                LogCenter.log("onGroupPokeAndGroupSign unknown type ${detail[2].asInt}", Level.WARN)
+                LogCenter.log("onGroupPokeAndGroupSign unknown type ${detail[26, 2].asInt}", Level.WARN)
             }
         }
     }
@@ -393,8 +393,11 @@ internal object PrimitiveListener {
         val groupCode = pb[1, 3, 2, 1].asULong
         val targetUid = pb[1, 3, 2, 3].asUtf8String
         val type = pb[1, 3, 2, 4].asInt
-        val operation = ContactHelper.getUinByUidAsync(pb[1, 3, 2, 5].asUtf8String).toLong()
-
+        val operation = try {
+            ContactHelper.getUinByUidAsync(pb[1, 3, 2, 5, 1, 1].asUtf8String).toLong()
+        } catch (e: Throwable) {
+            ContactHelper.getUinByUidAsync(pb[1, 3, 2, 5].asUtf8String).toLong()
+        }
         val target = ContactHelper.getUinByUidAsync(targetUid).toLong()
         val subtype = when (type) {
             130 -> NoticeSubType.Leave
@@ -436,7 +439,7 @@ internal object PrimitiveListener {
     }
 
     private suspend fun onGroupBan(msgTime: Long, pb: ProtoMap) {
-        val groupCode = pb[1, 1, 1].asULong
+        val groupCode = pb[1, 3, 2, 1].asULong
         val operatorUid = pb[1, 3, 2, 4].asUtf8String
         val targetUid = pb[1, 3, 2, 5, 3, 1].asUtf8String
         val duration = pb[1, 3, 2, 5, 3, 2].asInt
@@ -452,17 +455,19 @@ internal object PrimitiveListener {
     }
 
     private suspend fun onGroupRecall(time: Long, pb: ProtoMap) {
-        val groupCode = pb[1, 1, 1].asULong
-        val readPacket = ByteReadPacket(pb[1, 3, 2].asByteArray)
-        try {
-            /**
-             * 真是不理解这个傻呗设计，有些群是正常的Protobuf，有些群要去掉7字节
-             */
-            val detail = if (readPacket.readBuf32Long() == groupCode) {
-                readPacket.discardExact(1)
-                ProtoUtils.decodeFromByteArray(readPacket.readBytes(readPacket.readShort().toInt()))
-            } else pb[1, 3, 2]
-
+            var detail = pb[1, 3, 2]
+            if (detail !is ProtoMap) {
+                try {
+                    val readPacket = ByteReadPacket(detail.asByteArray)
+                    readPacket.discardExact(4)
+                    readPacket.discardExact(1)
+                    detail = ProtoUtils.decodeFromByteArray(readPacket.readBytes(readPacket.readShort().toInt()))
+                    readPacket.release()
+                } catch (e: Exception) {
+                    LogCenter.log("onGroupRecall error: ${e.stackTraceToString()}", Level.WARN)
+                }
+            }
+            val groupCode = detail[4].asULong
             val operatorUid = detail[11, 1].asUtf8String
             val targetUid = detail[11, 3, 6].asUtf8String
             val msgSeq = detail[11, 3, 1].asLong
@@ -482,9 +487,6 @@ internal object PrimitiveListener {
             ) {
                 LogCenter.log("群消息撤回推送失败！", Level.WARN)
             }
-        } finally {
-            readPacket.release()
-        }
     }
 
     private suspend fun onGroupApply(time: Long, pb: ProtoMap) {

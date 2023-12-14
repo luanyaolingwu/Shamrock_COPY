@@ -1,30 +1,28 @@
 @file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.shamrock.remote.service.listener
 
-import android.os.Build
 import moe.fuqiuluo.shamrock.helper.MessageHelper
 import com.tencent.qqnt.kernel.nativeinterface.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.convert.toCQCode
 import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
-import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.helper.db.MessageDB
 import moe.fuqiuluo.shamrock.remote.service.api.GlobalEventTransmitter
 import moe.fuqiuluo.shamrock.remote.service.api.RichMediaUploadHandler
+import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.remote.service.data.push.MessageTempSource
 import moe.fuqiuluo.shamrock.remote.service.data.push.PostType
-import mqq.app.MobileQQ
 import java.util.ArrayList
 import java.util.Collections
-import kotlin.collections.HashMap
+import kotlin.random.Random
 
-internal object AioListener: IKernelMsgListener {
+internal object AioListener : IKernelMsgListener {
     // 通过MSG SEQ临时监听器
     internal val messageLessListenerMap = Collections.synchronizedMap(HashMap<Long, MsgRecord.() -> Unit>())
 
@@ -38,18 +36,20 @@ internal object AioListener: IKernelMsgListener {
         }
     }
 
+    private var replyCount = 0
+    private var lastReplyTime = 0L
+    private var blockPingPong = 0
     private suspend fun handleMsg(record: MsgRecord) {
         try {
             if (record.chatType == MsgConstant.KCHATTYPEGUILD) return // TODO: 频道消息暂不处理
 
             messageLessListenerMap.firstNotNullOfOrNull {
-                if(it.key == record.msgSeq) it else null
+                if (it.key == record.msgSeq) it else null
             }?.let {
                 it.value(record)
                 messageLessListenerMap.remove(it.key)
             }
-
-            if (record.msgSeq < 0) return
+           if (record.msgSeq < 0) return
 
             val msgHash = MessageHelper.generateMsgIdHash(record.chatType, record.msgId)
 
@@ -66,9 +66,51 @@ internal object AioListener: IKernelMsgListener {
             val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
             if (rawMsg.isEmpty()) return
 
+            val random = Random.nextInt(10)  // 生成一个随机数
+            val currentTime = System.currentTimeMillis()
             if (ShamrockConfig.aliveReply() && rawMsg == "ping") {
-                MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "pong", { _, _ ->  })
+                val message = when (random) {
+                    in 0..4 -> "pong"
+                    else -> {
+                        when(Random.nextInt(10)) {
+                            0 -> "boom~"
+                            1 -> "呜呜~请求timeout啦~"
+                            2 -> "nyan~在做什么呀?一直ping ping的,会坏掉的~"
+                            3 -> "5555~主人怎么才想起依凌"
+                            4 -> "呜呜~想被抱抱哦(*/////∀////*)ノ ゙"
+                            5 -> "nyan~猫猫每天最想见的人就是主人呀!"
+                            6 -> "嗷嗷嗷~和主人一起玩游戏好开心呀~"
+                            7 -> "主人不要玩弄依凌了好不好,呜呜~"
+                            8 -> "nyan~主人请多喂依凌一点鱼罐头呀~"
+                            else -> "(づ ̄∀ ̄)づ╭♡~"
+                        }
+                    }
+                }
+
+                if (currentTime - lastReplyTime <= 30000) {
+                    if (replyCount >= 9) {
+                        lastReplyTime = currentTime
+                        if ( blockPingPong == 0 ) {
+                            blockPingPong = 1
+                            MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "喵～回复次数太多啦，不玩了！", { _, _ -> })
+                        }
+                    } else {
+                        replyCount++
+                        lastReplyTime = currentTime
+                        MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "${message}", { _, _ -> })
+                    }
+                } else {
+                    blockPingPong = 0
+                    replyCount = 1
+                    lastReplyTime = currentTime
+                    MessageHelper.sendMessageWithoutMsgId(record.chatType, record.peerUin.toString(), "${message}", { _, _ -> })
+                }
             }
+
+
+            val postType = if (record.senderUin == TicketSvc.getLongUin() && ShamrockConfig.enableSyncMsgAsSentMsg()) {
+                PostType.MsgSent
+            } else PostType.Msg
 
             //if (rawMsg.contains("forward")) {
             //    LogCenter.log(record.extInfoForUI.decodeToString(), Level.WARN)
@@ -83,7 +125,7 @@ internal object AioListener: IKernelMsgListener {
                     }
 
                     if(!GlobalEventTransmitter.MessageTransmitter.transGroupMessage(
-                        record, record.elements, rawMsg, msgHash
+                            record, record.elements, rawMsg, msgHash, postType
                     )) {
                         LogCenter.log("群消息推送失败 -> 推送目标可能不存在", Level.WARN)
                     }
@@ -96,7 +138,7 @@ internal object AioListener: IKernelMsgListener {
                     }
 
                     if(!GlobalEventTransmitter.MessageTransmitter.transPrivateMessage(
-                            record, record.elements, rawMsg, msgHash
+                            record, record.elements, rawMsg, msgHash, postType
                     )) {
                         LogCenter.log("私聊消息推送失败 -> MessageTransmitter", Level.WARN)
                     }
@@ -112,8 +154,8 @@ internal object AioListener: IKernelMsgListener {
                     }
 
                     if(!GlobalEventTransmitter.MessageTransmitter.transPrivateMessage(
-                        record, record.elements, rawMsg, msgHash, tempSource = MessageTempSource.Group
-                    )) {
+                            record, record.elements, rawMsg, msgHash, tempSource = MessageTempSource.Group, postType = postType
+                        )) {
                         LogCenter.log("私聊临时消息推送失败 -> MessageTransmitter", Level.WARN)
                     }
                 }
@@ -158,7 +200,8 @@ internal object AioListener: IKernelMsgListener {
             if (record.chatType == MsgConstant.KCHATTYPEGUILD) return@forEach// TODO: 频道消息暂不处理
 
             if (record.sendStatus == MsgConstant.KSENDSTATUSFAILED
-                || record.sendStatus == MsgConstant.KSENDSTATUSSENDING) {
+                || record.sendStatus == MsgConstant.KSENDSTATUSSENDING
+            ) {
                 return@forEach
             }
 
@@ -184,8 +227,8 @@ internal object AioListener: IKernelMsgListener {
 
                 if (!ShamrockConfig.enableSelfMsg()
                     || record.senderUin != TicketSvc.getLongUin()
-                    || record.peerUin == TicketSvc.getLongUin())
-                    return@launch
+                    || record.peerUin == TicketSvc.getLongUin()
+                ) return@launch
 
                 val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
                 if (rawMsg.isEmpty()) return@launch
@@ -193,24 +236,37 @@ internal object AioListener: IKernelMsgListener {
 
                 when (record.chatType) {
                     MsgConstant.KCHATTYPEGROUP -> {
-                        if(!GlobalEventTransmitter.MessageTransmitter
-                            .transGroupMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent)) {
+                        if (!GlobalEventTransmitter.MessageTransmitter
+                                .transGroupMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent)
+                        ) {
                             LogCenter.log("自发群消息推送失败 -> MessageTransmitter", Level.WARN)
                         }
                     }
+
                     MsgConstant.KCHATTYPEC2C -> {
-                        if(!GlobalEventTransmitter.MessageTransmitter
-                            .transPrivateMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent)) {
+                        if (!GlobalEventTransmitter.MessageTransmitter
+                                .transPrivateMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent)
+                        ) {
                             LogCenter.log("自发私聊消息推送失败 -> MessageTransmitter", Level.WARN)
                         }
                     }
+
                     MsgConstant.KCHATTYPETEMPC2CFROMGROUP -> {
                         if (!ShamrockConfig.allowTempSession()) return@launch
-                        if(!GlobalEventTransmitter.MessageTransmitter
-                            .transPrivateMessage(record, record.elements, rawMsg, msgHash, PostType.MsgSent, MessageTempSource.Group)) {
+                        if (!GlobalEventTransmitter.MessageTransmitter
+                                .transPrivateMessage(
+                                    record,
+                                    record.elements,
+                                    rawMsg,
+                                    msgHash,
+                                    PostType.MsgSent,
+                                    MessageTempSource.Group
+                                )
+                        ) {
                             LogCenter.log("自发私聊临时消息推送失败 -> MessageTransmitter", Level.WARN)
                         }
                     }
+
                     else -> LogCenter.log("不支持SELF PUSH事件: ${record.chatType}")
                 }
             }
@@ -307,7 +363,7 @@ internal object AioListener: IKernelMsgListener {
     override fun onFileMsgCome(arrayList: ArrayList<MsgRecord>?) {
         arrayList?.forEach { record ->
             GlobalScope.launch {
-                when(record.chatType) {
+                when (record.chatType) {
                     MsgConstant.KCHATTYPEGROUP -> onGroupFileMsg(record)
                     MsgConstant.KCHATTYPEC2C -> onC2CFileMsg(record)
                     else -> LogCenter.log("不支持该来源的文件上传事件：${record}", Level.WARN)
@@ -332,8 +388,9 @@ internal object AioListener: IKernelMsgListener {
         val fileSubId = fileMsg.fileSubId ?: ""
         val url = RichProtoSvc.getC2CFileDownUrl(fileId, fileSubId)
 
-        if(!GlobalEventTransmitter.FileNoticeTransmitter
-            .transPrivateFileEvent(record.msgTime, userId, fileId, fileSubId, fileName, fileSize, expireTime, url)) {
+        if (!GlobalEventTransmitter.FileNoticeTransmitter
+                .transPrivateFileEvent(record.msgTime, userId, fileId, fileSubId, fileName, fileSize, expireTime, url)
+        ) {
             LogCenter.log("私聊文件消息推送失败 -> FileNoticeTransmitter", Level.WARN)
         }
     }
@@ -355,8 +412,9 @@ internal object AioListener: IKernelMsgListener {
 
         val url = RichProtoSvc.getGroupFileDownUrl(record.peerUin, uuid, bizId)
 
-        if(!GlobalEventTransmitter.FileNoticeTransmitter
-            .transGroupFileEvent(record.msgTime, userId, groupId, uuid, fileName, fileSize, bizId, url)) {
+        if (!GlobalEventTransmitter.FileNoticeTransmitter
+                .transGroupFileEvent(record.msgTime, userId, groupId, uuid, fileName, fileSize, bizId, url)
+        ) {
             LogCenter.log("群聊文件消息推送失败 -> FileNoticeTransmitter", Level.WARN)
         }
     }

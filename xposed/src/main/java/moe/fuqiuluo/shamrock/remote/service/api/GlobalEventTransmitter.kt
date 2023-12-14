@@ -59,7 +59,7 @@ internal object GlobalEventTransmitter: BaseSvc() {
             elements: ArrayList<MsgElement>,
             rawMsg: String,
             msgHash: Int,
-            postType: PostType = PostType.Msg
+            postType: PostType
         ): Boolean {
             val uin = app.longAccountUin
             transMessageEvent(record,
@@ -86,7 +86,8 @@ internal object GlobalEventTransmitter: BaseSvc() {
                             .ifBlank { record.sendMemberName }
                             .ifBlank { record.peerName },
                         //card = record.sendMemberName.ifBlank { record.sendNickName },  //Dec_2_2023
-                        card = record.sendMemberName, //Dec_3_2023
+                        //card = record.sendMemberName, //Dec_3_2023
+                        card = record.sendMemberName.ifBlank { record.sendNickName }, //Dec_7_2023 改回来了,别问为什么
                         role = when (record.senderUin) {
                             GroupSvc.getOwner(record.peerUin.toString()) -> MemberRole.Owner
                             in GroupSvc.getAdminList(record.peerUin.toString()) -> MemberRole.Admin
@@ -108,7 +109,7 @@ internal object GlobalEventTransmitter: BaseSvc() {
             elements: ArrayList<MsgElement>,
             rawMsg: String,
             msgHash: Int,
-            postType: PostType = PostType.Msg,
+            postType: PostType,
             tempSource: MessageTempSource = MessageTempSource.Unknown
         ): Boolean {
             val botUin = app.longAccountUin

@@ -279,19 +279,19 @@ object ShamrockConfig {
         return preferences.getBoolean("enable_self_msg", false)
     }
 
+    fun enableSyncMsgAsSentMsg(ctx: Context): Boolean {
+        val preferences = ctx.getSharedPreferences("config", 0)
+        return preferences.getBoolean("enable_sync_msg_as_sent_msg", false)
+    }
+
     fun setEnableSelfMsg(ctx: Context, v: Boolean) {
         val preferences = ctx.getSharedPreferences("config", 0)
         preferences.edit().putBoolean("enable_self_msg", v).apply()
     }
 
-    fun isEchoNumber(ctx: Context): Boolean {
+    fun setEnableSyncMsgAsSentMsg(ctx: Context, v: Boolean) {
         val preferences = ctx.getSharedPreferences("config", 0)
-        return preferences.getBoolean("echo_number", false)
-    }
-
-    fun setEchoNumber(ctx: Context, v: Boolean) {
-        val preferences = ctx.getSharedPreferences("config", 0)
-        preferences.edit().putBoolean("echo_number", v).apply()
+        preferences.edit().putBoolean("enable_sync_msg_as_sent_msg", v).apply()
     }
 
     fun getConfigMap(ctx: Context): Map<String, Any?> {
@@ -321,6 +321,7 @@ object ShamrockConfig {
             "echo_number" to preferences.getBoolean("echo_number", false),
             "shell" to preferences.getBoolean("shell", false),
             "alive_reply" to preferences.getBoolean("alive_reply", false),
+            "enable_sync_msg_as_sent_msg" to preferences.getBoolean("enable_sync_msg_as_sent_msg", false),
         )
     }
 
