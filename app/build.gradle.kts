@@ -17,7 +17,7 @@ android {
 
     defaultConfig {
         applicationId = "moe.fuqiuluo.shamrock"
-        minSdk = 24
+        minSdk = 27
         targetSdk = 34
         versionCode = getCurrentVersionCode()
         versionName = "1.0.5" + "-r${getGitCommitCount()}" + "-Miao${getVersionName()}"
