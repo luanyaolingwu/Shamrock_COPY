@@ -106,7 +106,10 @@ internal abstract class WebSocketClientServlet(
     }
 
     private fun startHeartbeatTimer() {
-        if (heartbeatInterval <= 0) return
+        if (heartbeatInterval <= 0) {
+            LogCenter.log("被动WebSocket心跳间隔为0，不启动心跳", Level.WARN)
+            return
+        }
         timer(
             name = "heartbeat",
             initialDelay = 0,
@@ -117,6 +120,7 @@ internal abstract class WebSocketClientServlet(
                 return@timer
             }
             val runtime = AppRuntimeFetcher.appRuntime
+            LogCenter.log("WebSocketClient心跳: ${app.longAccountUin}", Level.DEBUG)
             send(
                 GlobalJson.encodeToString(
                     PushMetaEvent(
