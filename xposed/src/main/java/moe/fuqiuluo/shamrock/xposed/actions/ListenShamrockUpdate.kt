@@ -27,7 +27,7 @@ internal class ListenShamrockUpdate: IAction {
                 "android.intent.action.PACKAGE_REPLACED" -> {
                     val packageName = intent.data?.schemeSpecificPart
                     if (packageName == "moe.fuqiuluo.shamrock") {
-                        LogCenter.log("Shamrock更新, QQ已经自我销毁。")
+                        LogCenter.log("Shamrock更新, 尝试结束QQ进程~")
                         Process.killProcess(Process.myPid())
                         exitProcess(0)
                     }

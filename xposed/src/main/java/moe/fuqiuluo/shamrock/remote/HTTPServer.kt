@@ -63,18 +63,14 @@ internal object HTTPServer {
             weatherAction()
             otherAction()
             guildAction()
-            //testAction() //不知道拿来干啥的，先忽略
-            requestRouter() //处理加群以及好友请求
+            //testAction()
+            requestRouter()
             fav()
             if (ShamrockConfig.isPro()) {
                 qsign()
                 obtainProtocolData()
             }
         }
-
-//        intercept(ApplicationCallPipeline.Plugins) {
-//            call.response.headers.appendIfAbsent("Content-Type", ContentType.Application.Json.toString())
-//        }
     }
 
     private fun ApplicationEngineEnvironmentBuilder.configSSL() {
