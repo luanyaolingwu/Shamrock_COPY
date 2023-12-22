@@ -65,6 +65,7 @@ internal object HTTPServer {
             guildAction()
             //testAction() //不知道拿来干啥的，先忽略
             requestRouter() //处理加群以及好友请求
+            fav()
             if (ShamrockConfig.isPro()) {
                 qsign()
                 obtainProtocolData()
