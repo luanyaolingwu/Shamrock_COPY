@@ -5,6 +5,8 @@ import moe.fuqiuluo.shamrock.helper.ErrorTokenException
 import io.ktor.server.application.createApplicationPlugin
 import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.tools.fetchOrNull
+import java.net.URLDecoder
+import java.nio.charset.Charset
 
 private suspend fun ApplicationCall.checkToken() {
     val token = ShamrockConfig.getToken()
@@ -12,10 +14,14 @@ private suspend fun ApplicationCall.checkToken() {
         return
     }
     var accessToken = request.headers["Authorization"]
-        ?: fetchOrNull("ticket")
-        ?: fetchOrNull("access_token")
+        ?: fetchOrNull("ticket")?.let {
+            URLDecoder.decode(it)
+        }
+        ?: fetchOrNull("access_token")?.let {
+            URLDecoder.decode(it)
+        }
         ?: throw ErrorTokenException
-    if (accessToken.startsWith("Bearer ")) {
+    if (accessToken.startsWith("Bearer ", ignoreCase = true)) {
         accessToken = accessToken.substring(7)
     }
     if (token != accessToken) {

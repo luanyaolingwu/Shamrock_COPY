@@ -2,6 +2,7 @@ import com.android.build.api.dsl.ApplicationExtension
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 plugins {
     id("com.android.application")
@@ -16,7 +17,7 @@ android {
 
     defaultConfig {
         applicationId = "moe.fuqiuluo.shamrock"
-        minSdk = 24
+        minSdk = 27
         targetSdk = 34
         versionCode = getCurrentVersionCode()
         versionName = "1.0.5" + "-r${getGitCommitCount()}" + "-Miao${getVersionName()}"
@@ -126,6 +127,11 @@ android {
     }
 
     configureAppSigningConfigsForRelease(project)
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 }
 
 fun configureAppSigningConfigsForRelease(project: Project) {
@@ -174,13 +180,13 @@ fun getGitCommitCount(): String {
 fun getCurrentMonthTimestamp(): Long {
     val currentDate = LocalDate.now()
     val startOfMonth = currentDate.withDayOfMonth(1)
-    val startOfMonthTimestamp = startOfMonth.toEpochDay() * 24 * 60 * 60
-    val currentTimestamp = System.currentTimeMillis() / 1000
-    return (currentTimestamp - startOfMonthTimestamp) / (30 * 24 * 60 * 60)
+    return ChronoUnit.MONTHS.between(LocalDate.of(1970, 1, 1), startOfMonth)
 }
 
 fun getCurrentVersionCode(): Int{
-    return (getCurrentMonthTimestamp()).toInt() + (getGitCommitCount()).toInt()
+    //return (getCurrentMonthTimestamp()).toInt()
+    return (getGitCommitCount()).toInt()
+    //return ((getCurrentMonthTimestamp()).toInt() + (getGitCommitCount()).toInt())
 }
 
 fun getVersionName(): String {
