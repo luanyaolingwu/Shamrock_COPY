@@ -3,4 +3,5 @@
 Empty [戳我去 OpenShamrock](https://github.com/whitechi73/OpenShamrock/)
 ----
 
-*不再建议*使用Shamrock暴露的签名API, 已知包括但不限于导致: ❗设备信息被 __半永久__ 性拉黑, ♻️被30天或更长时间的封禁
+*不再建议* 使用Shamrock暴露的签名API, 已知包括但不限于导致: ❗设备信息被 __半永久__ 性拉黑, ♻️被30天或更长时间的封禁
+如果可以，建议迁移到 [QQ开放平台](https://q.qq.com) 或转战对机器人包容性更强的平台 🙏
