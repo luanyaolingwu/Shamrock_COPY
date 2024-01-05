@@ -46,7 +46,7 @@ internal object ActionManager {
             SetFriendAddRequest, SetGroupAddRequest,
 
             // GUILD
-            GetGuildServiceProfile,
+            GetGuildServiceProfile, GetGuildList,
 
             // WEATHER
             GetWeatherCityCode, GetWeather,
@@ -55,7 +55,7 @@ internal object ActionManager {
             FavAddTextMsg, FavAddImageMsg, FavGetItemContent, FavGetItemList,
 
             // OTHER
-            GetDeviceBattery, DownloadFile
+            GetDeviceBattery, DownloadFile, QuickOperation
         ).forEach {
             it.alias.forEach { name ->
                 actionMap[name] = it
