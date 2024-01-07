@@ -32,6 +32,7 @@ internal object ActionManager {
             ModifyTroopName, LeaveTroop, KickTroopMember, BanTroopMember, SetGroupWholeBan, SetGroupAdmin,
             ModifyTroopMemberName, SetGroupUnique, GetTroopHonor, GroupPoke, SetEssenceMessage, DeleteEssenceMessage,
             GetGroupSystemMsg, GetProhibitedMemberList, GetEssenceMessageList, GetGroupNotice, SendGroupNotice, SendGroupSign,
+            GetGroupRemainAtAllRemain,
 
             // MSG ACTIONS
             SendMessage, DeleteMessage, GetMsg, GetForwardMsg, SendPrivateForwardMessage, SendGroupMessage, SendPrivateMessage,
@@ -46,16 +47,16 @@ internal object ActionManager {
             SetFriendAddRequest, SetGroupAddRequest,
 
             // GUILD
-            GetGuildServiceProfile,
+            GetGuildServiceProfile, GetGuildList,
 
             // WEATHER
             GetWeatherCityCode, GetWeather,
 
             // FAV
-            FavAddRichMediaMsg, FavAddImageMsg,
+            FavAddTextMsg, FavAddImageMsg, FavGetItemContent, FavGetItemList,
 
             // OTHER
-            GetDeviceBattery, DownloadFile
+            GetDeviceBattery, DownloadFile, QuickOperation
         ).forEach {
             it.alias.forEach { name ->
                 actionMap[name] = it
