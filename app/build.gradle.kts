@@ -128,7 +128,7 @@ android {
     }
 
     configureAppSigningConfigsForRelease(project)
-    packagingOptions {
+    packaging {
         jniLibs {
             useLegacyPackaging = true
         }
