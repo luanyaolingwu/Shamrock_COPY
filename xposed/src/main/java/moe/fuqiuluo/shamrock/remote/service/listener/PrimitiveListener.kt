@@ -12,15 +12,7 @@ import kotlinx.io.core.discardExact
 import kotlinx.io.core.readBytes
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
-import moe.fuqiuluo.proto.ProtoByteString
-import moe.fuqiuluo.proto.ProtoMap
-import moe.fuqiuluo.proto.asInt
-import moe.fuqiuluo.proto.asLong
-import moe.fuqiuluo.proto.asUtf8String
-import moe.fuqiuluo.proto.ProtoUtils
-import moe.fuqiuluo.proto.asByteArray
-import moe.fuqiuluo.proto.asList
-import moe.fuqiuluo.proto.asULong
+import moe.fuqiuluo.proto.*
 import moe.fuqiuluo.qqinterface.servlet.FriendSvc.requestFriendSystemMsgNew
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc.requestGroupSystemMsgNew
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc.getLongUin
@@ -211,9 +203,12 @@ internal object PrimitiveListener {
                 LogCenter.log("onGroupTitleChange error: ${e.stackTraceToString()}", Level.WARN)
             }
         }
+        var detail5 = detail[5]
+        if (detail5 is ProtoList) {
+            detail5 = detail5.value.first { it is ProtoMap }
+        }
 
-        val targetUin = detail[5, 5].asLong
-
+        val targetUin = detail5[5].asLong
         var groupId:Long
         try {
             groupId = detail[4].asULong
@@ -222,7 +217,7 @@ internal object PrimitiveListener {
         }
 
         // 恭喜<{\"cmd\":5,\"data\":\"qq\",\"text}\":\"nickname\"}>获得群主授予的<{\"cmd\":1,\"data\":\"https://qun.qq.com/qqweb/m/qun/medal/detail.html?_wv=16777223&bid=2504&gc=gid&isnew=1&medal=302&uin=uin\",\"text\":\"title\",\"url\":\"https://qun.qq.com/qqweb/m/qun/medal/detail.html?_wv=16777223&bid=2504&gc=gid&isnew=1&medal=302&uin=uin\"}>头衔
-        val titleChangeInfo = detail[5, 2].asUtf8String
+        val titleChangeInfo = detail5[2].asUtf8String
         if (titleChangeInfo.indexOf("群主授予") == -1) {
             return
         }
@@ -457,14 +452,22 @@ internal object PrimitiveListener {
     private suspend fun onGroupBan(msgTime: Long, pb: ProtoMap) {
         val groupCode = pb[1, 3, 2, 1].asULong
         val operatorUid = pb[1, 3, 2, 4].asUtf8String
-        val targetUid = pb[1, 3, 2, 5, 3, 1].asUtf8String
-        val duration = pb[1, 3, 2, 5, 3, 2].asInt
-        val operation = ContactHelper.getUinByUidAsync(operatorUid).toLong()
-        val target = ContactHelper.getUinByUidAsync(targetUid).toLong()
-        LogCenter.log("群禁言($groupCode): $operation -> $target, 时长 = ${duration}s")
+        val wholeBan = !pb.has(1, 3, 2, 5, 3, 1)
+        val targetUid = if (wholeBan) "" else pb[1, 3, 2, 5, 3, 1].asUtf8String
+        val rawDuration = pb[1, 3, 2, 5, 3, 2].asInt
 
+        val operation = ContactHelper.getUinByUidAsync(operatorUid).toLong()
+        val duration = if (wholeBan) -1 else rawDuration
+        val target = if (wholeBan) 0 else ContactHelper.getUinByUidAsync(targetUid).toLong()
+        val subType = if (rawDuration == 0) NoticeSubType.LiftBan else NoticeSubType.Ban
+
+        if (wholeBan) {
+            LogCenter.log("群全员禁言($groupCode): $operation -> ${if (subType == NoticeSubType.Ban) "开启" else "关闭"}")
+        } else {
+            LogCenter.log("群禁言($groupCode): $operation -> $target, 时长 = ${duration}s")
+        }
         if (!GlobalEventTransmitter.GroupNoticeTransmitter
-                .transGroupBan(msgTime, operation, target, groupCode, duration)
+                .transGroupBan(msgTime, subType, operation, target, groupCode, duration)
         ) {
             LogCenter.log("群禁言推送失败！", Level.WARN)
         }
