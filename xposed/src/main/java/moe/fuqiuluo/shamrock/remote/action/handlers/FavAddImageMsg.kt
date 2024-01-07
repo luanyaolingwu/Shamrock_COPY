@@ -63,6 +63,8 @@ internal object FavAddImageMsg: IActionHandler() {
                 val allLength = readPacket.readInt()
                 val dataLength = readPacket.readInt()
                 val headLength = allLength - dataLength - 16
+                //LogCenter.log("上传图片请求成功: ${DeflateTools.ungzip(it.mRespData).toHexString()}")
+                //LogCenter.log("图片上传响应: allLength=$allLength, dataLength=$dataLength, headLength=$headLength")
                 readPacket.discardExact(2)
                 ByteArray(headLength).also {
                     readPacket.readFully(it, 0, it.size)
@@ -140,6 +142,7 @@ internal object FavAddImageMsg: IActionHandler() {
             picId = picId,
             id = itemId
         ), echo)
+
     }
 
     override fun path(): String = "fav.add_image_msg"
@@ -152,4 +155,5 @@ internal object FavAddImageMsg: IActionHandler() {
         @SerialName("pic_id") val picId: String,
         @SerialName("id") val id: String
     )
+
 }
