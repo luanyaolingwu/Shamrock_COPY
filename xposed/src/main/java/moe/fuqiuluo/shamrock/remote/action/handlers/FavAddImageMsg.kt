@@ -63,6 +63,8 @@ internal object FavAddImageMsg: IActionHandler() {
                 val allLength = readPacket.readInt()
                 val dataLength = readPacket.readInt()
                 val headLength = allLength - dataLength - 16
+                //LogCenter.log("上传图片请求成功: ${DeflateTools.ungzip(it.mRespData).toHexString()}")
+                //LogCenter.log("图片上传响应: allLength=$allLength, dataLength=$dataLength, headLength=$headLength")
                 readPacket.discardExact(2)
                 ByteArray(headLength).also {
                     readPacket.readFully(it, 0, it.size)

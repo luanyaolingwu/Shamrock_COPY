@@ -345,6 +345,8 @@ internal object QFavSvc: BaseSvc() {
                 override fun onUpdateProgeress(netReq: NetReq, curr: Long, final: Long) {}
             }
             val pSKey = getWeiYunPSKey()
+            //LogCenter.log(pSKey)
+
             httpNetReq.mHttpMethod = HttpNetReq.HTTP_POST
             httpNetReq.mSendData = DeflateTools.gzip(packData(packHead(cmd, pSKey), body))
             httpNetReq.mOutStream = outputStream
