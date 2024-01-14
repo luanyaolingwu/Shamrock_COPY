@@ -3,6 +3,8 @@
 package moe.fuqiuluo.shamrock
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -361,4 +363,16 @@ private fun AnimatedTab(
 @Composable
 private fun MainPreview() {
     AppMainView()
+}
+
+fun getAppPackageName(context: Context): String? {
+    val packageManager = context.packageManager
+    val selfPackageName = context.packageName
+    try {
+        val applicationInfo = packageManager.getApplicationInfo(selfPackageName, 0)
+        return applicationInfo.packageName
+    } catch (e: PackageManager.NameNotFoundException) {
+        e.printStackTrace()
+    }
+    return null
 }
