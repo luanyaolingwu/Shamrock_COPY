@@ -20,11 +20,15 @@ internal object SendMessage: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val detailType = session.getStringOrNull("detail_type") ?: session.getStringOrNull("message_type")
         try {
-            var chatType = detailType?.let {
+            val chatType = detailType?.let {
                 MessageHelper.obtainMessageTypeByDetailType(it)
             } ?: run {
                 if (session.has("user_id")) {
-                    MsgConstant.KCHATTYPEC2C
+                    if (session.has("group_id")) {
+                        MsgConstant.KCHATTYPETEMPC2CFROMGROUP
+                    } else {
+                        MsgConstant.KCHATTYPEC2C
+                    }
                 } else if (session.has("group_id")) {
                     MsgConstant.KCHATTYPEGROUP
                 } else {
@@ -33,27 +37,25 @@ internal object SendMessage: IActionHandler() {
             }
             val peerId = when(chatType) {
                 MsgConstant.KCHATTYPEGROUP -> session.getStringOrNull("group_id") ?: return noParam("group_id", session.echo)
+                MsgConstant.KCHATTYPEC2C, MsgConstant.KCHATTYPETEMPC2CFROMGROUP -> session.getStringOrNull("user_id") ?: return noParam("user_id", session.echo)
+                else -> error("unknown chat type: $chatType")
+            }
+            val fromId = when(chatType) {
+                MsgConstant.KCHATTYPEGROUP, MsgConstant.KCHATTYPETEMPC2CFROMGROUP -> session.getStringOrNull("group_id") ?: return noParam("group_id", session.echo)
                 MsgConstant.KCHATTYPEC2C -> session.getStringOrNull("user_id") ?: return noParam("user_id", session.echo)
                 else -> error("unknown chat type: $chatType")
             }
-            var fromId = peerId
-            if (chatType == MsgConstant.KCHATTYPEC2C) {
-                val groupId = session.getStringOrNull("group_id")
-                if (groupId != null) {
-                    chatType = MsgConstant.KCHATTYPETEMPC2CFROMGROUP
-                    fromId = groupId
-                }
-            }
+            val retryCnt = session.getIntOrNull("retry_cnt")
             return if (session.isString("message")) {
                 val autoEscape = session.getBooleanOrDefault("auto_escape", false)
                 val message = session.getString("message")
-                invoke(chatType, peerId, message, autoEscape, echo = session.echo, fromId = fromId)
+                invoke(chatType, peerId, message, autoEscape, echo = session.echo, fromId = fromId, retryCnt = retryCnt ?: 3)
             } else if (session.isArray("message")) {
                 val message = session.getArray("message")
-                invoke(chatType, peerId, message, session.echo, fromId = fromId)
+                invoke(chatType, peerId, message, session.echo, fromId = fromId, retryCnt ?: 3)
             } else {
                 val message = session.getObject("message")
-                invoke(chatType, peerId, listOf( message ).jsonArray, session.echo, fromId = fromId)
+                invoke(chatType, peerId, listOf( message ).jsonArray, session.echo, fromId = fromId, retryCnt ?: 3)
             }
         } catch (e: ParamsException) {
             return noParam(e.message!!, session.echo)
@@ -69,6 +71,7 @@ internal object SendMessage: IActionHandler() {
         message: String,
         autoEscape: Boolean,
         fromId: String = peerId,
+        retryCnt: Int,
         echo: JsonElement = EmptyJsonString
     ): String {
         //if (!ContactHelper.checkContactAvailable(chatType, peerId)) {
@@ -89,7 +92,7 @@ internal object SendMessage: IActionHandler() {
                 LogCenter.log("CQ码不合法", Level.WARN)
                 return logic("CQCode is illegal", echo)
             } else {
-                MsgSvc.sendToAio(chatType, peerId, msg, fromId = fromId)
+                MsgSvc.sendToAio(chatType, peerId, msg, fromId = fromId, retryCnt)
             }
         }
         if (result.isFailure) {
@@ -107,12 +110,12 @@ internal object SendMessage: IActionHandler() {
 
     // 消息段格式消息
     suspend operator fun invoke(
-        chatType: Int, peerId: String, message: JsonArray, echo: JsonElement = EmptyJsonString, fromId: String = peerId
+        chatType: Int, peerId: String, message: JsonArray, echo: JsonElement = EmptyJsonString, fromId: String = peerId, retryCnt: Int
     ): String {
         //if (!ContactHelper.checkContactAvailable(chatType, peerId)) {
         //    return logic("contact is not found", echo = echo)
         //}
-        val result = MsgSvc.sendToAio(chatType, peerId, message, fromId = fromId)
+        val result = MsgSvc.sendToAio(chatType, peerId, message, fromId = fromId, retryCnt)
         if (result.isFailure) {
             return logic(result.exceptionOrNull()?.message ?: "", echo)
         }
