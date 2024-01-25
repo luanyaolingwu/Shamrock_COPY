@@ -464,6 +464,9 @@ internal object AioListener : IKernelMsgListener {
 
     }
 
+    override fun onGuildMsgAbFlagChanged(guildMsgAbFlag: GuildMsgAbFlag?) {
+
+    }
     override fun onGuildNotificationAbstractUpdate(guildNotificationAbstractInfo: GuildNotificationAbstractInfo?) {
 
     }

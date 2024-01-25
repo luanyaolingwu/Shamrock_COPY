@@ -82,12 +82,10 @@ internal object GlobalEventTransmitter: BaseSvc() {
                     sender = Sender(
                         userId = record.senderUin,
                         nickname = record.sendNickName
-                            .ifBlank { record.sendRemarkName }
-                            .ifBlank { record.sendMemberName }
-                            .ifBlank { record.peerName },
-                        //card = record.sendMemberName.ifBlank { record.sendNickName },  //Dec_2_2023
-                        //card = record.sendMemberName, //Dec_3_2023
-                        card = record.sendMemberName.ifBlank { record.sendNickName }, //Dec_7_2023 改回来了,别问为什么
+                            .ifEmpty { record.sendRemarkName }
+                            .ifEmpty { record.sendMemberName }
+                            .ifEmpty { record.peerName },
+                        card = record.sendMemberName,
                         role = when (record.senderUin) {
                             GroupSvc.getOwner(record.peerUin.toString()) -> MemberRole.Owner
                             in GroupSvc.getAdminList(record.peerUin.toString()) -> MemberRole.Admin
@@ -114,7 +112,7 @@ internal object GlobalEventTransmitter: BaseSvc() {
         ): Boolean {
             val botUin = app.longAccountUin
             var nickName = record.sendNickName
-            if (nickName.isNullOrBlank()) {
+            if (nickName.isNullOrEmpty()) {
                 CardSvc.getProfileCard(record.senderUin.toString()).onSuccess {
                     nickName = it.strNick ?: record.peerName
                 }
@@ -266,8 +264,10 @@ internal object GlobalEventTransmitter: BaseSvc() {
         suspend fun transGroupMemberNumChanged(
             time: Long,
             target: Long,
+            targetUid: String,
             groupCode: Long,
-            operation: Long,
+            operator: Long,
+            operatorUid: String,
             noticeType: NoticeType,
             noticeSubType: NoticeSubType
         ): Boolean {
@@ -277,11 +277,14 @@ internal object GlobalEventTransmitter: BaseSvc() {
                 postType = PostType.Notice,
                 type = noticeType,
                 subType = noticeSubType,
-                operatorId = operation,
+                operatorId = operator,
                 userId = target,
-                senderId = operation,
+                senderId = operator,
                 target = target,
-                groupId = groupCode
+                groupId = groupCode,
+                targetUid = targetUid,
+                operatorUid = operatorUid,
+                userUid = targetUid
             ))
             return true
         }
@@ -289,6 +292,7 @@ internal object GlobalEventTransmitter: BaseSvc() {
         suspend fun transGroupAdminChanged(
             msgTime: Long,
             target: Long,
+            targetUid: String,
             groupCode: Long,
             setAdmin: Boolean
         ): Boolean {
@@ -300,6 +304,7 @@ internal object GlobalEventTransmitter: BaseSvc() {
                 subType = if (setAdmin) NoticeSubType.Set else NoticeSubType.UnSet,
                 operatorId = 0,
                 target = target,
+                targetUid = targetUid,
                 groupId = groupCode
             ))
             return true
@@ -308,8 +313,10 @@ internal object GlobalEventTransmitter: BaseSvc() {
         suspend fun transGroupBan(
             msgTime: Long,
             subType: NoticeSubType,
-            operation: Long,
+            operator: Long,
+            operatorUid: String,
             target: Long,
+            targetUid: String,
             groupCode: Long,
             duration: Int
         ): Boolean {
@@ -319,12 +326,14 @@ internal object GlobalEventTransmitter: BaseSvc() {
                 postType = PostType.Notice,
                 type = NoticeType.GroupBan,
                 subType = subType,
-                operatorId = operation,
+                operatorId = operator,
                 userId = target,
-                senderId = operation,
+                senderId = operator,
                 target = target,
                 groupId = groupCode,
-                duration = duration
+                duration = duration,
+                operatorUid = operatorUid,
+                targetUid = targetUid
             ))
             return true
         }
@@ -472,7 +481,8 @@ internal object GlobalEventTransmitter: BaseSvc() {
 
         suspend fun transGroupApply(
             time: Long,
-            operator: Long,
+            applier: Long,
+            applierUid: String,
             reason: String,
             groupCode: Long,
             flag: String,
@@ -483,7 +493,8 @@ internal object GlobalEventTransmitter: BaseSvc() {
                 selfId = app.longAccountUin,
                 postType = PostType.Request,
                 type = RequestType.Group,
-                userId = operator,
+                userId = applier,
+                userUid = applierUid,
                 comment = reason,
                 groupId = groupCode,
                 subType = subType,

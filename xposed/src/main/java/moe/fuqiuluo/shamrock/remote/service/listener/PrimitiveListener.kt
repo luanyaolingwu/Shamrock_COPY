@@ -14,6 +14,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import moe.fuqiuluo.proto.*
 import moe.fuqiuluo.qqinterface.servlet.FriendSvc.requestFriendSystemMsgNew
+import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc.requestGroupSystemMsgNew
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc.getLongUin
 import moe.fuqiuluo.shamrock.helper.MessageHelper
@@ -47,7 +48,6 @@ internal object PrimitiveListener {
         if (
             !pb.has(1, 3)
             || !pb.has(1, 2)
-//            || !pb.has(1, 2, 2)
             || !pb.has(1, 2, 6)
         ) return
         val msgType = pb[1, 2, 1].asInt
@@ -302,11 +302,10 @@ internal object PrimitiveListener {
                 LogCenter.log("onGroupPokeAndGroupSign error: ${e.stackTraceToString()}", Level.WARN)
             }
         }
-        var groupId:Long
-        try {
-            groupId = detail[4].asULong
+        val groupId = try {
+            detail[4].asULong
         }catch (e: ClassCastException){
-            groupId = detail[4].asList.value[0].asULong
+            detail[4].asList.value[0].asULong
         }
 
         detail = if (detail[26] is ProtoList) {
@@ -392,13 +391,21 @@ internal object PrimitiveListener {
         val groupCode = pb[1, 3, 2, 1].asULong
         val targetUid = pb[1, 3, 2, 3].asUtf8String
         val type = pb[1, 3, 2, 4].asInt
-        val operation = ContactHelper.getUinByUidAsync(pb[1, 3, 2, 5].asUtf8String).toLong()
+
+        GroupSvc.getGroupMemberList(groupCode.toString(), true).onFailure {
+            LogCenter.log("新成员加入刷新群成员列表失败: $groupCode", Level.WARN)
+        }.onSuccess {
+            LogCenter.log("新成员加入刷新群成员列表成功，群成员数量: ${it.size}", Level.INFO)
+        }
+
+        val operatorUid = pb[1, 3, 2, 5].asUtf8String
+        val operator = ContactHelper.getUinByUidAsync(operatorUid).toLong()
         val target = ContactHelper.getUinByUidAsync(targetUid).toLong()
         LogCenter.log("群成员增加($groupCode): $target, type = $type")
 
         if (!GlobalEventTransmitter.GroupNoticeTransmitter
                 .transGroupMemberNumChanged(
-                    time, target, groupCode, operation, NoticeType.GroupMemIncrease, when (type) {
+                    time, target, targetUid, groupCode, operator, operatorUid, NoticeType.GroupMemIncrease, when (type) {
                         130 -> NoticeSubType.Approve
                         131 -> NoticeSubType.Invite
                         else -> NoticeSubType.Approve
@@ -413,11 +420,19 @@ internal object PrimitiveListener {
         val groupCode = pb[1, 3, 2, 1].asULong
         val targetUid = pb[1, 3, 2, 3].asUtf8String
         val type = pb[1, 3, 2, 4].asInt
-        val operation = try {
-            ContactHelper.getUinByUidAsync(pb[1, 3, 2, 5, 1, 1].asUtf8String).toLong()
+        val operatorUid = try {
+            pb[1, 3, 2, 5, 1, 1].asUtf8String
         } catch (e: Throwable) {
-            ContactHelper.getUinByUidAsync(pb[1, 3, 2, 5].asUtf8String).toLong()
+            pb[1, 3, 2, 5].asUtf8String
         }
+
+        GroupSvc.getGroupMemberList(groupCode.toString(), true).onFailure {
+            LogCenter.log("新成员加入刷新群成员列表失败: $groupCode", Level.WARN)
+        }.onSuccess {
+            LogCenter.log("新成员加入刷新群成员列表成功，群成员数量: ${it.size}", Level.INFO)
+        }
+
+        val operator = ContactHelper.getUinByUidAsync(operatorUid).toLong()
         val target = ContactHelper.getUinByUidAsync(targetUid).toLong()
         val subtype = when (type) {
             130 -> NoticeSubType.Leave
@@ -431,7 +446,7 @@ internal object PrimitiveListener {
         LogCenter.log("群成员减少($groupCode): $target, type = $subtype ($type)")
 
         if (!GlobalEventTransmitter.GroupNoticeTransmitter
-                .transGroupMemberNumChanged(time, target, groupCode, operation, NoticeType.GroupMemDecrease, subtype)
+                .transGroupMemberNumChanged(time, target, targetUid, groupCode, operator, operatorUid, NoticeType.GroupMemDecrease, subtype)
         ) {
             LogCenter.log("群成员减少推送失败！", Level.WARN)
         }
@@ -452,7 +467,7 @@ internal object PrimitiveListener {
         LogCenter.log("群管理员变动($groupCode): $target, isSetAdmin = $isSetAdmin")
 
         if (!GlobalEventTransmitter.GroupNoticeTransmitter
-                .transGroupAdminChanged(msgTime, target, groupCode, isSetAdmin)
+                .transGroupAdminChanged(msgTime, target, targetUid, groupCode, isSetAdmin)
         ) {
             LogCenter.log("群管理员变动推送失败！", Level.WARN)
         }
@@ -465,61 +480,60 @@ internal object PrimitiveListener {
         val targetUid = if (wholeBan) "" else pb[1, 3, 2, 5, 3, 1].asUtf8String
         val rawDuration = pb[1, 3, 2, 5, 3, 2].asInt
 
-        val operation = ContactHelper.getUinByUidAsync(operatorUid).toLong()
+        val operator = ContactHelper.getUinByUidAsync(operatorUid).toLong()
         val duration = if (wholeBan) -1 else rawDuration
         val target = if (wholeBan) 0 else ContactHelper.getUinByUidAsync(targetUid).toLong()
         val subType = if (rawDuration == 0) NoticeSubType.LiftBan else NoticeSubType.Ban
 
         if (wholeBan) {
-            LogCenter.log("群全员禁言($groupCode): $operation -> ${if (subType == NoticeSubType.Ban) "开启" else "关闭"}")
+            LogCenter.log("群全员禁言($groupCode): $operator -> ${if (subType == NoticeSubType.Ban) "开启" else "关闭"}")
         } else {
-            LogCenter.log("群禁言($groupCode): $operation -> $target, 时长 = ${duration}s")
+            LogCenter.log("群禁言($groupCode): $operator -> $target, 时长 = ${duration}s")
         }
         if (!GlobalEventTransmitter.GroupNoticeTransmitter
-                .transGroupBan(msgTime, subType, operation, target, groupCode, duration)
+                .transGroupBan(msgTime, subType, operator, operatorUid, target, targetUid, groupCode, duration)
         ) {
             LogCenter.log("群禁言推送失败！", Level.WARN)
         }
     }
 
     private suspend fun onGroupRecall(time: Long, pb: ProtoMap) {
-            var detail = pb[1, 3, 2]
-            if (detail !is ProtoMap) {
-                try {
-                    val readPacket = ByteReadPacket(detail.asByteArray)
-                    readPacket.discardExact(4)
-                    readPacket.discardExact(1)
-                    detail = ProtoUtils.decodeFromByteArray(readPacket.readBytes(readPacket.readShort().toInt()))
-                    readPacket.release()
-                } catch (e: Exception) {
-                    LogCenter.log("onGroupRecall error: ${e.stackTraceToString()}", Level.WARN)
-                }
-            }
-            var groupCode:Long
+        var detail = pb[1, 3, 2]
+        if (detail !is ProtoMap) {
             try {
-                groupCode = detail[4].asULong
-            }catch (e: ClassCastException){
-                groupCode = detail[4].asList.value[0].asULong
+                val readPacket = ByteReadPacket(detail.asByteArray)
+                readPacket.discardExact(4)
+                readPacket.discardExact(1)
+                detail = ProtoUtils.decodeFromByteArray(readPacket.readBytes(readPacket.readShort().toInt()))
+                readPacket.release()
+            } catch (e: Exception) {
+                LogCenter.log("onGroupRecall error: ${e.stackTraceToString()}", Level.WARN)
             }
-            val operatorUid = detail[11, 1].asUtf8String
-            val targetUid = detail[11, 3, 6].asUtf8String
-            val msgSeq = detail[11, 3, 1].asLong
-            val tipText = if (detail.has(11, 9)) detail[11, 9, 2].asUtf8String else ""
-            val mapping = MessageHelper.getMsgMappingBySeq(MsgConstant.KCHATTYPEGROUP, msgSeq.toInt())
-            if (mapping == null) {
-                LogCenter.log("由于缺失消息映射关系(seq = $msgSeq)，消息撤回事件无法推送！", Level.WARN)
-                return
-            }
-            val msgHash = mapping.msgHashId
-            val operator = ContactHelper.getUinByUidAsync(operatorUid).toLong()
-            val target = ContactHelper.getUinByUidAsync(targetUid).toLong()
-            LogCenter.log("群消息撤回($groupCode): $operator -> $target, seq = $msgSeq, hash = $msgHash, tip = $tipText")
+        }
+        val groupCode:Long = try {
+            detail[4].asULong
+        }catch (e: ClassCastException){
+            detail[4].asList.value[0].asULong
+        }
+        val operatorUid = detail[11, 1].asUtf8String
+        val targetUid = detail[11, 3, 6].asUtf8String
+        val msgSeq = detail[11, 3, 1].asLong
+        val tipText = if (detail.has(11, 9)) detail[11, 9, 2].asUtf8String else ""
+        val mapping = MessageHelper.getMsgMappingBySeq(MsgConstant.KCHATTYPEGROUP, msgSeq.toInt())
+        if (mapping == null) {
+            LogCenter.log("由于缺失消息映射关系(seq = $msgSeq)，消息撤回事件无法推送！", Level.WARN)
+            return
+        }
+        val msgHash = mapping.msgHashId
+        val operator = ContactHelper.getUinByUidAsync(operatorUid).toLong()
+        val target = ContactHelper.getUinByUidAsync(targetUid).toLong()
+        LogCenter.log("群消息撤回($groupCode): $operator -> $target, seq = $msgSeq, hash = $msgHash, tip = $tipText")
 
-            if (!GlobalEventTransmitter.GroupNoticeTransmitter
-                    .transGroupMsgRecall(time, operator, target, groupCode, msgHash, tipText)
-            ) {
-                LogCenter.log("群消息撤回推送失败！", Level.WARN)
-            }
+        if (!GlobalEventTransmitter.GroupNoticeTransmitter
+                .transGroupMsgRecall(time, operator, target, groupCode, msgHash, tipText)
+        ) {
+            LogCenter.log("群消息撤回推送失败！", Level.WARN)
+        }
     }
 
     private suspend fun onGroupApply(time: Long, pb: ProtoMap) {
@@ -546,7 +560,7 @@ internal object PrimitiveListener {
                     "$time;$groupCode;$applier"
                 }
                 if (!GlobalEventTransmitter.RequestTransmitter
-                        .transGroupApply(time, applier, reason, groupCode, flag, RequestSubType.Add)
+                        .transGroupApply(time, applier, applierUid, reason, groupCode, flag, RequestSubType.Add)
                 ) {
                     LogCenter.log("入群申请推送失败！", Level.WARN)
                 }
@@ -577,7 +591,7 @@ internal object PrimitiveListener {
                     "$time;$groupCode;$applier"
                 }
                 if (!GlobalEventTransmitter.RequestTransmitter
-                        .transGroupApply(time, applier, "", groupCode, flag, RequestSubType.Add)
+                        .transGroupApply(time, applier, applierUid, "", groupCode, flag, RequestSubType.Add)
                 ) {
                     LogCenter.log("邀请入群申请推送失败！", Level.WARN)
                 }
@@ -604,7 +618,7 @@ internal object PrimitiveListener {
             "$time;$groupCode;$uin"
         }
         if (!GlobalEventTransmitter.RequestTransmitter
-                .transGroupApply(time, invitor, "", groupCode, flag, RequestSubType.Invite)
+                .transGroupApply(time, invitor,  invitorUid, "", groupCode, flag, RequestSubType.Invite)
         ) {
             LogCenter.log("邀请入群推送失败！", Level.WARN)
         }

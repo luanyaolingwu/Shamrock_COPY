@@ -35,22 +35,21 @@ import java.net.URI
 import kotlin.concurrent.timer
 
 internal abstract class WebSocketClientServlet(
-    url: String,
+    private val url: String,
     private val heartbeatInterval: Long,
     private val wsHeaders: Map<String, String>
 ) : BaseTransmitServlet, WebSocketClient(URI(url), wsHeaders) {
+    init {
+        if (connectedClients.containsKey(url)) {
+            throw RuntimeException("WebSocketClient已存在: $url")
+        }
+    }
+
+    private var firstOpen = true
     private val sendLock = Mutex()
 
     override fun allowTransmit(): Boolean {
         return ShamrockConfig.openWebSocketClient()
-    }
-
-    override fun onOpen(handshakedata: ServerHandshake?) {
-        LogCenter.log("WebSocketClient onOpen: ${handshakedata?.httpStatus}, ${handshakedata?.httpStatusMessage}")
-
-        startHeartbeatTimer()
-        pushMetaLifecycle()
-        initTransmitter()
     }
 
     override fun onMessage(message: String) {
@@ -84,6 +83,21 @@ internal abstract class WebSocketClientServlet(
         respond?.let { send(it) }
     }
 
+    override fun onOpen(handshakedata: ServerHandshake?) {
+        LogCenter.log("WebSocketClient onOpen: ${handshakedata?.httpStatus}, ${handshakedata?.httpStatusMessage}")
+
+        connectedClients[url] = this
+
+        //startHeartbeatTimer()
+        pushMetaLifecycle()
+        if (firstOpen) {
+            firstOpen = false
+        } else {
+            cancelFlowJobs()
+        }
+        initTransmitter()
+    }
+
     override fun onClose(code: Int, reason: String?, remote: Boolean) {
         if (code == 403) {
             if (wsHeaders.containsKey("authorization")) {
@@ -95,11 +109,13 @@ internal abstract class WebSocketClientServlet(
         }
         LogCenter.log("WebSocketClient onClose: $code, $reason, $remote")
         cancelFlowJobs()
+        connectedClients.remove(url)
     }
 
     override fun onError(ex: Exception?) {
         LogCenter.log("WebSocketClient onError: ${ex?.message}")
         cancelFlowJobs()
+        connectedClients.remove(url)
     }
 
     protected suspend inline fun <reified T> pushTo(body: T) {
@@ -113,14 +129,14 @@ internal abstract class WebSocketClientServlet(
         }
     }
 
-    private fun startHeartbeatTimer() {
+    fun startHeartbeatTimer() {
         if (heartbeatInterval <= 0) {
             LogCenter.log("被动WebSocket心跳间隔为0，不启动心跳", Level.WARN)
             return
         }
         timer(
             name = "heartbeat",
-            initialDelay = 0,
+            initialDelay = heartbeatInterval,
             period = heartbeatInterval,
         ) {
             if (isClosed || isClosing || !isOpen) {
@@ -143,7 +159,7 @@ internal abstract class WebSocketClientServlet(
                             status = "正常",
                             good = true
                         ),
-                        interval = 1000L * 15
+                        interval = heartbeatInterval
                     )
                 )
             )
@@ -168,5 +184,9 @@ internal abstract class WebSocketClientServlet(
                 )
             )
         }
+    }
+
+    companion object {
+        private val connectedClients = mutableMapOf<String, WebSocketClientServlet>()
     }
 }
