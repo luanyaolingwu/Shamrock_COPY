@@ -4,10 +4,9 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import moe.fuqiuluo.shamrock.remote.action.handlers.*
-import moe.fuqiuluo.shamrock.remote.entries.EmptyObject
-import moe.fuqiuluo.shamrock.remote.entries.Status
-import moe.fuqiuluo.shamrock.remote.entries.resultToString
+import moe.fuqiuluo.shamrock.remote.structures.EmptyObject
+import moe.fuqiuluo.shamrock.remote.structures.Status
+import moe.fuqiuluo.shamrock.remote.structures.resultToString
 import moe.fuqiuluo.shamrock.tools.*
 import moe.fuqiuluo.shamrock.tools.json
 
@@ -15,54 +14,7 @@ internal object ActionManager {
     val actionMap = mutableMapOf<String, IActionHandler>()
 
     init {
-        arrayOf(
-            // Framework Info
-            TestHandler, GetLatestEvents, GetSupportedActions, GetStatus, GetVersionInfo, GetSelfInfo, GetLoginInfo,
-            SwitchAccount,
-
-            // UserActions
-            GetProfileCard, GetFriendList, SendLike, GetUid, GetUinByUid, ScanQRCode, SetProfileCard,
-            GetCookies, GetCSRF, GetCredentials, RestartMe, CleanCache, GetModelShow, SetModelShow,
-            GetModelShowList, GetOnlineClients, GetStrangerInfo, IsBlackListUin, GetHttpCookies, GetFriendSystemMsg,
-
-            // GroupInfo
-            GetTroopList, GetTroopInfo, GetTroopList, GetTroopMemberInfo, GetTroopMemberList,
-
-            // GroupActions
-            ModifyTroopName, LeaveTroop, KickTroopMember, BanTroopMember, SetGroupWholeBan, SetGroupAdmin,
-            ModifyTroopMemberName, SetGroupUnique, GetTroopHonor, GroupPoke, SetEssenceMessage, DeleteEssenceMessage,
-            GetGroupSystemMsg, GetProhibitedMemberList, GetEssenceMessageList, GetGroupNotice, SendGroupNotice, SendGroupSign,
-            GetGroupRemainAtAllRemain,
-
-            // MSG ACTIONS
-            SendMessage, DeleteMessage, GetMsg, GetForwardMsg, SendPrivateForwardMessage, SendGroupMessage, SendPrivateMessage,
-            ClearMsgs, GetHistoryMsg, GetGroupMsgHistory, SendGroupForwardMessage,
-
-            // RESOURCE ACTION
-            GetRecord, GetImage, UploadGroupFile, CreateGroupFileFolder, DeleteGroupFolder,
-            DeleteGroupFile, GetGroupFileSystemInfo, GetGroupRootFiles, GetGroupSubFiles,
-            GetGroupFileUrl, UploadPrivateFile,
-
-            // REQUEST ACTION
-            SetFriendAddRequest, SetGroupAddRequest,
-
-            // GUILD
-            GetGuildServiceProfile, GetGuildList,
-
-            // WEATHER
-            GetWeatherCityCode, GetWeather,
-
-            // FAV
-            FavAddTextMsg, FavAddImageMsg, FavGetItemContent, FavGetItemList,
-
-            // OTHER
-            GetDeviceBattery, DownloadFile, QuickOperation
-        ).forEach {
-            it.alias.forEach { name ->
-                actionMap[name] = it
-            }
-            actionMap[it.path()] = it
-        }
+        initManager()
     }
 
     operator fun get(action: String): IActionHandler? {
@@ -72,10 +24,6 @@ internal object ActionManager {
 
 internal abstract class IActionHandler {
     protected abstract suspend fun internalHandle(session: ActionSession): String
-
-    abstract fun path(): String
-
-    open val alias: Array<String> = arrayOf()
 
     open val requiredParams: Array<String> = arrayOf()
 

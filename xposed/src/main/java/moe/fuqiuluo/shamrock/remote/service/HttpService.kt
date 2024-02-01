@@ -7,9 +7,6 @@ import com.tencent.qqnt.kernel.nativeinterface.MsgRecord
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.server.application.call
-import io.ktor.server.response.respondText
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -19,18 +16,13 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import moe.fuqiuluo.qqinterface.servlet.msg.*
 import moe.fuqiuluo.shamrock.remote.service.api.HttpTransmitServlet
-import moe.fuqiuluo.shamrock.remote.service.data.push.*
 import moe.fuqiuluo.shamrock.tools.*
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.remote.action.ActionManager
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.handlers.QuickOperation.quicklyReply
-import moe.fuqiuluo.shamrock.remote.config.ECHO_KEY
-import moe.fuqiuluo.shamrock.remote.entries.EmptyObject
-import moe.fuqiuluo.shamrock.remote.entries.Status
 import moe.fuqiuluo.shamrock.remote.service.api.GlobalEventTransmitter
 
 internal object HttpService: HttpTransmitServlet() {
@@ -121,7 +113,7 @@ internal object HttpService: HttpTransmitServlet() {
                     MsgSvc.recallMsg(msgHash)
                 }
                 if (MsgConstant.KCHATTYPEGROUP == record.chatType && data.containsKey("kick") && data["kick"].asBoolean) {
-                    GroupSvc.kickMember(record.peerUin, false, record.senderUin)
+                    GroupSvc.kickMember(record.peerUin, false, "", record.senderUin)
                 }
                 if (MsgConstant.KCHATTYPEGROUP == record.chatType && data.containsKey("ban") && data["ban"].asBoolean) {
                     val banTime = data["ban_duration"].asIntOrNull ?: (30 * 60)

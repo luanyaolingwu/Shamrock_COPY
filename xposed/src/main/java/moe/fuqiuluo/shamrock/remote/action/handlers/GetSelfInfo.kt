@@ -3,12 +3,13 @@ package moe.fuqiuluo.shamrock.remote.action.handlers
 import com.tencent.mobileqq.app.QQAppInterface
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
-import moe.fuqiuluo.shamrock.remote.entries.Status
-import moe.fuqiuluo.shamrock.remote.entries.resultToString
+import moe.fuqiuluo.shamrock.remote.structures.Status
+import moe.fuqiuluo.shamrock.remote.structures.resultToString
 import moe.fuqiuluo.shamrock.remote.service.data.UserDetail
 import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
-import mqq.app.MobileQQ
+import moe.fuqiuluo.symbols.OneBotHandler
 
+@OneBotHandler("get_self_info")
 internal object GetSelfInfo: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         //val accounts = MobileQQ.getMobileQQ().allAccounts
@@ -20,6 +21,4 @@ internal object GetSelfInfo: IActionHandler() {
             curUin.toLong(), runtime.currentNickname, runtime.currentNickname
         ), echo = session.echo)
     }
-
-    override fun path(): String = "get_self_info"
 }

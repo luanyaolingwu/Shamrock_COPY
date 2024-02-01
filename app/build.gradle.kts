@@ -7,7 +7,7 @@ import java.time.temporal.ChronoUnit
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    kotlin("plugin.serialization") version "1.8.10"
+    kotlin("plugin.serialization") version "1.9.21"
 }
 
 android {
@@ -20,7 +20,7 @@ android {
         minSdk = 27
         targetSdk = 34
         versionCode = getCurrentVersionCode()
-        versionName = "1.0.5" + "-r${getGitCommitCount()}" + "-Miao${getVersionName()}"
+        versionName = "1.0.8" + "-r${getGitCommitCount()}" + "-Miao${getVersionName()}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -93,7 +93,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3"
+        kotlinCompilerExtensionVersion = "1.5.4"
     }
     packaging {
         jniLibs {
@@ -195,10 +195,13 @@ fun getVersionName(): String {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
-    implementation("androidx.activity:activity-compose:1.8.2")
-    implementation(platform("androidx.compose:compose-bom:2023.06.01"))
+    val composeBom = platform("androidx.compose:compose-bom:2023.10.01")
+    implementation(composeBom)
+
+    DEPENDENCY_ANDROIDX.forEach {
+        implementation(it)
+    }
+
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -207,31 +210,26 @@ dependencies {
     implementation("com.google.accompanist:accompanist-pager:0.31.5+")
     //noinspection GradleDynamicVersion
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.31.5+")
-    //noinspection GradleDynamicVersion useless
-    // implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0+")
     implementation("io.coil-kt:coil:2.4.0")
     implementation("io.coil-kt:coil-compose:2.4.0")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-io-jvm:0.1.16")
-
-    val ktorVersion = "2.3.3"
-    implementation("io.ktor:ktor-server-core:$ktorVersion")
-    implementation("io.ktor:ktor-server-host-common:$ktorVersion")
-    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
-    implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-    //implementation("io.ktor:ktor-serialization-kotlinx-protobuf:$ktorVersion")
+    implementation(kotlinx("io-jvm", "0.1.16"))
+    implementation(ktor("server", "core"))
+    implementation(ktor("server", "host-common"))
+    implementation(ktor("server", "status-pages"))
+    implementation(ktor("server", "netty"))
+    implementation(ktor("server", "content-negotiation"))
+    implementation(ktor("client", "core"))
+    implementation(ktor("client", "content-negotiation"))
+    implementation(ktor("client", "cio"))
+    implementation(ktor("serialization", "kotlinx-json"))
 
     implementation(project(":xposed"))
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2023.06.01"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2023.10.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

@@ -27,10 +27,12 @@ import moe.fuqiuluo.shamrock.remote.service.api.RichMediaUploadHandler
 import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import moe.fuqiuluo.shamrock.utils.FileUtils
 import moe.fuqiuluo.shamrock.utils.MD5
+import moe.fuqiuluo.symbols.OneBotHandler
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.coroutines.resume
 
+@OneBotHandler("upload_private_file")
 internal object UploadPrivateFile : IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val userId = session.getString("user_id")
@@ -107,12 +109,12 @@ internal object UploadPrivateFile : IActionHandler() {
             val contact = MessageHelper.generateContact(MsgConstant.KCHATTYPEC2C, userId)
             suspendCancellableCoroutine<FileTransNotifyInfo?> {
                 msgService.sendMsgWithMsgId(
-                    contact, msgIdPair.second, arrayListOf(msgElement)
+                    contact, msgIdPair.qqMsgId, arrayListOf(msgElement)
                 ) { code, reason ->
                     LogCenter.log("私聊文件消息发送异常(code = $code, reason = $reason)")
                     it.resume(null)
                 }
-                RichMediaUploadHandler.registerListener(msgIdPair.second) {
+                RichMediaUploadHandler.registerListener(msgIdPair.qqMsgId) {
                     it.resume(this)
                     return@registerListener true
                 }
@@ -124,7 +126,7 @@ internal object UploadPrivateFile : IActionHandler() {
         }.commonFileInfo
 
         return ok(data = UploadGroupFile.FileUploadResult(
-            msgHash = msgIdPair.first,
+            msgHash = msgIdPair.msgHashId,
             bizid = info.bizType ?: 0,
             md5 = info.md5,
             sha = info.sha,
@@ -134,6 +136,4 @@ internal object UploadPrivateFile : IActionHandler() {
     }
 
     override val requiredParams: Array<String> = arrayOf("user_id", "file", "name")
-
-    override fun path(): String = "upload_private_file"
 }

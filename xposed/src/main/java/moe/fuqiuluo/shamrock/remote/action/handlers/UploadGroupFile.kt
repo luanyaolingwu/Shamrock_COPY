@@ -26,10 +26,12 @@ import moe.fuqiuluo.shamrock.remote.service.api.RichMediaUploadHandler
 import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import moe.fuqiuluo.shamrock.utils.FileUtils
 import moe.fuqiuluo.shamrock.utils.MD5
+import moe.fuqiuluo.symbols.OneBotHandler
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.coroutines.resume
 
+@OneBotHandler("upload_group_file")
 internal object UploadGroupFile : IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val groupId = session.getString("group_id")
@@ -106,12 +108,12 @@ internal object UploadGroupFile : IActionHandler() {
             val contact = MessageHelper.generateContact(MsgConstant.KCHATTYPEGROUP, groupId)
             suspendCancellableCoroutine<FileTransNotifyInfo?> {
                 msgService.sendMsgWithMsgId(
-                    contact, msgIdPair.second, arrayListOf(msgElement)
+                    contact, msgIdPair.qqMsgId, arrayListOf(msgElement)
                 ) { code, reason ->
                     LogCenter.log("群文件消息发送异常(code = $code, reason = $reason)")
                     it.resume(null)
                 }
-                RichMediaUploadHandler.registerListener(msgIdPair.second) {
+                RichMediaUploadHandler.registerListener(msgIdPair.qqMsgId) {
                     it.resume(this)
                     return@registerListener true
                 }
@@ -123,7 +125,7 @@ internal object UploadGroupFile : IActionHandler() {
         }.commonFileInfo
 
         return ok(data = FileUploadResult(
-            msgHash = msgIdPair.first,
+            msgHash = msgIdPair.msgHashId,
             bizid = info.bizType ?: 0,
             md5 = info.md5,
             sha = info.sha,
@@ -133,8 +135,6 @@ internal object UploadGroupFile : IActionHandler() {
     }
 
     override val requiredParams: Array<String> = arrayOf("group_id", "file", "name")
-
-    override fun path(): String = "upload_group_file"
 
     @Serializable
     data class FileUploadResult(

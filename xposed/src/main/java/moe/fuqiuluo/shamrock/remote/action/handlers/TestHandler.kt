@@ -4,9 +4,11 @@ import kotlinx.serialization.Serializable
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import de.robv.android.xposed.XposedBridge.log
-import moe.fuqiuluo.shamrock.remote.entries.Status
-import moe.fuqiuluo.shamrock.remote.entries.resultToString
+import moe.fuqiuluo.shamrock.remote.structures.Status
+import moe.fuqiuluo.shamrock.remote.structures.resultToString
+import moe.fuqiuluo.symbols.OneBotHandler
 
+@OneBotHandler("test")
 internal object TestHandler: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         kotlin.runCatching {
@@ -23,7 +25,7 @@ internal object TestHandler: IActionHandler() {
         }
         return "error"
     }
-    override fun path(): String = "test"
+
     @Serializable
     data class Test(val time: Long)
 }

@@ -18,7 +18,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * 文本 / 艾特 消息转换消息段
      */
-    object TextConverter: MessageElemConverter() {
+    data object TextConverter: MessageElemConverter() {
         override suspend fun convert(chatType: Int, peerId: String, element: MsgElement): MessageSegment {
             val text = element.textElement
             return if (text.atType != MsgConstant.ATTYPEUNKNOWN) {
@@ -42,9 +42,10 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * 小表情 / 戳一戳 消息转换消息段
      */
-    object FaceConverter: MessageElemConverter() {
+    data object FaceConverter: MessageElemConverter() {
         override suspend fun convert(chatType: Int, peerId: String, element: MsgElement): MessageSegment {
             val face = element.faceElement
+
             if (face.faceType == 5) {
                 return MessageSegment(
                     type = "poke",
@@ -55,8 +56,6 @@ internal sealed class MessageElemConverter: IMessageConvert {
                     )
                 )
             }
-
-
             when (face.faceIndex) {
                 114 -> {
                     return MessageSegment(
@@ -84,10 +83,22 @@ internal sealed class MessageElemConverter: IMessageConvert {
                         )
                     )
                 }
+                394 -> {
+                    //LogCenter.log(face.toString())
+                    return MessageSegment(
+                        type = "face",
+                        data = hashMapOf(
+                            "id" to face.faceIndex,
+                            "big" to (face.faceType == 3),
+                            "result" to (face.resultId ?: "1")
+                        )
+                    )
+                }
                 else -> return MessageSegment(
                     type = "face",
                     data = hashMapOf(
-                        "id" to face.faceIndex
+                        "id" to face.faceIndex,
+                        "big" to (face.faceType == 3)
                     )
                 )
             }
@@ -97,7 +108,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * 图片消息转换消息段
      */
-    object ImageConverter: MessageElemConverter() {
+    data object ImageConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -121,7 +132,9 @@ internal sealed class MessageElemConverter: IMessageConvert {
                         MsgConstant.KCHATTYPEGROUP -> RichProtoSvc.getGroupPicDownUrl(md5)
                         MsgConstant.KCHATTYPEC2C -> RichProtoSvc.getC2CPicDownUrl(md5)
                         else -> unknownChatType(chatType)
-                    }
+                    },
+                    "subType" to image.picSubType,
+                    "type" to if (image.isFlashPic == true) "flash" else if(image.original) "original" else "show"
                 )
             )
         }
@@ -130,7 +143,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * 语音消息转换消息段
      */
-    object VoiceConverter: MessageElemConverter() {
+    data object VoiceConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -166,7 +179,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * 视频消息转换消息段
      */
-    object VideoConverter: MessageElemConverter() {
+    data object VideoConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -195,7 +208,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * 商城大表情消息转换消息段
      */
-    object MarketFaceConverter: MessageElemConverter() {
+    data object MarketFaceConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -218,7 +231,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * JSON消息转消息段
      */
-    object StructJsonConverter: MessageElemConverter() {
+    data object StructJsonConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -280,7 +293,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * 回复消息转消息段
      */
-    object ReplyConverter: MessageElemConverter() {
+    data object ReplyConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -312,7 +325,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * 灰色提示条消息过滤
      */
-    object GrayTipsConverter: MessageElemConverter() {
+    data object GrayTipsConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -347,7 +360,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * 文件消息转换消息段
      */
-    object FileConverter: MessageElemConverter() {
+    data object FileConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -381,7 +394,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
     /**
      * 老板QQ的合并转发信息
      */
-    object XmlMultiMsgConverter: MessageElemConverter() {
+    data object XmlMultiMsgConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -397,7 +410,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
         }
     }
 
-    object XmlLongMsgConverter: MessageElemConverter() {
+    data object XmlLongMsgConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -413,7 +426,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
         }
     }
 
-    object MarkdownConverter: MessageElemConverter() {
+    data object MarkdownConverter: MessageElemConverter() {
         override suspend fun convert(
             chatType: Int,
             peerId: String,
@@ -424,6 +437,23 @@ internal sealed class MessageElemConverter: IMessageConvert {
                 type = "markdown",
                 data = mapOf(
                     "content" to markdown.content
+                )
+            )
+        }
+    }
+
+    data object BubbleFaceConverter: MessageElemConverter() {
+        override suspend fun convert(
+            chatType: Int,
+            peerId: String,
+            element: MsgElement
+        ): MessageSegment {
+            val bubbleElement = element.faceBubbleElement
+            return MessageSegment(
+                type = "bubble_face",
+                data = mapOf(
+                    "id" to bubbleElement.yellowFaceInfo.index,
+                    "count" to (bubbleElement.faceCount ?: 1),
                 )
             )
         }

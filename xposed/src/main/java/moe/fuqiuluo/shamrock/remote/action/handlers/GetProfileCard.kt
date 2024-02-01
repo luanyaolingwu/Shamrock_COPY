@@ -4,17 +4,19 @@ import com.tencent.mobileqq.data.Card
 import moe.fuqiuluo.qqinterface.servlet.CardSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
-import moe.fuqiuluo.shamrock.remote.entries.Status
-import moe.fuqiuluo.shamrock.remote.entries.resultToString
+import moe.fuqiuluo.shamrock.remote.structures.Status
+import moe.fuqiuluo.shamrock.remote.structures.resultToString
 import moe.fuqiuluo.shamrock.remote.service.data.VipInfo
 import moe.fuqiuluo.shamrock.remote.service.data.VipType
 import moe.fuqiuluo.shamrock.remote.service.data.profile.Location
 import moe.fuqiuluo.shamrock.remote.service.data.profile.ProfileCard
+import moe.fuqiuluo.symbols.OneBotHandler
 
+@OneBotHandler("get_user_info",  ["get_profile_card"])
 internal object GetProfileCard: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val uin = session.getString("user_id")
-        val refresh = session.getBooleanOrDefault("refresh", false)
+        val refresh = session.getBooleanOrDefault("refresh", session.getBooleanOrDefault("no_cache", false))
 
         var card: Card? = CardSvc.getProfileCard(uin).getOrNull()
         if (refresh || !card.ok()) {
@@ -73,6 +75,4 @@ internal object GetProfileCard: IActionHandler() {
     private fun Card?.ok(): Boolean {
         return this != null && !strNick.isNullOrBlank()
     }
-
-    override fun path(): String = "get_user_info"
 }

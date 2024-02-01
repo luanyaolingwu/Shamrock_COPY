@@ -23,7 +23,9 @@ import moe.fuqiuluo.shamrock.tools.asLong
 import moe.fuqiuluo.shamrock.tools.asString
 import moe.fuqiuluo.shamrock.tools.json
 import moe.fuqiuluo.shamrock.tools.jsonArray
+import moe.fuqiuluo.symbols.OneBotHandler
 
+@OneBotHandler(".handle_quick_operation_async")
 internal object QuickOperation: IActionHandler() {
     val actionMsgTypes = arrayOf(
         "record", "voice", "video", "markdown"
@@ -94,7 +96,7 @@ internal object QuickOperation: IActionHandler() {
             MsgSvc.recallMsg(msgHash)
         }
         if (MsgConstant.KCHATTYPEGROUP == record.chatType && operation.containsKey("kick") && operation["kick"].asBoolean) {
-            GroupSvc.kickMember(record.peerUin, false, record.senderUin)
+            GroupSvc.kickMember(record.peerUin, false, "", record.senderUin)
         }
         if (MsgConstant.KCHATTYPEGROUP == record.chatType && operation.containsKey("ban") && operation["ban"].asBoolean) {
             val banTime = operation["ban_duration"].asIntOrNull ?: (30 * 60)
@@ -104,8 +106,6 @@ internal object QuickOperation: IActionHandler() {
 
         return logic("操作成功", session.echo)
     }
-
-    override fun path(): String = ".handle_quick_operation_async"
 
     override val requiredParams: Array<String> = arrayOf("context", "operation", "self_id")
 
@@ -122,7 +122,7 @@ internal object QuickOperation: IActionHandler() {
         }.let {
             if (it.isNotEmpty()) {
                 it.map { listOf(it) }.forEach {
-                    MsgSvc.sendToAio(record.chatType, record.peerUin.toString(), it.jsonArray)
+                    MsgSvc.sendToAio(record.chatType, record.peerUin.toString(), it.jsonArray, retryCnt = 3)
                 }
                 return
             }
@@ -143,6 +143,6 @@ internal object QuickOperation: IActionHandler() {
             ).json) // 添加@发送者
         }
         messageList.addAll(message)
-        MsgSvc.sendToAio(record.chatType, record.peerUin.toString(), JsonArray(messageList))
+        MsgSvc.sendToAio(record.chatType, record.peerUin.toString(), JsonArray(messageList), retryCnt = 3)
     }
 }

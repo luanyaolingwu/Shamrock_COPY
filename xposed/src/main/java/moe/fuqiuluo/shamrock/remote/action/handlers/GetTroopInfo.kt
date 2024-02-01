@@ -6,11 +6,13 @@ import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.remote.service.data.SimpleTroopInfo
 import moe.fuqiuluo.shamrock.tools.EmptyJsonString
+import moe.fuqiuluo.symbols.OneBotHandler
 
+@OneBotHandler("get_group_info")
 internal object GetTroopInfo: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val groupId = session.getString("group_id")
-        val refresh = session.getBooleanOrDefault("refresh", false)
+        val refresh = session.getBooleanOrDefault("refresh", session.getBooleanOrDefault("no_cache", false))
         return invoke(groupId, refresh, session.echo)
     }
 
@@ -36,6 +38,4 @@ internal object GetTroopInfo: IActionHandler() {
     }
 
     override val requiredParams: Array<String> = arrayOf("group_id")
-
-    override fun path(): String = "get_group_info"
 }

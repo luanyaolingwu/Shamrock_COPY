@@ -7,7 +7,9 @@ import moe.fuqiuluo.shamrock.remote.action.IActionHandler
 import moe.fuqiuluo.shamrock.remote.service.data.OutResource
 import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import moe.fuqiuluo.shamrock.utils.AudioUtils
+import moe.fuqiuluo.symbols.OneBotHandler
 
+@OneBotHandler("get_record")
 internal object GetRecord: IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val file = session.getString("file")
@@ -32,11 +34,9 @@ internal object GetRecord: IActionHandler() {
                 url = "/res/${audioFile.nameWithoutExtension}"
             ), echo)
         } else {
-            error("not found record file from cache")
+            error("not found record file from cache", echo)
         }
     }
 
     override val requiredParams: Array<String> = arrayOf("file", "out_format")
-
-    override fun path(): String = "get_record"
 }

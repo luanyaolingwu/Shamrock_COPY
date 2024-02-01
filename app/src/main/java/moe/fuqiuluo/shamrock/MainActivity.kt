@@ -87,6 +87,7 @@ import moe.fuqiuluo.shamrock.ui.tools.getShamrockVersion
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             CompositionLocalProvider(
                 LocalIndication provides NoIndication

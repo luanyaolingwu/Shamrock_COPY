@@ -138,26 +138,16 @@ char * __cdecl my_strstr(const char *lhs, const char *rhs) {
 }
 
 int fake_memcmp(const void* __lhs, const void* __rhs, size_t __n) {
-    //if (my_strstr((const char*) __rhs, "lsposed")) {
-        //return -1;
-    //}
-    //if (my_strstr((const char*) __rhs, "xposed")) {
-    //    return -1;
-    //}
-    if (my_strstr((const char*) __rhs, "shamrock")) {
+    if (my_strstr((const char*) __rhs, "shamrock") && my_strstr((const char*) __lhs, "shamrock")) {
         if (backup_memcmp(__lhs, __rhs, __n) == 0) {
             // 底层广播判断
             return 0;
+        } else {
+            LOGI("[Shamrock] QQ好像正在寻找Shamrock");
         }
         return -1;
     }
-    if (my_strstr((const char*) __rhs, "riru")) {
-        return -1;
-    }
-    //if (my_strstr((const char*) __rhs, "zygisk")) {
-    //    return -1;
-    //}
-    //if (my_strstr((const char*) __rhs, "magisk")) {
+    //if (my_strstr((const char*) __rhs, "riru") && my_strstr((const char*) __lhs, "riru")) {
     //    return -1;
     //}
     return backup_memcmp(__lhs, __rhs, __n);
@@ -177,7 +167,7 @@ NativeOnModuleLoaded native_init(const NativeAPIEntries *entries) {
 
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_moe_fuqiuluo_shamrock_xposed_actions_AntiDetection_antiNativeDetections(JNIEnv *env,
+Java_moe_fuqiuluo_shamrock_xposed_hooks_AntiDetection_antiNativeDetections(JNIEnv *env,
                                                                              jobject thiz) {
     if (hook_function == nullptr) return false;
     hook_function((void*) __system_property_get, (void *)fake_system_property_get, (void **) &backup_system_property_get);
