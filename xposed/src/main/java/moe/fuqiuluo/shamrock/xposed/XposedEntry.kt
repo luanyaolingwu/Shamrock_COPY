@@ -141,8 +141,8 @@ internal class XposedEntry: IXposedHookLoadPackage {
     private fun injectClassloader(moduleLoader: ClassLoader?): Boolean {
         if (moduleLoader != null) {
             if (kotlin.runCatching {
-                    moduleLoader.loadClass("mqq.app.MobileQQ")
-                }.isSuccess) {
+                moduleLoader.loadClass("mqq.app.MobileQQ")
+            }.isSuccess) {
                 log("ModuleClassloader already injected.")
                 return true
             }

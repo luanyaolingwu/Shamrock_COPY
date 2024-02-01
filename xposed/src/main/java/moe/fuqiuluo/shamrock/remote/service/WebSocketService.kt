@@ -78,9 +78,8 @@ internal class WebSocketService(
         }
         val path = URI.create(handshake.resourceDescriptor).path
         if (path != "/api") {
-            pushMetaLifecycle()
             eventReceivers.add(conn)
-            //pushMetaLifecycle()
+            pushMetaLifecycle()
         }
         LogCenter.log({ "WSServer连接(${conn.remoteSocketAddress.address.hostAddress}:${conn.remoteSocketAddress.port}$path)" }, Level.WARN)
     }

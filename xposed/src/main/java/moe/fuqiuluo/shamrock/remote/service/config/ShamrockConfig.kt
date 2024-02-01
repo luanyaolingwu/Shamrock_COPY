@@ -48,7 +48,7 @@ internal object ShamrockConfig {
             putBoolean(  "use_cqcode", intent.getBooleanExtra("use_cqcode", false))             // 使用CQ码
             putBoolean(  "pro_api",    intent.getBooleanExtra("pro_api", false))                // 调试API开关
             putBoolean(  "inject_packet",    intent.getBooleanExtra("inject_packet", false))    // 拦截无用包
-            putBoolean(  "debug",    intent.getBooleanExtra("debug", false))                    // 调试模式
+            putBoolean(  "debug",      intent.getBooleanExtra("debug", false))                  // 调试模式
 
             Config.defaultToken = intent.getStringExtra("token")
             Config.antiTrace = intent.getBooleanExtra("anti_qq_trace", true)
@@ -67,11 +67,11 @@ internal object ShamrockConfig {
                 ConnectionConfig(address = it)
             }?.toMutableList()
 
-            putString(   "key_store",      intent.getStringExtra("key_store"))                                // 证书路径
-            putString(   "ssl_pwd",      intent.getStringExtra("ssl_pwd"))                                    // 证书密码
-            putString(   "ssl_private_pwd",      intent.getStringExtra("ssl_private_pwd"))                    // 证书私钥密码
-            putString(   "ssl_alias",      intent.getStringExtra("ssl_alias"))                                // 证书别名
-            putInt(      "ssl_port",    intent.getIntExtra("ssl_port", 9016))                      // 主动HTTP端口
+            putString(  "key_store",   intent.getStringExtra("key_store"))                                // 证书路径
+            putString(  "ssl_pwd",     intent.getStringExtra("ssl_pwd"))                                  // 证书密码
+            putString(  "ssl_private_pwd",   intent.getStringExtra("ssl_private_pwd"))                    // 证书私钥密码
+            putString(  "ssl_alias",   intent.getStringExtra("ssl_alias"))                                // 证书别名
+            putInt(     "ssl_port",    intent.getIntExtra("ssl_port", 5701))                    // 主动HTTP端口
 
             //putBoolean("auto_clear", intent.getBooleanExtra("auto_clear", false))                 // 自动清理
             putBoolean("alive_reply",   intent.getBooleanExtra("alive_reply", false))             // 自回复测试
@@ -149,9 +149,7 @@ internal object ShamrockConfig {
     }
 
     fun getPort(): Int {
-        //val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
         return mmkv.getInt("port", 9015)
-        //return mmkv.getInt("port", 5700)
     }
 
     fun isInjectPacket(): Boolean {
@@ -190,7 +188,6 @@ internal object ShamrockConfig {
     }
 
     fun isPro(): Boolean {
-        //val mmkv = MMKVFetcher.mmkvWithId("shamrock_config")
         return mmkv.getBoolean("pro_api", false)
     }
 

@@ -48,7 +48,7 @@ internal object GlobalEventTransmitter: BaseSvc() {
     private suspend fun transMessageEvent(record: MsgRecord, message: MessageEvent) = messageEventFlow.emit(record to message)
 
     /**
-     * 消息 手淫器 //WTF?什么鬼注释
+     * 消息 手淫器
      */
     object MessageTransmitter {
         /**
@@ -499,7 +499,6 @@ internal object GlobalEventTransmitter: BaseSvc() {
                 groupId = groupCode,
                 subType = subType,
                 flag = flag
-
             ))
             return true
         }
