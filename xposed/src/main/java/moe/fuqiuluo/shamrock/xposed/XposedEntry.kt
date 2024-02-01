@@ -121,14 +121,7 @@ internal class XposedEntry: IXposedHookLoadPackage {
                 System.setProperty("qxbot_flag", "1")
             } else return
 
-            log("Process Name = " + MobileQQ.getMobileQQ().qqProcessName.apply {
-                // if (!contains("msf", ignoreCase = true)) return // 非MSF进程 退出
-                // 
-                //if (contains("peak")) {
-                //    PlatformUtils.killProcess(ctx, this)
-                //}
-                //
-            })
+            log("Process Name = " + MobileQQ.getMobileQQ().qqProcessName)
 
             PlatformUtils.isTim()
 
@@ -148,8 +141,8 @@ internal class XposedEntry: IXposedHookLoadPackage {
     private fun injectClassloader(moduleLoader: ClassLoader?): Boolean {
         if (moduleLoader != null) {
             if (kotlin.runCatching {
-                moduleLoader.loadClass("mqq.app.MobileQQ")
-            }.isSuccess) {
+                    moduleLoader.loadClass("mqq.app.MobileQQ")
+                }.isSuccess) {
                 log("ModuleClassloader already injected.")
                 return true
             }
