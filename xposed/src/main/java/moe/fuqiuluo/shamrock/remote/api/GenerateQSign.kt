@@ -336,16 +336,17 @@ private suspend inline fun PipelineContext<Unit, ApplicationCall>.fetchSalt(
 
     return when (mode) {
         "v1" -> {
-            val guid = fetchOrThrow("guid").hex2ByteArray()
-            val salt = ByteBuffer.allocate(8 + 2 + guid.size + 2 + 10 + 4)
-            val sub = data.substring(4).toInt(16)
-            salt.putLong(uin.toLong())
-            salt.putShort(guid.size.toShort())
-            salt.put(guid)
-            salt.putShort(version.length.toShort())
-            salt.put(version.toByteArray())
-            salt.putInt(sub)
-            salt.array()
+            error("This feature has been DEPRECATED due to high risk. It is strictly forbidden to use it ANY FURTHER.")
+            // val guid = fetchOrThrow("guid").hex2ByteArray()
+            // val salt = ByteBuffer.allocate(8 + 2 + guid.size + 2 + 10 + 4)
+            // val sub = data.substring(4).toInt(16)
+            // salt.putLong(uin.toLong())
+            // salt.putShort(guid.size.toShort())
+            // salt.put(guid)
+            // salt.putShort(version.length.toShort())
+            // salt.put(version.toByteArray())
+            // salt.putInt(sub)
+            // salt.array()
         }
         "v2" -> {
             val guid = fetchOrThrow("guid").hex2ByteArray()
@@ -353,25 +354,35 @@ private suspend inline fun PipelineContext<Unit, ApplicationCall>.fetchSalt(
             val salt = ByteBuffer.allocate(4 + 2 + guid.size + 2 + 10 + 4 + 4)
             salt.putInt(0)
             salt.putShort(guid.size.toShort())
-            salt.put(guid)
-            salt.putShort(version.length.toShort())
-            salt.put(version.toByteArray())
-            salt.putInt(sub)
+            // salt.put(guid)
+            // salt.putShort(version.length.toShort())
+            // salt.put(version.toByteArray())
+            // salt.putInt(sub)
             salt.putInt(0)
             salt.array()
         }
         "v3" -> { // 812_a
-            val phone = fetchOrThrow("phone").toByteArray() // 86-xxx
-            val salt = ByteBuffer.allocate(phone.size + 2 + 2 + version.length + 2)
-            salt.put(phone)
+            error("This feature has been DEPRECATED due to high risk. It is strictly forbidden to use it ANY FURTHER.")
+            // val phone = fetchOrThrow("phone").toByteArray() // 86-xxx
+            // val salt = ByteBuffer.allocate(phone.size + 2 + 2 + version.length + 2)
+            // salt.put(phone)
             //println(String(phone))
-            salt.putShort(0)
-            salt.putShort(version.length.toShort())
-            salt.put(version.toByteArray())
-            salt.putShort(0)
-            salt.array()
+            // salt.putShort(0)
+            // salt.putShort(version.length.toShort())
+            // salt.put(version.toByteArray())
+            // salt.putShort(0)
+            // salt.array()
         }
         "v4" -> { // 812_5
+            // val receipt = fetchOrThrow("receipt").toByteArray()
+            // val code = fetchOrThrow("code")
+            // val key = MD50.toMD5Byte(code)
+            // val encrypt = Crypt0().encrypt(receipt, key)
+            // val salt = ByteBuffer.allocate(receipt.size + 2 + encrypt.size)
+            // salt.put(receipt)
+            // salt.putShort(encrypt.size.toShort())
+            // salt.put(encrypt)
+            // salt.array()
             error("Not support [v4] mode.")
         }
         else -> EMPTY_BYTE_ARRAY
