@@ -42,8 +42,6 @@ internal object AioListener : IKernelMsgListener {
     private var blockPingPong = 0
     private suspend fun handleMsg(record: MsgRecord) {
         try {
-            if (record.chatType == MsgConstant.KCHATTYPEGUILD) return // TODO: 频道消息暂不处理
-
             messageLessListenerMap.firstNotNullOfOrNull {
                 if (it.key == record.msgSeq) it else null
             }?.let {
@@ -54,17 +52,22 @@ internal object AioListener : IKernelMsgListener {
 
             val msgHash = MessageHelper.generateMsgIdHash(record.chatType, record.msgId)
 
+            val peerId = when(record.chatType) {
+                MsgConstant.KCHATTYPEGUILD -> record.guildId
+                else -> record.peerUin.toString()
+            }
             MessageHelper.saveMsgMapping(
                 hash = msgHash,
                 qqMsgId = record.msgId,
                 chatType = record.chatType,
                 subChatType = record.chatType,
-                peerId = record.peerUin.toString(),
+                peerId = peerId,
                 msgSeq = record.msgSeq.toInt(),
-                time = record.msgTime
+                time = record.msgTime,
+                subPeerId = record.channelId ?: peerId
             )
 
-            val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
+            val rawMsg = record.elements.toCQCode(record.chatType, peerId, record.channelId ?: peerId)
             if (rawMsg.isEmpty()) return
 
             val random = Random.nextInt(10)  // 生成一个随机数
@@ -160,6 +163,16 @@ internal object AioListener : IKernelMsgListener {
                         LogCenter.log("私聊临时消息推送失败 -> MessageTransmitter", Level.WARN)
                     }
                 }
+
+                MsgConstant.KCHATTYPEGUILD -> {
+                    LogCenter.log("频道消息(guildId = ${record.guildId}, sender=${record.senderUid}, id = [$msgHash | ${record.msgId}], msg = $rawMsg)")
+                    if(!GlobalEventTransmitter.MessageTransmitter
+                        .transGuildMessage(record, record.elements, rawMsg, msgHash, postType = postType)
+                        ) {
+                        LogCenter.log("频道消息推送失败 -> MessageTransmitter", Level.WARN)
+                    }
+                }
+
                 else -> LogCenter.log("不支持PUSH事件: ${record.chatType}")
             }
         } catch (e: Throwable) {
@@ -172,21 +185,25 @@ internal object AioListener : IKernelMsgListener {
     }
 
     override fun onAddSendMsg(record: MsgRecord) {
-        if (record.chatType == MsgConstant.KCHATTYPEGUILD) return // TODO: 频道消息暂不处理
         if (record.peerUin == TicketSvc.getLongUin()) return // 发给自己的消息不处理
 
         GlobalScope.launch {
             try {
                 val msgHash = MessageHelper.generateMsgIdHash(record.chatType, record.msgId)
 
+                val peerId = when(record.chatType) {
+                    MsgConstant.KCHATTYPEGUILD -> record.guildId
+                    else -> record.peerUin.toString()
+                }
                 MessageHelper.saveMsgMapping(
                     hash = msgHash,
                     qqMsgId = record.msgId,
                     chatType = record.chatType,
                     subChatType = record.chatType,
-                    peerId = record.peerUin.toString(),
+                    peerId = peerId,
                     msgSeq = record.msgSeq.toInt(),
-                    time = record.msgTime
+                    time = record.msgTime,
+                    subPeerId = record.channelId ?: peerId
                 )
 
                 LogCenter.log("预发送消息($msgHash | ${record.msgSeq} | ${record.msgId})")
@@ -208,6 +225,10 @@ internal object AioListener : IKernelMsgListener {
 
             GlobalScope.launch {
                 val msgHash = MessageHelper.generateMsgIdHash(record.chatType, record.msgId)
+                val peerId = when(record.chatType) {
+                    MsgConstant.KCHATTYPEGUILD -> record.guildId
+                    else -> record.peerUin.toString()
+                }
 
                 val mapping = MessageHelper.getMsgMappingByHash(msgHash)
                 if (mapping == null) {
@@ -216,9 +237,10 @@ internal object AioListener : IKernelMsgListener {
                         qqMsgId = record.msgId,
                         chatType = record.chatType,
                         subChatType = record.chatType,
-                        peerId = record.peerUin.toString(),
+                        peerId = peerId,
                         msgSeq = record.msgSeq.toInt(),
-                        time = record.msgTime
+                        time = record.msgTime,
+                        subPeerId = record.channelId ?: peerId
                     )
                 } else {
                     LogCenter.log("Update message info from ${mapping.msgSeq} to ${record.msgSeq}", Level.INFO)
@@ -231,7 +253,7 @@ internal object AioListener : IKernelMsgListener {
                     || record.peerUin == TicketSvc.getLongUin()
                 ) return@launch
 
-                val rawMsg = record.elements.toCQCode(record.chatType, record.peerUin.toString())
+                val rawMsg = record.elements.toCQCode(record.chatType, peerId, record.channelId ?: peerId)
                 if (rawMsg.isEmpty()) return@launch
                 LogCenter.log("自发消息(target = ${record.peerUin}, id = $msgHash, msg = $rawMsg)")
 

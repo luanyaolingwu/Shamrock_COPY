@@ -21,12 +21,15 @@ internal enum class MsgSubType {
     @SerialName("group") GroupLess,
     @SerialName("friend") Friend,
     @SerialName("other") Other,
+
+    @SerialName("channel") Channel
 }
 
 @Serializable
 internal enum class MsgType {
     @SerialName("group") Group,
-    @SerialName("private") Private
+    @SerialName("private") Private,
+    @SerialName("guild") Guild
 }
 
 @Serializable
@@ -94,4 +97,5 @@ internal data class Sender(
     @SerialName("role") val role: MemberRole?,
     @SerialName("title") val title: String,
     @SerialName("level") val level: String,
+    @SerialName("tiny_id") val tinyId: String = "0",
 )

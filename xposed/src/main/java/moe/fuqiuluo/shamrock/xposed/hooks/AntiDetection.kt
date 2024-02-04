@@ -1,6 +1,7 @@
 @file:Suppress("UNCHECKED_CAST", "LocalVariableName")
 package moe.fuqiuluo.shamrock.xposed.hooks
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.pm.VersionedPackage
@@ -25,10 +26,24 @@ class AntiDetection: IAction {
 
     override fun invoke(ctx: Context) {
         antiFindPackage(ctx)
+        antiProviderDetection()
         antiNativeDetection()
         if (ShamrockConfig.isAntiTrace())
             antiTrace()
         antiMemoryWalking()
+    }
+
+    private fun antiProviderDetection() {
+        ContentResolver::class.java.hookMethod("acquireContentProviderClient").before {
+            val uri = it.args[0] as String
+            if (uri == "moe.fuqiuluo.108.provider" || uri == "moe.fuqiuluo.xqbot.provider" || uri == "moe.fuqiuluo.hanahime.provider") {
+                it.result = null
+                LogCenter.log("AntiDetection: 检测到对Shamrock的检测，欺骗ContentResolver", Level.WARN)
+            }
+            //else {
+            //    LogCenter.log(uri)
+            //}
+        }
     }
 
     val isModuleStack = fun String.(): Boolean {

@@ -7,6 +7,10 @@ import com.tencent.mobileqq.app.QQAppInterface
 import com.tencent.mobileqq.msf.core.MsfCore
 import com.tencent.mobileqq.pb.ByteStringMicro
 import com.tencent.qphone.base.remote.ToServiceMsg
+import io.ktor.utils.io.core.BytePacketBuilder
+import io.ktor.utils.io.core.readBytes
+import io.ktor.utils.io.core.writeFully
+import io.ktor.utils.io.core.writeInt
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -15,11 +19,13 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
+import moe.fuqiuluo.shamrock.tools.slice
+import moe.fuqiuluo.shamrock.utils.DeflateTools
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
 import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
 import moe.fuqiuluo.shamrock.xposed.helper.internal.DynamicReceiver
 import moe.fuqiuluo.shamrock.xposed.helper.internal.IPCRequest
-import moe.whitechi73.protobuf.oidb.TrpcOidb
+import protobuf.oidb.TrpcOidb
 import mqq.app.MobileQQ
 import tencent.im.oidb.oidb_sso
 import kotlin.coroutines.resume
@@ -38,7 +44,7 @@ internal abstract class BaseSvc {
 
         suspend fun sendOidbAW(cmd: String, cmdId: Int, serviceId: Int, data: ByteArray, trpc: Boolean = false, timeout: Long = 5000L): ByteArray? {
             val seq = MsfCore.getNextSeq()
-            return withTimeoutOrNull(timeout) {
+            val buffer = withTimeoutOrNull(timeout) {
                 suspendCancellableCoroutine { continuation ->
                     GlobalScope.launch(Dispatchers.Default) {
                         DynamicReceiver.register(IPCRequest(cmd, seq) {
@@ -53,11 +59,21 @@ internal abstract class BaseSvc {
                 if (it == null)
                     DynamicReceiver.unregister(seq)
             }?.copyOf()
+            try {
+                if (buffer != null && buffer.size >= 5 && buffer[4] == 120.toByte()) {
+                    val builder = BytePacketBuilder()
+                    val deBuffer = DeflateTools.uncompress(buffer.slice(4))
+                    builder.writeInt(deBuffer.size)
+                    builder.writeFully(deBuffer)
+                    return builder.build().readBytes()
+                }
+            } catch (_: Exception) { }
+            return buffer
         }
 
         suspend fun sendBufferAW(cmd: String, isPb: Boolean, data: ByteArray, timeout: Long = 5000L): ByteArray? {
             val seq = MsfCore.getNextSeq()
-            return withTimeoutOrNull<ByteArray?>(timeout) {
+            val buffer = withTimeoutOrNull<ByteArray?>(timeout) {
                 suspendCancellableCoroutine { continuation ->
                     GlobalScope.launch(Dispatchers.Default) {
                         DynamicReceiver.register(IPCRequest(cmd, seq) {
@@ -71,6 +87,16 @@ internal abstract class BaseSvc {
                 if (it == null)
                     DynamicReceiver.unregister(seq)
             }?.copyOf()
+            try {
+                if (buffer != null && buffer.size >= 5 && buffer[4] == 120.toByte()) {
+                    val builder = BytePacketBuilder()
+                    val deBuffer = DeflateTools.uncompress(buffer.slice(4))
+                    builder.writeInt(deBuffer.size)
+                    builder.writeFully(deBuffer)
+                    return builder.build().readBytes()
+                }
+            } catch (_: Exception) { }
+            return buffer
         }
 
         fun sendOidb(cmd: String, cmdId: Int, serviceId: Int, buffer: ByteArray, seq: Int = -1, trpc: Boolean = false) {
@@ -125,7 +151,7 @@ internal abstract class BaseSvc {
 
     protected suspend fun sendAW(toServiceMsg: ToServiceMsg, timeout: Long = 5000L): ByteArray? {
         val seq = MsfCore.getNextSeq()
-        return withTimeoutOrNull<ByteArray?>(timeout) {
+        val buffer = withTimeoutOrNull<ByteArray?>(timeout) {
             suspendCancellableCoroutine { continuation ->
                 GlobalScope.launch(Dispatchers.Default) {
                     DynamicReceiver.register(IPCRequest(toServiceMsg.serviceCmd, seq) {
@@ -139,6 +165,16 @@ internal abstract class BaseSvc {
         }.also {
             if (it == null) DynamicReceiver.unregister(seq)
         }?.copyOf()
+        try {
+            if (buffer != null && buffer.size >= 5 && buffer[4] == 120.toByte()) {
+                val builder = BytePacketBuilder()
+                val deBuffer = DeflateTools.uncompress(buffer.slice(4))
+                builder.writeInt(deBuffer.size)
+                builder.writeFully(deBuffer)
+                return builder.build().readBytes()
+            }
+        } catch (_: Exception) { }
+        return buffer
     }
 
     protected fun sendExtra(cmd: String, builder: (Bundle) -> Unit) {

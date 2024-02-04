@@ -32,7 +32,7 @@ public interface IKernelGuildService {
     //void fetchGuestGuildInfoWithChannelList(String guildId, String str2, int i2, int seq, String str3,
     //                                        IGProFetchGuestGuildInfoWithChannelListCallback iGProFetchGuestGuildInfoWithChannelListCallback);
 
-    GProGuild getGuildInfoFromCache(long j2);
+    GProGuild getGuildInfoFromCache(long guildId);
 
     // 第一次请求: startIndex = 0 , roleIdIndex = 2
     void fetchMemberListWithRole(long guildId, long channelId, long startIndex, long roleIndex, int count, int seq, IGProFetchMemberListWithRoleCallback cb);
@@ -41,7 +41,22 @@ public interface IKernelGuildService {
 
     void refreshGuildInfoOnly(long j2, boolean z, int i2);
 
-    void fetchUserInfo(long j2, long j3, ArrayList<Long> tinyIdList, int i2, IGProGetUserInfoCallback iGProGetUserInfoCallback);
+    void refreshGuildUserProfileInfo(long guildId, long tinyId, int seq);
+
+    void fetchUserInfo(long guildId, long channelId, ArrayList<Long> tinyIdList, int seq, IGProGetUserInfoCallback cb);
+
+    @Deprecated(since = "QQ新版本不支持创建话题子频道")
+    void fetchTopFeeds(long guildId, long channelId, IGProFetchTopFeedsCallback cb);
+
+    void fetchChannelInvisibleRoleList(long guildId, long channelId, IGProFetchChannelInvisibleRoleListCallback cb);
+
+    void fetchChannelLiveableRoleList(long guildId, long channelId, IGProFetchChannelLiveableRoleListCallback cb);
+
+    void fetchMemberRoles(long guildId, long channelId, long tinyId, int seq, IGProFetchMemberRolesCallback cb);
+
+    void fetchRoleListWithPermission(long guildId, int seq, IGProFetchRoleListPermissionCallback cb);
+
+    void fetchRoleWithPermission(long guildId, long roleId, int seq, IGProFetchRolePermissionCallback cb);
 
     GProSimpleProfile getSimpleProfile(long guildId, long tinyId, int seq);
 
@@ -50,4 +65,12 @@ public interface IKernelGuildService {
     String getGuildUserAvatarUrl(long guildId, long tinyId, int seq);
 
     String getGuildUserNickname(long guildId);
+
+    void deleteRole(long guild, long role, IGProResultCallback cb);
+
+    void setMemberRoles(long guild, long u1, long u2, long tinyId, ArrayList<Long> addRoles, ArrayList<Long> removeRoles, IGProResultCallback cb);
+
+    void setRoleInfo(long guild, long role, GProRoleCreateInfo info, IGProResultCallback cb);
+
+    void createRole(long guildId, GProRoleCreateInfo info, ArrayList<Long> initialUsers, IGProCreateRoleCallback cb);
 }
