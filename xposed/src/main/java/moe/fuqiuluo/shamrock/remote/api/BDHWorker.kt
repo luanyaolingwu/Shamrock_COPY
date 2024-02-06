@@ -16,7 +16,7 @@ import kotlin.random.Random
 import kotlin.random.nextLong
 
 fun Routing.registerBDH() {
-    if(ShamrockConfig.isDev()) post("/upload_group_image") {
+    if(/*ShamrockConfig.isDev()*/ShamrockConfig.isPro()) post("/upload_group_image") {
         val troop = fetchPost("troop")
         val picBytes = Base64.decode(fetchPost("pic"), Base64.DEFAULT)
         val md5Str = MD5.getMd5Hex(picBytes)
