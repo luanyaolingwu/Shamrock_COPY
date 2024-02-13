@@ -1,9 +1,15 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package moe.fuqiuluo.shamrock.remote.service.api
 
 import com.tencent.qqnt.kernel.nativeinterface.MsgElement
 import com.tencent.qqnt.kernel.nativeinterface.MsgRecord
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import moe.fuqiuluo.qqinterface.servlet.BaseSvc
 import moe.fuqiuluo.qqinterface.servlet.CardSvc
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
@@ -48,7 +54,7 @@ internal object GlobalEventTransmitter: BaseSvc() {
     private suspend fun transMessageEvent(record: MsgRecord, message: MessageEvent) = messageEventFlow.emit(record to message)
 
     /**
-     * 消息 手淫器
+     * 消息
      */
     object MessageTransmitter {
         /**
@@ -556,19 +562,29 @@ internal object GlobalEventTransmitter: BaseSvc() {
 
     @ShamrockDsl
     suspend inline fun onMessageEvent(collector: FlowCollector<Pair<MsgRecord, MessageEvent>>) {
-        messageEventFlow.collect(collector)
+        messageEventFlow.collect {
+            GlobalScope.launch {
+                collector.emit(it)
+            }
+        }
     }
 
     @ShamrockDsl
     suspend inline fun onNoticeEvent(collector: FlowCollector<NoticeEvent>) {
-        noticeEventFlow
-            .collect(collector)
+        noticeEventFlow.collect {
+            GlobalScope.launch {
+                collector.emit(it)
+            }
+        }
     }
 
     @ShamrockDsl
     suspend inline fun onRequestEvent(collector: FlowCollector<RequestEvent>) {
-        requestEventFlow
-            .collect(collector)
+        requestEventFlow.collect {
+            GlobalScope.launch {
+                collector.emit(it)
+            }
+        }
     }
 }
 
