@@ -2,6 +2,10 @@ package moe.fuqiuluo.qqinterface.servlet.msg.convert
 
 import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import com.tencent.qqnt.kernel.nativeinterface.MsgElement
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
 import moe.fuqiuluo.shamrock.helper.ContactHelper
 import moe.fuqiuluo.shamrock.helper.Level
@@ -12,6 +16,7 @@ import moe.fuqiuluo.shamrock.helper.db.ImageMapping
 import moe.fuqiuluo.shamrock.helper.db.MessageDB
 import moe.fuqiuluo.shamrock.tools.asJsonObject
 import moe.fuqiuluo.shamrock.tools.asString
+import moe.fuqiuluo.shamrock.tools.hex2ByteArray
 import moe.fuqiuluo.shamrock.tools.json
 
 internal sealed class MessageElemConverter: IMessageConvert {
@@ -135,14 +140,19 @@ internal sealed class MessageElemConverter: IMessageConvert {
                 ImageMapping(md5.uppercase(), chatType, image.fileSize)
             )
 
+            //LogCenter.log(image.toString())
+
+            val originalUrl = image.originImageUrl ?: ""
+            //LogCenter.log({ "receive image: $image" }, Level.DEBUG)
+
             return MessageSegment(
                 type = "image",
                 data = hashMapOf(
                     "file" to md5,
                     "url" to when(chatType) {
-                        MsgConstant.KCHATTYPEGROUP -> RichProtoSvc.getGroupPicDownUrl(md5)
-                        MsgConstant.KCHATTYPEC2C -> RichProtoSvc.getC2CPicDownUrl(md5)
-                        MsgConstant.KCHATTYPEGUILD -> RichProtoSvc.getGuildPicDownUrl(md5)
+                        MsgConstant.KCHATTYPEDISC, MsgConstant.KCHATTYPEGROUP -> RichProtoSvc.getGroupPicDownUrl(originalUrl, md5)
+                        MsgConstant.KCHATTYPEC2C -> RichProtoSvc.getC2CPicDownUrl(originalUrl, md5)
+                        MsgConstant.KCHATTYPEGUILD -> RichProtoSvc.getGuildPicDownUrl(originalUrl, md5)
                         else -> unknownChatType(chatType)
                     },
                     "subType" to image.picSubType,
@@ -201,7 +211,15 @@ internal sealed class MessageElemConverter: IMessageConvert {
             element: MsgElement
         ): MessageSegment {
             val video = element.videoElement
-            val md5 = video.fileName.split(".")[0]
+            val md5 = if (video.fileName.contains("/")) {
+                video.videoMd5.takeIf {
+                    !it.isNullOrEmpty()
+                }?.hex2ByteArray() ?: video.fileName.split("/").let {
+                    it[it.size - 2].hex2ByteArray()
+                }
+            } else video.fileName.split(".")[0].hex2ByteArray()
+
+            //LogCenter.log({ "receive video msg: $video" }, Level.DEBUG)
 
             return MessageSegment(
                 type = "video",
@@ -210,7 +228,7 @@ internal sealed class MessageElemConverter: IMessageConvert {
                     "url" to when(chatType) {
                         MsgConstant.KCHATTYPEGROUP -> RichProtoSvc.getGroupVideoDownUrl("0", md5, video.fileUuid)
                         MsgConstant.KCHATTYPEC2C -> RichProtoSvc.getC2CVideoDownUrl("0", md5, video.fileUuid)
-                        MsgConstant.KCHATTYPEGUILD -> RichProtoSvc.getGroupVideoDownUrl(peerId, md5, video.fileUuid)
+                        MsgConstant.KCHATTYPEGUILD -> RichProtoSvc.getGroupVideoDownUrl("0", md5, video.fileUuid)
                         else -> unknownChatType(chatType)
                     }
                 ).also {
@@ -482,6 +500,53 @@ internal sealed class MessageElemConverter: IMessageConvert {
                 data = mapOf(
                     "id" to bubbleElement.yellowFaceInfo.index,
                     "count" to (bubbleElement.faceCount ?: 1),
+                )
+            )
+        }
+    }
+
+    data object InlineKeyboardConverter: MessageElemConverter() {
+        override suspend fun convert(
+            chatType: Int,
+            peerId: String,
+            subPeer: String,
+            element: MsgElement
+        ): MessageSegment {
+            val keyboard = element.inlineKeyboardElement
+            return MessageSegment(
+                type = "inline_keyboard",
+                data = mapOf(
+                    "data" to buildJsonObject {
+                        putJsonArray("rows") {
+                            keyboard.rows.forEach {  row ->
+                                add(buildJsonObject row@{
+                                    putJsonArray("buttons") {
+                                        row.buttons.forEach { button ->
+                                            add(buildJsonObject {
+                                                put("id", button.id ?: "")
+                                                put("label", button.label ?: "")
+                                                put("visited_label", button.visitedLabel ?: "")
+                                                put("style", button.style)
+                                                put("type", button.type)
+                                                put("click_limit", button.clickLimit)
+                                                put("unsupport_tips", button.unsupportTips ?: "")
+                                                put("data", button.data)
+                                                put("at_bot_show_channel_list", button.atBotShowChannelList)
+                                                put("permission_type", button.permissionType)
+                                                putJsonArray("specify_role_ids") {
+                                                    button.specifyRoleIds?.forEach { add(it) }
+                                                }
+                                                putJsonArray("specify_tinyids") {
+                                                    button.specifyTinyids?.forEach { add(it) }
+                                                }
+                                            })
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                        put("bot_appid", keyboard.botAppid)
+                    }.toString()
                 )
             )
         }

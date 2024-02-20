@@ -19,18 +19,35 @@ import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.tools.toHexString
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
 import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
+import mqq.app.MobileQQ
 import protobuf.oidb.cmd0xfc2.Oidb0xfc2ChannelInfo
 import protobuf.oidb.cmd0xfc2.Oidb0xfc2MsgApplyDownloadReq
 import protobuf.oidb.cmd0xfc2.Oidb0xfc2ReqBody
 import protobuf.oidb.cmd0xfc2.Oidb0xfc2RspBody
-import mqq.app.MobileQQ
 import tencent.im.cs.cmd0x346.cmd0x346
 import tencent.im.oidb.cmd0x6d6.oidb_0x6d6
 import tencent.im.oidb.cmd0xe37.cmd0xe37
 import tencent.im.oidb.oidb_sso
 import kotlin.coroutines.resume
 
+private const val GPRO_PIC = "gchat.qpic.cn"
+private const val GPRO_PIC_NT = "multimedia.nt.qq.com.cn"
+private const val C2C_PIC = "c2cpicdw.qpic.cn"
+
 internal object RichProtoSvc: BaseSvc() {
+    var multiMediaRKey = "CAQSKAB6JWENi5LMk0kc62l8Pm3Jn1dsLZHyRLAnNmHGoZ3y_gDZPqZt-64"
+    /*@Deprecated("Use RichProtoSvc.getQQDns instead", ReplaceWith("getQQDns(domain)"))
+    fun getQQDns(domain: String) {
+        val bundle = Bundle()
+        bundle.putString("domain", "xxx")
+        bundle.putInt("businessType", 1)
+        val result = BinderMethodProxy
+            .callServer(QIPCClientHelper.getInstance().client, "InnerDnsModule", "reqDomain2IpList", bundle)
+        if (result.isSuccess) {
+            val ipList: ArrayList<IpData> = result.data.getParcelableArrayList("ip")!!
+        }
+    }*/
+
     suspend fun getGuildFileDownUrl(peerId: String, channelId: String, fileId: String, bizId: Int): String {
         val buffer = sendOidbAW("OidbSvcTrpcTcp.0xfc2_0", 4034, 0, ProtoBuf.encodeToByteArray(
             Oidb0xfc2ReqBody(
@@ -142,24 +159,48 @@ internal object RichProtoSvc: BaseSvc() {
     }
 
     fun getGroupPicDownUrl(
-        md5: String
+        originalUrl: String,
+        md5: String,
     ): String {
-        return "http://gchat.qpic.cn/gchatpic_new/0/0-0-${md5.uppercase()}/0?term=2"
+        val isNtServer = originalUrl.startsWith("/download")
+        val domain = if (isNtServer) GPRO_PIC_NT else GPRO_PIC
+        if (originalUrl.isNotEmpty()) {
+            if (isNtServer && !originalUrl.contains("rkey=")) {
+                return "https://$domain$originalUrl&rkey=$multiMediaRKey"
+            }
+            return "https://$domain$originalUrl"
+        }
+        return "https://$domain/gchatpic_new/0/0-0-${md5.uppercase()}/0?term=2"
     }
 
     fun getC2CPicDownUrl(
+        originalUrl: String,
         md5: String
     ): String {
-        return "https://c2cpicdw.qpic.cn/offpic_new/0/123-0-${md5.uppercase()}/0?term=2"
+        if (originalUrl.isNotEmpty()) {
+            return "https://$C2C_PIC$originalUrl"
+        }
+        return "https://$C2C_PIC/offpic_new/0/123-0-${md5.uppercase()}/0?term=2"
     }
 
-    fun getGuildPicDownUrl(md5: String): String {
-        return "https://gchat.qpic.cn/qmeetpic/0/0-0-${md5.uppercase()}/0?term=2"
+    fun getGuildPicDownUrl(
+        originalUrl: String,
+        md5: String
+    ): String {
+        val isNtServer = originalUrl.startsWith("/download")
+        val domain = if (isNtServer) GPRO_PIC_NT else GPRO_PIC
+        if (originalUrl.isNotEmpty()) {
+            if (isNtServer && !originalUrl.contains("rkey=")) {
+                return "https://$domain$originalUrl&rkey=$multiMediaRKey"
+            }
+            return "https://$domain$originalUrl"
+        }
+        return "https://$domain/qmeetpic/0/0-0-${md5.uppercase()}/0?term=2"
     }
 
     suspend fun getC2CVideoDownUrl(
         peerId: String,
-        md5Hex: String,
+        md5: ByteArray,
         fileUUId: String
     ): String {
         return suspendCancellableCoroutine {
@@ -175,7 +216,7 @@ internal object RichProtoSvc: BaseSvc() {
             downReq.troopUin = peerId
             downReq.clientType = 2
             downReq.fileId = fileUUId
-            downReq.md5 = md5Hex.hex2ByteArray()
+            downReq.md5 = md5
             downReq.busiType = FileTransfer.BUSI_TYPE_SHORT_VIDEO
             downReq.subBusiType = 0
             downReq.fileType = FileTransfer.VIDEO_FORMAT_MP4
@@ -202,7 +243,7 @@ internal object RichProtoSvc: BaseSvc() {
 
     suspend fun getGroupVideoDownUrl(
         peerId: String,
-        md5Hex: String,
+        md5: ByteArray,
         fileUUId: String
     ): String {
         return suspendCancellableCoroutine {
@@ -218,7 +259,7 @@ internal object RichProtoSvc: BaseSvc() {
             downReq.troopUin = peerId
             downReq.clientType = 2
             downReq.fileId = fileUUId
-            downReq.md5 = md5Hex.hex2ByteArray()
+            downReq.md5 = md5
             downReq.busiType = FileTransfer.BUSI_TYPE_SHORT_VIDEO
             downReq.subBusiType = 0
             downReq.fileType = FileTransfer.VIDEO_FORMAT_MP4
@@ -320,13 +361,5 @@ internal object RichProtoSvc: BaseSvc() {
             richProtoReq.protoReqMgr = runtime.getRuntimeService(IProtoReqManager::class.java, "all")
             RichProtoProc.procRichProtoReq(richProtoReq)
         }
-    }
-
-    suspend fun getGuildPttDownUrl(
-        peerId: String,
-        md5Hex: String,
-        fileUUId: String
-    ): String {
-        return "unsupported"
     }
 }

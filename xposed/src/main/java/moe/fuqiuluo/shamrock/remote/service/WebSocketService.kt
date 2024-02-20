@@ -26,24 +26,24 @@ internal class WebSocketService(
     port: Int,
     heartbeatInterval: Long,
 ): WebSocketTransmitServlet(host, port, heartbeatInterval) {
-    private val eventJobList = mutableSetOf<Job>()
+    private val subscribes = mutableSetOf<Job>()
 
-    override fun submitFlowJob(job: Job) {
-        eventJobList.add(job)
+    override fun subscribe(job: Job) {
+        subscribes.add(job)
     }
 
-    override fun initTransmitter() {
-        submitFlowJob(GlobalScope.launch {
+    override fun init() {
+        subscribe(GlobalScope.launch {
             GlobalEventTransmitter.onMessageEvent { (_, event) ->
                 pushTo(event)
             }
         })
-        submitFlowJob(GlobalScope.launch {
+        subscribe(GlobalScope.launch {
             GlobalEventTransmitter.onNoticeEvent { event ->
                 pushTo(event)
             }
         })
-        submitFlowJob(GlobalScope.launch {
+        subscribe(GlobalScope.launch {
             GlobalEventTransmitter.onRequestEvent { event ->
                 pushTo(event)
             }
@@ -51,8 +51,8 @@ internal class WebSocketService(
         LogCenter.log("WebSocketService: 初始化服务", Level.WARN)
     }
 
-    override fun cancelFlowJobs() {
-        eventJobList.removeIf { job ->
+    override fun unsubscribe() {
+        subscribes.removeIf { job ->
             job.cancel()
             return@removeIf true
         }
@@ -60,8 +60,10 @@ internal class WebSocketService(
     }
 
     override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
-        val token = ShamrockConfig.getActiveWebSocketConfig()?.token ?: ShamrockConfig.getToken()
-        if (token.isNotBlank()) {
+        val token = ShamrockConfig.getActiveWebSocketConfig()?.tokens
+            ?: ShamrockConfig.getActiveWebSocketConfig()?.token?.split(",", "|", "，")
+            ?: listOf(ShamrockConfig.getToken())
+        if (token.isNotEmpty()) {
             var accessToken = handshake.getFieldValue("access_token")
                 .ifNullOrEmpty(handshake.getFieldValue("ticket"))
                 .ifNullOrEmpty(handshake.getFieldValue("Authorization"))
@@ -69,8 +71,7 @@ internal class WebSocketService(
             if (accessToken.startsWith("Bearer ", ignoreCase = true)) {
                 accessToken = accessToken.substring(7)
             }
-            val tokenList = token.split(",", "|", "，")
-            if (!tokenList.contains(accessToken)) {
+            if (!token.contains(accessToken)) {
                 conn.close()
                 LogCenter.log({ "WSServer连接错误(${conn.remoteSocketAddress.address.hostAddress}:${conn.remoteSocketAddress.port}) 没有提供正确的token, $accessToken。" }, Level.ERROR)
                 return

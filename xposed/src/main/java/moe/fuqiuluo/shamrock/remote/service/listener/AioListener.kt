@@ -7,6 +7,7 @@ import com.tencent.qqnt.kernel.nativeinterface.*
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import moe.fuqiuluo.qqinterface.servlet.msg.convert.toCQCode
 import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
@@ -154,11 +155,19 @@ internal object AioListener : IKernelMsgListener {
                 MsgConstant.KCHATTYPETEMPC2CFROMGROUP -> {
                     if (!ShamrockConfig.allowTempSession()) return
 
-                    LogCenter.log("私聊临时消息(private = ${record.senderUin}, id = $msgHash, msg = $rawMsg)")
                     ShamrockConfig.getPrivateRule()?.let { rule ->
                         if (!rule.black.isNullOrEmpty() && rule.black.contains(record.senderUin)) return
                         if (!rule.white.isNullOrEmpty() && !rule.white.contains(record.senderUin)) return
                     }
+
+                    var groupCode = 0L
+                    var fromNick = ""
+                    MsgSvc.getTempChatInfo(record.chatType, record.senderUid).onSuccess {
+                        groupCode = it.groupCode.toLong()
+                        fromNick = it.fromNick
+                    }
+
+                    LogCenter.log("私聊临时消息(private = ${record.senderUin}, groupId=$groupCode, id = $msgHash, msg = $rawMsg)")
 
                     if (!GlobalEventTransmitter.MessageTransmitter.transPrivateMessage(
                             record,
@@ -166,7 +175,9 @@ internal object AioListener : IKernelMsgListener {
                             rawMsg,
                             msgHash,
                             tempSource = MessageTempSource.Group,
-                            postType = postType
+                            postType = postType,
+                            groupId = groupCode,
+                            fromNick = fromNick
                         )
                     ) {
                         LogCenter.log("私聊临时消息推送失败 -> MessageTransmitter", Level.WARN)
@@ -174,7 +185,7 @@ internal object AioListener : IKernelMsgListener {
                 }
 
                 MsgConstant.KCHATTYPEGUILD -> {
-                    LogCenter.log("频道消息(guildId = ${record.guildId}, sender=${record.senderUid}, id = [$msgHash | ${record.msgId}], msg = $rawMsg)")
+                    LogCenter.log("频道消息(guildId = ${record.guildId}, sender = ${record.senderUid}, id = [$msgHash | ${record.msgId}], msg = $rawMsg)")
                     if (!GlobalEventTransmitter.MessageTransmitter
                             .transGuildMessage(record, record.elements, rawMsg, msgHash, postType = postType)
                     ) {
@@ -199,7 +210,6 @@ internal object AioListener : IKernelMsgListener {
         GlobalScope.launch {
             try {
                 val msgHash = MessageHelper.generateMsgIdHash(record.chatType, record.msgId)
-
                 val peerId = when (record.chatType) {
                     MsgConstant.KCHATTYPEGUILD -> record.guildId
                     else -> record.peerUin.toString()

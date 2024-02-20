@@ -59,6 +59,7 @@ import moe.fuqiuluo.shamrock.remote.service.data.EssenceMessage
 import moe.fuqiuluo.shamrock.remote.service.data.GroupAnnouncement
 import moe.fuqiuluo.shamrock.remote.service.data.GroupAnnouncementMessage
 import moe.fuqiuluo.shamrock.remote.service.data.GroupAnnouncementMessageImage
+import moe.fuqiuluo.shamrock.remote.service.data.push.MemberRole
 import moe.fuqiuluo.shamrock.tools.EmptyJsonArray
 import moe.fuqiuluo.shamrock.tools.GlobalClient
 import moe.fuqiuluo.shamrock.tools.asInt
@@ -96,6 +97,8 @@ import java.nio.ByteBuffer
 import kotlin.coroutines.resume
 
 internal object GroupSvc: BaseSvc() {
+    private const val GET_MEMBER_ROLE_BY_NT = false
+
     private val RefreshTroopMemberInfoLock by lazy {
         Mutex()
     }
@@ -394,6 +397,27 @@ internal object GroupSvc: BaseSvc() {
             .filter { it != 0L }
     }
 
+    suspend fun getMemberRole(groupId: Long, memberUin: Long): MemberRole {
+        if (!GET_MEMBER_ROLE_BY_NT) {
+            return when (memberUin) {
+                getOwner(groupId.toString()) -> MemberRole.Owner
+                in getAdminList(groupId.toString()) -> MemberRole.Admin
+                else -> MemberRole.Member
+            }
+        }
+        return when(getTroopMemberInfoByUinViaNt(groupId.toString(), memberUin, 3000).getOrNull()?.role) {
+            com.tencent.qqnt.kernel.nativeinterface.MemberRole.STRANGER -> MemberRole.Stranger
+            com.tencent.qqnt.kernel.nativeinterface.MemberRole.MEMBER -> MemberRole.Member
+            com.tencent.qqnt.kernel.nativeinterface.MemberRole.ADMIN -> MemberRole.Admin
+            com.tencent.qqnt.kernel.nativeinterface.MemberRole.OWNER -> MemberRole.Owner
+            com.tencent.qqnt.kernel.nativeinterface.MemberRole.UNSPECIFIED, null -> when (memberUin) {
+                getOwner(groupId.toString()) -> MemberRole.Owner
+                in getAdminList(groupId.toString()) -> MemberRole.Admin
+                else -> MemberRole.Member
+            }
+        }
+    }
+
     fun getOwner(groupId: String): Long {
         val groupInfo = getGroupInfo(groupId)
         return groupInfo.troopowneruin?.toLong() ?: 0
@@ -566,29 +590,92 @@ internal object GroupSvc: BaseSvc() {
         }
     }
 
-    private suspend fun getTroopMemberInfoByUinViaNt(groupId: String, qq: Long): Result<MemberInfo> {
-        val kernelService = NTServiceFetcher.kernelService
-        val sessionService = kernelService.wrapperSession
-        val groupService = sessionService.groupService
-        val info = suspendCancellableCoroutine {
-            groupService.getTransferableMemberInfo(groupId.toLong()) { code, _, data ->
-                if (code != 0) {
-                    it.resume(null)
-                    return@getTransferableMemberInfo
+    suspend fun getTroopMemberInfoByUinV2(
+        groupId: String,
+        uin: String,
+        refresh: Boolean = false
+    ): Result<TroopMemberInfo> {
+        val service = app.getRuntimeService(ITroopMemberInfoService::class.java, "all")
+        var info = service.getTroopMember(groupId, uin)
+        if (refresh || !service.isMemberInCache(groupId, uin) || info == null || info.troopnick == null) {
+            info = requestTroopMemberInfo(service, groupId.toLong(), uin.toLong(), timeout = 2000).getOrNull()
+        }
+        if (info == null) {
+            info = getTroopMemberInfoByUinViaNt(groupId, uin.toLong(), timeout = 2000L).getOrNull()?.let {
+                TroopMemberInfo().apply {
+                    troopnick = it.cardName
+                    friendnick = it.nick
                 }
-                data.forEach { (_, info) ->
-                    if (info.uin == qq) {
-                        it.resume(info)
-                        return@forEach
+            }
+        }
+        try {
+            if (info != null && (info.alias == null || info.alias.isBlank())) {
+                val req = group_member_info.ReqBody()
+                req.uint64_group_code.set(groupId.toLong())
+                req.uint64_uin.set(uin.toLong())
+                req.bool_new_client.set(true)
+                req.uint32_client_type.set(1)
+                req.uint32_rich_card_name_ver.set(1)
+                val respBuffer = sendBufferAW("group_member_card.get_group_member_card_info", true, req.toByteArray(), timeout = 2000)
+                if (respBuffer != null) {
+                    val rsp = group_member_info.RspBody()
+                    rsp.mergeFrom(respBuffer.slice(4))
+                    if (rsp.msg_meminfo.str_location.has()) {
+                        info.alias = rsp.msg_meminfo.str_location.get().toStringUtf8()
+                    }
+                    if (rsp.msg_meminfo.uint32_age.has()) {
+                        info.age = rsp.msg_meminfo.uint32_age.get().toByte()
+                    }
+                    if (rsp.msg_meminfo.bytes_group_honor.has()) {
+                        val honorBytes = rsp.msg_meminfo.bytes_group_honor.get().toByteArray()
+                        val honor = troop_honor.GroupUserCardHonor()
+                        honor.mergeFrom(honorBytes)
+                        info.level = honor.level.get()
+                        // 10315: medal_id not real group level
                     }
                 }
-                it.resume(null)
             }
+        } catch (err: Throwable) {
+            LogCenter.log(err.stackTraceToString(), Level.WARN)
         }
         return if (info != null) {
             Result.success(info)
         } else {
             Result.failure(Exception("获取群成员信息失败"))
+        }
+    }
+
+    suspend fun getTroopMemberInfoByUinViaNt(
+        groupId: String,
+        qq: Long,
+        timeout: Long = 5000L
+    ): Result<MemberInfo> {
+        return runCatching {
+            val kernelService = NTServiceFetcher.kernelService
+            val sessionService = kernelService.wrapperSession
+            val groupService = sessionService.groupService
+            val info = withTimeoutOrNull(timeout) {
+                suspendCancellableCoroutine {
+                    groupService.getTransferableMemberInfo(groupId.toLong()) { code, _, data ->
+                        if (code != 0) {
+                            it.resume(null)
+                            return@getTransferableMemberInfo
+                        }
+                        data.forEach { (_, info) ->
+                            if (info.uin == qq) {
+                                it.resume(info)
+                                return@forEach
+                            }
+                        }
+                        it.resume(null)
+                    }
+                }
+            }
+            return if (info != null) {
+                Result.success(info)
+            } else {
+                Result.failure(Exception("获取群成员信息失败"))
+            }
         }
     }
 
@@ -748,7 +835,7 @@ internal object GroupSvc: BaseSvc() {
         }
     }
 
-    private suspend fun requestTroopMemberInfo(service: ITroopMemberInfoService, groupId: Long, memberUin: Long): Result<TroopMemberInfo> {
+    private suspend fun requestTroopMemberInfo(service: ITroopMemberInfoService, groupId: Long, memberUin: Long, timeout: Long = 10_000): Result<TroopMemberInfo> {
         val info = RefreshTroopMemberInfoLock.withLock {
             val groupIdStr = groupId.toString()
             val memberUinStr = memberUin.toString()
@@ -758,7 +845,7 @@ internal object GroupSvc: BaseSvc() {
             requestMemberInfoV2(groupId, memberUin)
             requestMemberInfo(groupId, memberUin)
 
-            withTimeoutOrNull(10000) {
+            withTimeoutOrNull(timeout) {
                 while (!service.isMemberInCache(groupIdStr, memberUinStr)) {
                     delay(200)
                 }
