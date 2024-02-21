@@ -4,7 +4,7 @@ import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import kotlinx.serialization.json.*
 import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc
-import moe.fuqiuluo.qqinterface.servlet.msg.convert.toSegments
+import moe.fuqiuluo.qqinterface.servlet.msg.msgelement.toSegments
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.helper.MessageHelper
@@ -107,7 +107,13 @@ internal object SendForwardMessage : IActionHandler() {
                             ) else null
                         ),
                         content = MessageContent(
-                            msgType = record.msgType,
+                            msgType = when (record.chatType) {
+                                MsgConstant.KCHATTYPEC2C -> 529
+                                MsgConstant.KCHATTYPEGROUP -> 82
+                                else -> throw UnsupportedOperationException(
+                                    "Unsupported chatType: $chatType"
+                                )
+                            },
                             msgViaRandom = record.msgId,
                             msgSeq = record.msgSeq,
                             msgTime = record.msgTime,
@@ -118,7 +124,7 @@ internal object SendForwardMessage : IActionHandler() {
                                 u1 = 0,
                                 u2 = 0,
                                 u3 = if (record.chatType == MsgConstant.KCHATTYPEGROUP) 0 else 2,
-                                u4 = "",
+                                ub641 = "",
                                 Avatar = ""
                             )
                         ),
@@ -128,8 +134,12 @@ internal object SendForwardMessage : IActionHandler() {
                                     record.chatType,
                                     record.msgId,
                                     record.peerUin.toString(),
-                                    record.elements.toSegments(record.chatType, record.peerUin.toString(), "0").also {
-                                        desc[++i] = record.peerName + ": "
+                                    record.elements.toSegments(
+                                        record.chatType,
+                                        record.peerUin.toString(),
+                                        "0"
+                                    ).also {
+                                        desc[++i] = record.sendMemberName.ifEmpty { record.sendNickName } + ": "
                                     }.map {
                                         when (it.type) {
                                             "text" -> desc[i] += it.data["text"] as String
@@ -142,7 +152,6 @@ internal object SendForwardMessage : IActionHandler() {
 
                                             "node" -> desc[i] += "[合并转发消息]"
                                         }
-
                                         it.toJson()
                                     }.json
                                 ).also {
@@ -154,13 +163,15 @@ internal object SendForwardMessage : IActionHandler() {
                 } else if (data.containsKey("content")) {
                     PushMsgBody(
                         head = MessageHead(
+                            peer = data["uin"]?.asLong ?: TicketSvc.getUin().toLong(),
                             peerUid = data["uid"]?.asString ?: TicketSvc.getUid()
+
                         ),
                         content = MessageContent(
                             msgType = 529,
                             msgViaRandom = 4,
-                            msgSeq = data["seq"]?.asLong ?: 0,
-                            msgTime = System.currentTimeMillis() / 1000,
+                            msgSeq = data["seq"]?.asLong ?: Random.nextLong(),
+                            msgTime = data["time"]?.asLong ?: (System.currentTimeMillis() / 1000),
                             u2 = 1,
                             u6 = 0,
                             u7 = 0,
@@ -168,7 +179,7 @@ internal object SendForwardMessage : IActionHandler() {
                                 u1 = 0,
                                 u2 = 0,
                                 u3 = 2,
-                                u4 = "",
+                                ub641 = "",
                                 Avatar = ""
                             )
                         ),
@@ -221,7 +232,8 @@ internal object SendForwardMessage : IActionHandler() {
                 chatType, peerId,
                 listOf(
                     hashMapOf(
-                        "type" to "json", "data" to hashMapOf(
+                        "type" to "json",
+                        "data" to hashMapOf(
                             "data" to hashMapOf(
                                 "app" to "com.tencent.multimsg",
                                 "config" to hashMapOf(
@@ -235,7 +247,7 @@ internal object SendForwardMessage : IActionHandler() {
                                 "extra" to hashMapOf(
                                     "filename" to uniseq,
                                     "tsum" to 2
-                                ).json.toString() + "\n",
+                                ).json.toString(),
                                 "meta" to hashMapOf(
                                     "detail" to hashMapOf(
                                         "news" to desc.slice(0..if (i < 3) i else 3)
