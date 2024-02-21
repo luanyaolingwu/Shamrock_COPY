@@ -4,10 +4,8 @@
 
 | 版本 | 支持状态          |
 | ------- | ------------------ |
-| 9.0.15  | :white_check_mark: |
-| 8.9.75  | :white_check_mark: |
-| 8.9.73  | :white_check_mark: |
-| 8.9.98  | :white_check_mark: |
+| 9.0.0 ~ 9.0.15  | :white_check_mark: |
+| 8.9.68 ~ 8.9.96  | :white_check_mark: |
 | < 8.9.68| :x:                |
 
 ## 频道支持性说明
