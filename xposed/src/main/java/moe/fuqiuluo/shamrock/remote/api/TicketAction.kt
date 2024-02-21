@@ -1,15 +1,25 @@
 package moe.fuqiuluo.shamrock.remote.api
 
 import io.ktor.http.ContentType
-import moe.fuqiuluo.qqinterface.servlet.TicketSvc
 import io.ktor.server.application.call
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Routing
 import kotlinx.serialization.json.JsonElement
-import moe.fuqiuluo.shamrock.remote.action.handlers.*
+import moe.fuqiuluo.qqinterface.servlet.TicketSvc
+import moe.fuqiuluo.shamrock.remote.action.handlers.GetCSRF
+import moe.fuqiuluo.shamrock.remote.action.handlers.GetCookies
+import moe.fuqiuluo.shamrock.remote.action.handlers.GetCredentials
+import moe.fuqiuluo.shamrock.remote.action.handlers.GetHttpCookies
 import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.remote.structures.Status
-import moe.fuqiuluo.shamrock.tools.*
+import moe.fuqiuluo.shamrock.tools.EmptyJsonObject
+import moe.fuqiuluo.shamrock.tools.asJsonObject
+import moe.fuqiuluo.shamrock.tools.fetchOrNull
+import moe.fuqiuluo.shamrock.tools.fetchOrThrow
+import moe.fuqiuluo.shamrock.tools.getOrPost
+import moe.fuqiuluo.shamrock.tools.json
+import moe.fuqiuluo.shamrock.tools.respond
+import moe.fuqiuluo.shamrock.tools.toHexString
 
 fun Routing.ticketActions() {
     getOrPost("/get_http_cookies") {
@@ -68,7 +78,7 @@ fun Routing.ticketActions() {
         respond(true, Status.Ok, data = ticket)
     }
 
-    if (ShamrockConfig.isDev()) getOrPost("/get_all_ticket") {
+    if (/*ShamrockConfig.isDev()*/ShamrockConfig.isPro()) getOrPost("/get_all_ticket") {
         val uin = fetchOrThrow("uin")
 
         val ticketMap = mutableMapOf<Int, JsonElement>()
