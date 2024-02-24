@@ -43,7 +43,7 @@ internal abstract class IActionHandler {
         return resultToString(true, Status.Ok, EmptyObject, msg, echo = echo)
     }
 
-    protected inline fun <reified T> ok(data: T, echo: JsonElement = EmptyJsonString, msg: String = ""): String {
+    protected inline fun <reified T> ok(data: T, echo: JsonElement, msg: String = ""): String {
         return resultToString(true, Status.Ok, data!!, msg, echo = echo)
     }
 
@@ -147,6 +147,14 @@ internal class ActionSession {
 
     fun getBooleanOrDefault(key: String, default: Boolean? = null): Boolean {
         return params[key].asBooleanOrNull ?: default as Boolean
+    }
+
+    fun getJsonElement(key: String): JsonElement {
+        return params[key]!!
+    }
+
+    fun getJsonElementOrNull(key: String): JsonElement? {
+        return params[key]
     }
 
     fun getObject(key: String): JsonObject {

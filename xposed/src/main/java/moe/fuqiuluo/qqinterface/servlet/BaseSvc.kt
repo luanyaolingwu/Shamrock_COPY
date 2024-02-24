@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.encodeToByteArray
-import kotlinx.serialization.protobuf.ProtoBuf
+
 import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.utils.DeflateTools
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
@@ -28,6 +28,7 @@ import moe.fuqiuluo.shamrock.xposed.helper.internal.DynamicReceiver
 import moe.fuqiuluo.shamrock.xposed.helper.internal.IPCRequest
 import protobuf.oidb.TrpcOidb
 import mqq.app.MobileQQ
+import protobuf.auto.toByteArray
 import tencent.im.oidb.oidb_sso
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
@@ -127,9 +128,9 @@ internal abstract class BaseSvc {
                 cmd = cmdId,
                 service = serviceId,
                 buffer = buffer,
-                flag = 0
+                flag = 1
             )
-            to.putWupBuffer(ProtoBuf.encodeToByteArray(oidb))
+            to.putWupBuffer(oidb.toByteArray())
 
             to.addAttribute("req_pb_protocol_flag", true)
             if (seq != -1) {

@@ -6,12 +6,11 @@ import com.tencent.mobileqq.transfile.FileMsg
 import com.tencent.mobileqq.transfile.api.IProtoReqManager
 import com.tencent.mobileqq.transfile.protohandler.RichProto
 import com.tencent.mobileqq.transfile.protohandler.RichProtoProc
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.decodeFromByteArray
-import kotlinx.serialization.encodeToByteArray
-import kotlinx.serialization.protobuf.ProtoBuf
 import moe.fuqiuluo.qqinterface.servlet.BaseSvc
+import moe.fuqiuluo.shamrock.helper.ContactHelper
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.tools.hex2ByteArray
@@ -19,7 +18,26 @@ import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.tools.toHexString
 import moe.fuqiuluo.shamrock.utils.PlatformUtils
 import moe.fuqiuluo.shamrock.xposed.helper.AppRuntimeFetcher
+import moe.fuqiuluo.symbols.decodeProtobuf
 import mqq.app.MobileQQ
+import protobuf.auto.toByteArray
+import protobuf.oidb.TrpcOidb
+import protobuf.oidb.cmd0x11c5.C2CUserInfo
+import protobuf.oidb.cmd0x11c5.ChannelUserInfo
+import protobuf.oidb.cmd0x11c5.ClientMeta
+import protobuf.oidb.cmd0x11c5.CodecConfigReq
+import protobuf.oidb.cmd0x11c5.CommonHead
+import protobuf.oidb.cmd0x11c5.DownloadExt
+import protobuf.oidb.cmd0x11c5.DownloadReq
+import protobuf.oidb.cmd0x11c5.FileInfo
+import protobuf.oidb.cmd0x11c5.FileType
+import protobuf.oidb.cmd0x11c5.GroupUserInfo
+import protobuf.oidb.cmd0x11c5.IndexNode
+import protobuf.oidb.cmd0x11c5.MultiMediaReqHead
+import protobuf.oidb.cmd0x11c5.NtV2RichMediaReq
+import protobuf.oidb.cmd0x11c5.NtV2RichMediaRsp
+import protobuf.oidb.cmd0x11c5.SceneInfo
+import protobuf.oidb.cmd0x11c5.VideoDownloadExt
 import protobuf.oidb.cmd0xfc2.Oidb0xfc2ChannelInfo
 import protobuf.oidb.cmd0xfc2.Oidb0xfc2MsgApplyDownloadReq
 import protobuf.oidb.cmd0xfc2.Oidb0xfc2ReqBody
@@ -31,26 +49,14 @@ import tencent.im.oidb.oidb_sso
 import kotlin.coroutines.resume
 
 private const val GPRO_PIC = "gchat.qpic.cn"
-private const val GPRO_PIC_NT = "multimedia.nt.qq.com.cn"
+private const val MULTIMEDIA_DOMAIN = "multimedia.nt.qq.com.cn"
 private const val C2C_PIC = "c2cpicdw.qpic.cn"
 
 internal object RichProtoSvc: BaseSvc() {
-    var multiMediaRKey = "CAQSKAB6JWENi5LMk0kc62l8Pm3Jn1dsLZHyRLAnNmHGoZ3y_gDZPqZt-64"
-    /*@Deprecated("Use RichProtoSvc.getQQDns instead", ReplaceWith("getQQDns(domain)"))
-    fun getQQDns(domain: String) {
-        val bundle = Bundle()
-        bundle.putString("domain", "xxx")
-        bundle.putInt("businessType", 1)
-        val result = BinderMethodProxy
-            .callServer(QIPCClientHelper.getInstance().client, "InnerDnsModule", "reqDomain2IpList", bundle)
-        if (result.isSuccess) {
-            val ipList: ArrayList<IpData> = result.data.getParcelableArrayList("ip")!!
-        }
-    }*/
+    private val requestId = atomic(2L)
 
     suspend fun getGuildFileDownUrl(peerId: String, channelId: String, fileId: String, bizId: Int): String {
-        val buffer = sendOidbAW("OidbSvcTrpcTcp.0xfc2_0", 4034, 0, ProtoBuf.encodeToByteArray(
-            Oidb0xfc2ReqBody(
+        val buffer = sendOidbAW("OidbSvcTrpcTcp.0xfc2_0", 4034, 0, Oidb0xfc2ReqBody(
             msgCmd = 1200,
             msgBusType = 4202,
             msgChannelInfo = Oidb0xfc2ChannelInfo(
@@ -62,14 +68,16 @@ internal object RichProtoSvc: BaseSvc() {
                 fieldId = fileId,
                 supportEncrypt = 0
             )
-        )
-        )) ?: return ""
+        ).toByteArray()) ?: return ""
         val body = oidb_sso.OIDBSSOPkg()
         body.mergeFrom(buffer.slice(4))
-        ProtoBuf.decodeFromByteArray<Oidb0xfc2RspBody>(body.bytes_bodybuffer.get().toByteArray()).msgApplyDownloadRsp?.let {
-            it.msgDownloadInfo?.let {
-                return "https://${it.downloadDomain}${it.downloadUrl}&fname=$fileId&isthumb=0"
-            }
+        body.bytes_bodybuffer
+            .get().toByteArray()
+            .decodeProtobuf<Oidb0xfc2RspBody>()
+            .msgApplyDownloadRsp?.let {
+                it.msgDownloadInfo?.let {
+                    return "https://${it.downloadDomain}${it.downloadUrl}&fname=$fileId&isthumb=0"
+                }
         }
         return ""
     }
@@ -158,44 +166,192 @@ internal object RichProtoSvc: BaseSvc() {
         }
     }
 
-    fun getGroupPicDownUrl(
+    suspend fun getGroupPicDownUrl(
         originalUrl: String,
         md5: String,
+        peer: String = "",
+        fileId: String = "",
+        sha: String = "",
+        fileSize: ULong = 0uL,
+        width: UInt = 0u,
+        height: UInt = 0u
     ): String {
         val isNtServer = originalUrl.startsWith("/download")
-        val domain = if (isNtServer) GPRO_PIC_NT else GPRO_PIC
+        val domain = if (isNtServer) MULTIMEDIA_DOMAIN else GPRO_PIC
         if (originalUrl.isNotEmpty()) {
             if (isNtServer && !originalUrl.contains("rkey=")) {
-                return "https://$domain$originalUrl&rkey=$multiMediaRKey"
+                getNtPicRKey(
+                    fileId = fileId,
+                    md5 = md5,
+                    sha = sha,
+                    fileSize = fileSize,
+                    width = width,
+                    height = height
+                ) {
+                    sceneType = 2u
+                    grp = GroupUserInfo(peer.toULong())
+                }.onSuccess {
+                    return "https://$domain$originalUrl$it"
+                }.onFailure {
+                    LogCenter.log("getGroupPicDownUrl: ${it.stackTraceToString()}", Level.WARN)
+                }
             }
             return "https://$domain$originalUrl"
         }
         return "https://$domain/gchatpic_new/0/0-0-${md5.uppercase()}/0?term=2"
     }
 
-    fun getC2CPicDownUrl(
+    suspend fun getC2CPicDownUrl(
         originalUrl: String,
-        md5: String
-    ): String {
-        if (originalUrl.isNotEmpty()) {
-            return "https://$C2C_PIC$originalUrl"
-        }
-        return "https://$C2C_PIC/offpic_new/0/123-0-${md5.uppercase()}/0?term=2"
-    }
-
-    fun getGuildPicDownUrl(
-        originalUrl: String,
-        md5: String
+        md5: String,
+        peer: String = "",
+        fileId: String = "",
+        sha: String = "",
+        fileSize: ULong = 0uL,
+        width: UInt = 0u,
+        height: UInt = 0u
     ): String {
         val isNtServer = originalUrl.startsWith("/download")
-        val domain = if (isNtServer) GPRO_PIC_NT else GPRO_PIC
+        val domain = if (isNtServer) MULTIMEDIA_DOMAIN else C2C_PIC
+        if (originalUrl.isNotEmpty()) {
+            if (fileId.isNotEmpty()) getNtPicRKey(
+                fileId = fileId,
+                md5 = md5,
+                sha = sha,
+                fileSize = fileSize,
+                width = width,
+                height = height
+            ) {
+                sceneType = 1u
+                c2c = C2CUserInfo(
+                    accountType = 2u,
+                    uid = ContactHelper.getUidByUinAsync(peer.toLong())
+                )
+            }.onSuccess {
+                if (isNtServer && !originalUrl.contains("rkey=")) {
+                    return "https://$domain$originalUrl$it"
+                }
+            }.onFailure {
+                LogCenter.log("getC2CPicDownUrl: ${it.stackTraceToString()}", Level.WARN)
+            }
+            if (isNtServer && !originalUrl.contains("rkey=")) {
+                return "https://$domain$originalUrl&rkey="
+            }
+            return "https://$domain$originalUrl"
+        }
+        return "https://$$domain/offpic_new/0/123-0-${md5}/0?term=2"
+    }
+
+    suspend fun getGuildPicDownUrl(
+        originalUrl: String,
+        md5: String,
+        peer: String = "",
+        subPeer: String = "",
+        fileId: String = "",
+        sha: String = "",
+        fileSize: ULong = 0uL,
+        width: UInt = 0u,
+        height: UInt = 0u
+    ): String {
+        val isNtServer = originalUrl.startsWith("/download")
+        val domain = if (isNtServer) MULTIMEDIA_DOMAIN else GPRO_PIC
         if (originalUrl.isNotEmpty()) {
             if (isNtServer && !originalUrl.contains("rkey=")) {
-                return "https://$domain$originalUrl&rkey=$multiMediaRKey"
+                getNtPicRKey(
+                    fileId = fileId,
+                    md5 = md5,
+                    sha = sha,
+                    fileSize = fileSize,
+                    width = width,
+                    height = height
+                ) {
+                    sceneType = 3u
+                    channel = ChannelUserInfo(peer.toULong(), subPeer.toULong(), 1u)
+                }.onSuccess {
+                    return "https://$domain$originalUrl$it"
+                }.onFailure {
+                    LogCenter.log("getGuildPicDownUrl: ${it.stackTraceToString()}", Level.WARN)
+                }
+                return "https://$domain$originalUrl&rkey="
             }
             return "https://$domain$originalUrl"
         }
         return "https://$domain/qmeetpic/0/0-0-${md5.uppercase()}/0?term=2"
+    }
+
+    suspend fun getNtPicRKey(
+        fileId: String,
+        md5: String,
+        sha: String,
+        fileSize: ULong,
+        width: UInt,
+        height: UInt,
+        sceneBuilder: suspend SceneInfo.() -> Unit
+    ): Result<String> {
+        runCatching {
+            val req = run {
+                NtV2RichMediaReq(
+                    head = MultiMediaReqHead(
+                        commonHead = CommonHead(
+                            requestId = requestId.incrementAndGet().toULong(),
+                            cmd = 200u
+                        ),
+                        sceneInfo = SceneInfo(
+                            requestType = 2u,
+                            businessType = 1u,
+                        ).apply {
+                            sceneBuilder()
+                        },
+                        clientMeta = ClientMeta(2u)
+                    ),
+                    download = DownloadReq(
+                        IndexNode(
+                            FileInfo(
+                                fileSize = fileSize,
+                                md5 = md5.lowercase(),
+                                sha1 = sha.lowercase(),
+                                name = "${md5}.jpg",
+                                fileType = FileType(
+                                    fileType = 1u,
+                                    picFormat = 1000u,
+                                    videoFormat = 0u,
+                                    voiceFormat = 0u
+                                ),
+                                width = width,
+                                height = height,
+                                time = 0u,
+                                original = 1u
+                            ),
+                            fileUuid = fileId,
+                            storeId = 1u,
+                            uploadTime = 0u,
+                            ttl = 0u,
+                            subType = 0u,
+                            storeAppId = 0u
+                        ),
+                        DownloadExt(
+                            video = VideoDownloadExt(
+                                busiType = 0u,
+                                subBusiType = 0u,
+                                msgCodecConfig = CodecConfigReq(
+                                    platformChipinfo = "",
+                                    osVer = "",
+                                    deviceName = ""
+                                ),
+                                flag = 1u
+                            )
+                        )
+                    )
+                )
+            }.toByteArray()
+            val buffer = sendOidbAW("OidbSvcTrpcTcp.0x11c5_200", 4549, 200, req, true)?.slice(4)
+            buffer?.decodeProtobuf<TrpcOidb>()?.buffer?.decodeProtobuf<NtV2RichMediaRsp>()?.download?.rkeyParam?.let {
+                return Result.success(it)
+            }
+        }.onFailure {
+            return Result.failure(it)
+        }
+        return Result.failure(Exception("unable to get c2c nt pic"))
     }
 
     suspend fun getC2CVideoDownUrl(

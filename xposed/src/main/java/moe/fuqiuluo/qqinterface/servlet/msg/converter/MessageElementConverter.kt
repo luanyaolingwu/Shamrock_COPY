@@ -1,57 +1,26 @@
-package moe.fuqiuluo.qqinterface.servlet.msg.messageelement
+package moe.fuqiuluo.qqinterface.servlet.msg.converter
 
 import kotlinx.io.core.ByteReadPacket
 import kotlinx.io.core.discardExact
 import kotlinx.io.core.readUInt
 import moe.fuqiuluo.qqinterface.servlet.msg.MessageSegment
-import moe.fuqiuluo.shamrock.helper.Level
-import moe.fuqiuluo.shamrock.helper.LogCenter
-import protobuf.message.MessageElement
+import moe.fuqiuluo.shamrock.utils.DeflateTools
+import moe.fuqiuluo.shamrock.tools.asJsonObject
+import moe.fuqiuluo.shamrock.tools.asString
+import protobuf.message.Elem
 
 
-internal suspend fun List<MessageElement>.toSegments(
-    chatType: Int,
-    peerId: String,
-    subPeer: String
-): List<MessageSegment> {
-    val messageData = arrayListOf<MessageSegment>()
-    this.forEach { msg ->
-        kotlin.runCatching {
-            val elementType = if (msg.text != null) {
-                1
-            } else if (msg.face != null) {
-                2
-            } else if (msg.json != null) {
-                51
-            } else
-                throw UnsupportedOperationException("不支持的消息element类型：$msg")
-            val converter = MessageElementConverter[elementType]
-            converter?.invoke(chatType, peerId, subPeer, msg)
-                ?: throw UnsupportedOperationException("不支持的消息element类型：$elementType")
-        }.onSuccess {
-            messageData.add(it)
-        }.onFailure {
-            if (it is UnknownError) {
-                // 不处理的消息类型，抛出unknown error
-            } else {
-                LogCenter.log("消息element转换错误：$it", Level.WARN)
-            }
-        }
-    }
-    return messageData
-}
-
-internal typealias IMessageElementConverter = suspend (Int, String, String, MessageElement) -> MessageSegment
+internal typealias IMessageElementConverter = suspend (Int, String, String, Elem) -> MessageSegment
 
 internal object MessageElementConverter {
     private val convertMap = hashMapOf(
-          1 to MessageElementConverter::convertTextElem,
+        1 to MessageElementConverter::convertTextElem,
 //        MsgConstant.KELEMTYPEFACE to MessageElementConverter::convertFaceElem,
 //        MsgConstant.KELEMTYPEPIC to MessageElementConverter::convertImageElem,
 //        MsgConstant.KELEMTYPEPTT to MessageElementConverter::convertVoiceElem,
 //        MsgConstant.KELEMTYPEVIDEO to MessageElementConverter::convertVideoElem,
 //        MsgConstant.KELEMTYPEMARKETFACE to MessageElementConverter::convertMarketFaceElem,
-//        MsgConstant.KELEMTYPEARKSTRUCT to MessageElementConverter::convertStructJsonElem,
+        51 to MessageElementConverter::convertStructJsonElem,
 //        MsgConstant.KELEMTYPEREPLY to MessageElementConverter::convertReplyElem,
 //        MsgConstant.KELEMTYPEGRAYTIP to MessageElementConverter::convertGrayTipsElem,
 //        MsgConstant.KELEMTYPEFILE to MessageElementConverter::convertFileElem,
@@ -71,7 +40,7 @@ internal object MessageElementConverter {
         chatType: Int,
         peerId: String,
         subPeer: String,
-        element: MessageElement
+        element: Elem
     ): MessageSegment {
         val text = element.text!!
         if (text.attr6Buf != null) {
@@ -84,23 +53,11 @@ internal object MessageElementConverter {
                     "qq" to uin
                 )
             )
-        } else if (text.pbReserve != null) {
-            val resv = text.pbReserve!!
-            return MessageSegment(
-                type = "at",
-                data = hashMapOf(
-                    "qq" to when (resv.atType) {
-                        2 -> resv.atMemberTinyid!!
-                        4 -> resv.atChannelInfo!!.channelId!!
-                        else -> throw UnsupportedOperationException("Unknown at type: ${resv.atType}")
-                    }
-                )
-            )
         } else {
             return MessageSegment(
                 type = "text",
                 data = hashMapOf(
-                    "text" to text.text!!
+                    "text" to text.str!!
                 )
             )
         }
@@ -328,71 +285,74 @@ internal object MessageElementConverter {
 //        }
 //    }
 //
-//    /**
-//     * JSON消息转消息段
-//     */
-//    private suspend fun convertStructJsonElem(
-//        chatType: Int,
-//        peerId: String,
-//        subPeer: String,
-//        element: MessageElement
-//    ): MessageSegment {
-//        val data = element.arkElement.bytesData.asJsonObject
-//        return when (data["app"].asString) {
-//            "com.tencent.multimsg" -> {
-//                val info = data["meta"].asJsonObject["detail"].asJsonObject
-//                MessageSegment(
-//                    type = "forward",
-//                    data = mapOf(
-//                        "id" to info["resid"].asString
-//                    )
-//                )
-//            }
-//
-//            "com.tencent.troopsharecard" -> {
-//                val info = data["meta"].asJsonObject["contact"].asJsonObject
-//                MessageSegment(
-//                    type = "contact",
-//                    data = hashMapOf(
-//                        "type" to "group",
-//                        "id" to info["jumpUrl"].asString.split("group_code=")[1]
-//                    )
-//                )
-//            }
-//
-//            "com.tencent.contact.lua" -> {
-//                val info = data["meta"].asJsonObject["contact"].asJsonObject
-//                MessageSegment(
-//                    type = "contact",
-//                    data = hashMapOf(
-//                        "type" to "private",
-//                        "id" to info["jumpUrl"].asString.split("uin=")[1]
-//                    )
-//                )
-//            }
-//
-//            "com.tencent.map" -> {
-//                val info = data["meta"].asJsonObject["Location.Search"].asJsonObject
-//                MessageSegment(
-//                    type = "location",
-//                    data = hashMapOf(
-//                        "lat" to info["lat"].asString,
-//                        "lon" to info["lng"].asString,
-//                        "content" to info["address"].asString,
-//                        "title" to info["name"].asString
-//                    )
-//                )
-//            }
-//
-//            else -> MessageSegment(
-//                type = "json",
-//                data = mapOf(
-//                    "data" to element.arkElement.bytesData.asJsonObject.toString()
-//                )
-//            )
-//        }
-//    }
-//
+    /**
+     * JSON消息转消息段
+     */
+    private suspend fun convertStructJsonElem(
+        chatType: Int,
+        peerId: String,
+        subPeer: String,
+        element: Elem
+    ): MessageSegment {
+        val data = element.lightApp!!.data!!
+        val jsonStr =
+            (if (data[0].toInt() == 1) DeflateTools.uncompress(data.sliceArray(1 until data.size)) else data.sliceArray(1 until data.size)).toString()
+        val json = jsonStr.asJsonObject
+        return when (json["app"].asString) {
+            "com.tencent.multimsg" -> {
+                val info = json["meta"].asJsonObject["detail"].asJsonObject
+                MessageSegment(
+                    type = "forward",
+                    data = mapOf(
+                        "id" to info["resid"].asString
+                    )
+                )
+            }
+
+            "com.tencent.troopsharecard" -> {
+                val info = json["meta"].asJsonObject["contact"].asJsonObject
+                MessageSegment(
+                    type = "contact",
+                    data = hashMapOf(
+                        "type" to "group",
+                        "id" to info["jumpUrl"].asString.split("group_code=")[1]
+                    )
+                )
+            }
+
+            "com.tencent.contact.lua" -> {
+                val info = json["meta"].asJsonObject["contact"].asJsonObject
+                MessageSegment(
+                    type = "contact",
+                    data = hashMapOf(
+                        "type" to "private",
+                        "id" to info["jumpUrl"].asString.split("uin=")[1]
+                    )
+                )
+            }
+
+            "com.tencent.map" -> {
+                val info = json["meta"].asJsonObject["Location.Search"].asJsonObject
+                MessageSegment(
+                    type = "location",
+                    data = hashMapOf(
+                        "lat" to info["lat"].asString,
+                        "lon" to info["lng"].asString,
+                        "content" to info["address"].asString,
+                        "title" to info["name"].asString
+                    )
+                )
+            }
+
+            else -> MessageSegment(
+                type = "json",
+                data = mapOf(
+                    "data" to jsonStr
+                )
+            )
+        }
+    }
+
 //    /**
 //     * 回复消息转消息段
 //     */

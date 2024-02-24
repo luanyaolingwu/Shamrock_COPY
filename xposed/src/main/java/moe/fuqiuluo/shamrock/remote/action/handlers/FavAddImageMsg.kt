@@ -7,7 +7,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.protobuf.ProtoBuf
+
 import moe.fuqiuluo.qqinterface.servlet.QFavSvc
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
@@ -16,6 +16,7 @@ import moe.fuqiuluo.shamrock.utils.CryptTools
 import moe.fuqiuluo.shamrock.utils.DeflateTools
 import moe.fuqiuluo.shamrock.utils.FileUtils
 import moe.fuqiuluo.symbols.OneBotHandler
+import moe.fuqiuluo.symbols.decodeProtobuf
 import protobuf.fav.WeiyunComm
 
 @OneBotHandler("fav.add_image_msg")
@@ -40,7 +41,7 @@ internal object FavAddImageMsg: IActionHandler() {
         val image = fileText.let {
             val md5 = it.replace(regex = "[{}\\-]".toRegex(), replacement = "").split(".")[0].lowercase()
             if (md5.length == 32) {
-                FileUtils.getFile(it)
+                FileUtils.getFileByMd5(it)
             } else {
                 FileUtils.parseAndSave(it)
             }
@@ -76,7 +77,7 @@ internal object FavAddImageMsg: IActionHandler() {
                     readPacket.readFully(it, 0, it.size)
                 }
 
-                val resp = ProtoBuf.decodeFromByteArray<WeiyunComm>(data)
+                val resp = data.decodeProtobuf<WeiyunComm>()
                     .resp!!.fastUploadResourceResp!!.picResultList!!.first()
                 val picInfo = resp.picInfo!!
                 picUrl = picInfo.uri
@@ -135,7 +136,7 @@ internal object FavAddImageMsg: IActionHandler() {
                 val data = ByteArray(dataLength).also {
                     readPacket.readFully(it, 0, it.size)
                 }
-                val resp = ProtoBuf.decodeFromByteArray<WeiyunComm>(data).resp!!
+                val resp = data.decodeProtobuf<WeiyunComm>().resp!!
                 itemId = resp.addRichMediaResp!!.cid
             }
 

@@ -5,16 +5,8 @@ package protobuf.message.longmsg
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
-import protobuf.message.MessageBody
-import protobuf.message.MessageContent
-import protobuf.message.MessageHead
-
-@Serializable
-data class PushMsgBody(
-    @ProtoNumber(1) val head: MessageHead? = null,
-    @ProtoNumber(2) val content: MessageContent? = null,
-    @ProtoNumber(3) val body: MessageBody? = null
-)
+import moe.fuqiuluo.symbols.Protobuf
+import protobuf.message.PushMsgBody
 
 @Serializable
 data class LongMsgContent(
@@ -29,4 +21,4 @@ data class LongMsgAction(
 @Serializable
 data class LongMsgPayload(
     @ProtoNumber(2) val action: List<LongMsgAction>? = null
-)
+): Protobuf<LongMsgPayload>

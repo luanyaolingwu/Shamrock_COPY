@@ -2,13 +2,14 @@ package protobuf.push
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
-import protobuf.message.NtMessage
+import moe.fuqiuluo.symbols.Protobuf
+import protobuf.message.PushMsgBody
 
 @Serializable
 data class MessagePush(
-    @ProtoNumber(1) val msgBody: NtMessage? = null,
+    @ProtoNumber(1) val msgBody: PushMsgBody? = null,
     @ProtoNumber(4) val clientInfo: MessagePushClientInfo? = null,
-)
+): Protobuf<MessagePush>
 
 @Serializable
 data class MessagePushClientInfo(

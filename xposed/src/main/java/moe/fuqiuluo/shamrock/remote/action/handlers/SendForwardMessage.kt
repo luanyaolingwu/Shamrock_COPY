@@ -4,7 +4,7 @@ import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import kotlinx.serialization.json.*
 import moe.fuqiuluo.qqinterface.servlet.MsgSvc
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc
-import moe.fuqiuluo.qqinterface.servlet.msg.msgelement.toSegments
+import moe.fuqiuluo.qqinterface.servlet.msg.toSegments
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.helper.MessageHelper
@@ -15,7 +15,6 @@ import moe.fuqiuluo.shamrock.remote.service.data.ForwardMessageResult
 import moe.fuqiuluo.shamrock.tools.*
 import moe.fuqiuluo.symbols.OneBotHandler
 import protobuf.message.*
-import protobuf.message.longmsg.PushMsgBody
 import java.util.*
 import kotlin.random.Random
 
@@ -95,41 +94,48 @@ internal object SendForwardMessage : IActionHandler() {
                         LogCenter.log("合并转发消息节点消息(id = ${data["id"].asInt})获取失败：$it", Level.WARN)
                         return@map null
                     }
-                    uid = record.peerUid
                     if (record.chatType == MsgConstant.KCHATTYPEGROUP) groupUin = record.peerUin.toString()
+                    if (record.chatType == MsgConstant.KCHATTYPEC2C) uid = record.peerUid
                     PushMsgBody(
-                        head = MessageHead(
+                        msgHead = ResponseHead(
                             peerUid = record.senderUid,
-                            groupInfo = if (record.chatType == MsgConstant.KCHATTYPEGROUP) GroupInfo(
+                            receiverUid = record.peerUid,
+                            forward = ResponseForward(
+                                friendName = record.sendNickName
+                            ),
+                            responseGrp = if (record.chatType == MsgConstant.KCHATTYPEGROUP) ResponseGrp(
                                 groupCode = record.peerUin.toULong(),
                                 memberCard = record.sendMemberName,
                                 u1 = 2
                             ) else null
                         ),
-                        content = MessageContent(
+                        contentHead = ContentHead(
                             msgType = when (record.chatType) {
-                                MsgConstant.KCHATTYPEC2C -> 529
+                                MsgConstant.KCHATTYPEC2C -> 9
                                 MsgConstant.KCHATTYPEGROUP -> 82
                                 else -> throw UnsupportedOperationException(
                                     "Unsupported chatType: $chatType"
                                 )
                             },
+                            msgSubType = if (record.chatType == MsgConstant.KCHATTYPEC2C) 175 else null,
+                            divSeq = if (record.chatType == MsgConstant.KCHATTYPEC2C) 175 else null,
                             msgViaRandom = record.msgId,
-                            msgSeq = record.msgSeq,
+                            sequence = record.msgSeq, // idk what this is(i++)
                             msgTime = record.msgTime,
                             u2 = 1,
                             u6 = 0,
                             u7 = 0,
+                            msgSeq = if (record.chatType == MsgConstant.KCHATTYPEC2C) record.msgSeq else null, // seq for dm
                             forwardHead = ForwardHead(
                                 u1 = 0,
                                 u2 = 0,
-                                u3 = if (record.chatType == MsgConstant.KCHATTYPEGROUP) 0 else 2,
+                                u3 = 0,
                                 ub641 = "",
-                                Avatar = ""
+                                avatar = ""
                             )
                         ),
-                        body = MessageBody(
-                            rich = RichMessage(
+                        body = MsgBody(
+                            richText = RichText(
                                 elements = MessageHelper.messageArrayToMessageElements(
                                     record.chatType,
                                     record.msgId,
@@ -162,29 +168,35 @@ internal object SendForwardMessage : IActionHandler() {
                     )
                 } else if (data.containsKey("content")) {
                     PushMsgBody(
-                        head = MessageHead(
+                        msgHead = ResponseHead(
                             peer = data["uin"]?.asLong ?: TicketSvc.getUin().toLong(),
-                            peerUid = data["uid"]?.asString ?: TicketSvc.getUid()
-
+                            peerUid = data["uid"]?.asString ?: TicketSvc.getUid(),
+                            receiverUid = TicketSvc.getUid(),
+                            forward = ResponseForward(
+                                friendName = data["name"]?.asStringOrNull ?: TicketSvc.getNickname()
+                            )
                         ),
-                        content = MessageContent(
-                            msgType = 529,
-                            msgViaRandom = 4,
-                            msgSeq = data["seq"]?.asLong ?: Random.nextLong(),
+                        contentHead = ContentHead(
+                            msgType = 9,
+                            msgSubType = 175,
+                            divSeq = 175,
+                            msgViaRandom = Random.nextLong(),
+                            sequence = data["seq"]?.asLong ?: Random.nextLong(),
                             msgTime = data["time"]?.asLong ?: (System.currentTimeMillis() / 1000),
                             u2 = 1,
                             u6 = 0,
                             u7 = 0,
+                            msgSeq = data["seq"]?.asLong ?: Random.nextLong(),
                             forwardHead = ForwardHead(
                                 u1 = 0,
                                 u2 = 0,
                                 u3 = 2,
                                 ub641 = "",
-                                Avatar = ""
+                                avatar = ""
                             )
                         ),
-                        body = MessageBody(
-                            rich = RichMessage(
+                        body = MsgBody(
+                            richText = RichText(
                                 elements = MessageHelper.messageArrayToMessageElements(
                                     1,
                                     Random.nextLong(),
@@ -199,15 +211,14 @@ internal object SendForwardMessage : IActionHandler() {
                                             ?: TicketSvc.getNickname()
                                         }: "
                                     }.onEach {
-                                        when (it.asJsonObject["type"].asString) {
-                                            "text" -> desc[i] += it.asJsonObject["data"].asJsonObject["text"].asString
-
-                                            "at" -> desc[i] += "@${it.asJsonObject["data"].asJsonObject["name"].asStringOrNull ?: it.asJsonObject["data"].asJsonObject["qq"].asString}"
-
+                                        val type = it.asJsonObject["type"].asString
+                                        val itData = it.asJsonObject["data"].asJsonObject
+                                        when (type) {
+                                            "text" -> desc[i] += itData["text"].asString
+                                            "at" -> desc[i] += "@${itData["name"].asStringOrNull ?: itData["qq"].asString}"
                                             "face" -> desc[i] += "[表情]"
-
+                                            "image" -> desc[i] += "[图片]"
                                             "voice" -> desc[i] += "[语音]"
-
                                             "node" -> desc[i] += "[合并转发消息]"
                                         }
                                     }
