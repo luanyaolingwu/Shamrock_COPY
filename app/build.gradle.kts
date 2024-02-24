@@ -19,8 +19,8 @@ android {
         applicationId = "moe.fuqiuluo.shamrock"
         minSdk = 27
         targetSdk = 34
-        versionCode = getVersionCode()
-        versionName = "1.0.9" + ".r${getGitCommitCount()}." + "-Miao${getVersionName()}"
+        versionCode = getCurrentVersionCode()
+        versionName = "1.0.9" + ".r${getGitCommitCount()}" + "-Miao${getVersionName()}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
