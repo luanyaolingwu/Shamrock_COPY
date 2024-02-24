@@ -3,7 +3,7 @@
 [戳我去 OpenShamrock](https://github.com/whitechi73/OpenShamrock/)
 ----
 
-*使用时请注意好 __隐藏__ ,以避免出现"设备环境风险"的提示* 经过网友确认删除文件的方法已经失效
+*使用时请注意好 __隐藏__ ,以避免出现"设备环境风险"的提示* 经过网友确认删除文件的方法已经失效 --> [原先的解决方法](https://github.com/luanyaolingwu/Shamrock_COPY/releases/tag/1.0.7-beta)
 
 原始Readme
 ----
