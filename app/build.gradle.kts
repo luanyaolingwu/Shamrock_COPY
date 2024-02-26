@@ -7,7 +7,7 @@ import java.time.temporal.ChronoUnit
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    kotlin("plugin.serialization") version "1.9.21"
+    kotlin("plugin.serialization") version "1.9.22"
 }
 
 android {
@@ -93,7 +93,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.6"
+        kotlinCompilerExtensionVersion = "1.5.10"
     }
     packaging {
         jniLibs {
@@ -128,11 +128,6 @@ android {
     }
 
     configureAppSigningConfigsForRelease(project)
-    packaging {
-        jniLibs {
-            useLegacyPackaging = true
-        }
-    }
 }
 
 fun configureAppSigningConfigsForRelease(project: Project) {

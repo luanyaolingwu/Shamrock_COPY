@@ -31,7 +31,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 internal object MsgSvc : BaseSvc() {
-    suspend fun prepareTempChatFromGroup(
+    private suspend fun prepareTempChatFromGroup(
         groupId: String,
         peerId: String
     ): Result<Unit> {
@@ -222,7 +222,7 @@ internal object MsgSvc : BaseSvc() {
         }
     }
 
-    suspend fun sendMultiMsg(
+    suspend fun uploadMultiMsg(
         uid: String,
         groupUin: String?,
         messages: List<PushMsgBody>,
@@ -297,7 +297,7 @@ internal object MsgSvc : BaseSvc() {
                         time = msg.contentHead?.msgTime?.toInt() ?: 0,
                         msgType = MessageHelper.obtainDetailTypeByMsgType(chatType),
                         msgId = 0, // MessageHelper.generateMsgIdHash(chatType, msg.content!!.msgViaRandom), msgViaRandom 为空
-                        realId = msg.contentHead!!.msgSeq?.toInt() ?: 0,
+                        msgSeq = msg.contentHead!!.msgSeq ?: 0,
                         sender = MessageSender(
                             msg.msgHead?.peer ?: 0,
                             msg.msgHead?.responseGrp?.memberCard?.ifEmpty { msg.msgHead?.forward?.friendName }

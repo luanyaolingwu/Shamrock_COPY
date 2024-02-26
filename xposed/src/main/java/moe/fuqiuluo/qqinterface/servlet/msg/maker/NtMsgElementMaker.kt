@@ -16,17 +16,17 @@ import kotlinx.serialization.json.JsonPrimitive
 import moe.fuqiuluo.qqinterface.servlet.CardSvc
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.qqinterface.servlet.LbsSvc
-import moe.fuqiuluo.qqinterface.servlet.ark.ArkAppInfo
+import moe.fuqiuluo.qqinterface.servlet.ark.data.ArkAppInfo
 import moe.fuqiuluo.qqinterface.servlet.ark.ArkMsgSvc
 import moe.fuqiuluo.qqinterface.servlet.ark.WeatherSvc
 import moe.fuqiuluo.qqinterface.servlet.transfile.*
 import moe.fuqiuluo.qqinterface.servlet.transfile.FileTransfer
-import moe.fuqiuluo.qqinterface.servlet.transfile.PictureResource
-import moe.fuqiuluo.qqinterface.servlet.transfile.Private
+import moe.fuqiuluo.qqinterface.servlet.transfile.data.PictureResource
+import moe.fuqiuluo.qqinterface.servlet.transfile.data.Private
 import moe.fuqiuluo.qqinterface.servlet.transfile.Transfer
-import moe.fuqiuluo.qqinterface.servlet.transfile.Troop
-import moe.fuqiuluo.qqinterface.servlet.transfile.VideoResource
-import moe.fuqiuluo.qqinterface.servlet.transfile.VoiceResource
+import moe.fuqiuluo.qqinterface.servlet.transfile.data.Troop
+import moe.fuqiuluo.qqinterface.servlet.transfile.data.VideoResource
+import moe.fuqiuluo.qqinterface.servlet.transfile.data.VoiceResource
 import moe.fuqiuluo.shamrock.helper.ActionMsgException
 import moe.fuqiuluo.shamrock.helper.ContactHelper
 import moe.fuqiuluo.shamrock.helper.IllegalParamsException
@@ -57,76 +57,88 @@ import kotlin.random.nextInt
 
 internal typealias IMsgElementMaker = suspend (Int, Long, String, JsonObject) -> Result<MsgElement>
 
-internal object MsgElementMaker {
+internal object NtMsgElementMaker {
     private val makerMap = hashMapOf(
-        "text" to MsgElementMaker::createTextElem,
-        "face" to MsgElementMaker::createFaceElem,
-        "pic" to MsgElementMaker::createImageElem,
-        "image" to MsgElementMaker::createImageElem,
-        "voice" to MsgElementMaker::createRecordElem,
-        "record" to MsgElementMaker::createRecordElem,
-        "at" to MsgElementMaker::createAtElem,
-        "video" to MsgElementMaker::createVideoElem,
-        "markdown" to MsgElementMaker::createMarkdownElem,
-        "dice" to MsgElementMaker::createDiceElem,
-        "rps" to MsgElementMaker::createRpsElem,
-        "poke" to MsgElementMaker::createPokeElem,
-        "anonymous" to MsgElementMaker::createAnonymousElem,
-        "share" to MsgElementMaker::createShareElem,
-        "contact" to MsgElementMaker::createContactElem,
-        "location" to MsgElementMaker::createLocationElem,
-        "music" to MsgElementMaker::createMusicElem,
-        "reply" to MsgElementMaker::createReplyElem,
-        "touch" to MsgElementMaker::createTouchElem,
-        "weather" to MsgElementMaker::createWeatherElem,
-        "json" to MsgElementMaker::createJsonElem,
-        "new_dice" to MsgElementMaker::createNewDiceElem,
-        "new_rps" to MsgElementMaker::createNewRpsElem,
-        "basketball" to MsgElementMaker::createBasketballElem,
-        //"node" to MessageMaker::createNodeElem,
+        "text" to NtMsgElementMaker::createTextElem,
+        "face" to NtMsgElementMaker::createFaceElem,
+        "pic" to NtMsgElementMaker::createImageElem,
+        "image" to NtMsgElementMaker::createImageElem,
+        "voice" to NtMsgElementMaker::createRecordElem,
+        "record" to NtMsgElementMaker::createRecordElem,
+        "at" to NtMsgElementMaker::createAtElem,
+        "video" to NtMsgElementMaker::createVideoElem,
+        "markdown" to NtMsgElementMaker::createMarkdownElem,
+        "dice" to NtMsgElementMaker::createDiceElem,
+        "rps" to NtMsgElementMaker::createRpsElem,
+        "poke" to NtMsgElementMaker::createPokeElem,
+        "anonymous" to NtMsgElementMaker::createAnonymousElem,
+        "share" to NtMsgElementMaker::createShareElem,
+        "contact" to NtMsgElementMaker::createContactElem,
+        "location" to NtMsgElementMaker::createLocationElem,
+        "music" to NtMsgElementMaker::createMusicElem,
+        "reply" to NtMsgElementMaker::createReplyElem,
+        "touch" to NtMsgElementMaker::createTouchElem,
+        "weather" to NtMsgElementMaker::createWeatherElem,
+        "json" to NtMsgElementMaker::createJsonElem,
+        "new_dice" to NtMsgElementMaker::createNewDiceElem,
+        "new_rps" to NtMsgElementMaker::createNewRpsElem,
+        "basketball" to NtMsgElementMaker::createBasketballElem,
         //"multi_msg" to MessageMaker::createLongMsgStruct,
-        "bubble_face" to MsgElementMaker::createBubbleFaceElem,
-        "button" to MsgElementMaker::createInlineKeywordElem,
-        "inline_keyboard" to MsgElementMaker::createInlineKeywordElem
+        "bubble_face" to NtMsgElementMaker::createBubbleFaceElem,
+        "button" to NtMsgElementMaker::createInlineKeywordElem,
+        "inline_keyboard" to NtMsgElementMaker::createInlineKeywordElem
     )
 
     operator fun get(type: String): IMsgElementMaker? = makerMap[type]
 
-    private suspend fun createInlineKeywordElem(chatType: Int, msgId: Long, peerId: String, data: JsonObject): Result<MsgElement> {
-        fun tryNewKeyboardButton(btn: JsonObject): InlineKeyboardButton {
+    private suspend fun createInlineKeywordElem(
+        chatType: Int,
+        msgId: Long,
+        peerId: String,
+        data: JsonObject
+    ): Result<MsgElement> {
+        fun tryNewKeyboardButton(button: JsonObject): InlineKeyboardButton {
+            val renderData = button["render_data"].asJsonObject
+            val action = button["action"].asJsonObject
+            val permission = action["permission"].asJsonObject
             return runCatching {
                 InlineKeyboardButton(
-                    btn["id"].asString,
-                    btn["label"].asString,
-                    btn["visited_label"].asString,
-                    btn["style"].asInt,
-                    btn["type"].asInt,
-                    btn["click_limit"].asInt,
-                    btn["unsupport_tips"].asString,
-                    btn["data"].asString,
-                    btn["at_bot_show_channel_list"].asBoolean,
-                    btn["permission_type"].asInt,
-                    ArrayList(btn["specify_role_ids"].asJsonArray.map { it.asString }),
-                    ArrayList(btn["specify_tinyids"].asJsonArray.map { it.asString }),
+                    button["id"].asStringOrNull ?: "",
+                    renderData["label"].asString,
+                    renderData["visited_label"].asString,
+                    renderData["style"].asInt,
+                    action["type"].asInt,
+                    action["click_limit"].asInt,
+                    action["unsupport_tips"].asString,
+                    action["data"].asString,
+                    action["at_bot_show_channel_list"].asBooleanOrNull ?: false,
+                    permission["type"].asInt,
+                    ArrayList(permission["specify_role_ids"].asJsonArrayOrNull?.map { id -> id.asString }
+                        ?: arrayListOf()),
+                    ArrayList(permission["specify_user_ids"].asJsonArrayOrNull?.map { id -> id.asString }
+                        ?: arrayListOf()),
                     false, 0, false, arrayListOf()
                 )
             }.getOrElse {
                 InlineKeyboardButton(
-                    btn["id"].asString,
-                    btn["label"].asString,
-                    btn["visited_label"].asString,
-                    btn["style"].asInt,
-                    btn["type"].asInt,
-                    btn["click_limit"].asInt,
-                    btn["unsupport_tips"].asString,
-                    btn["data"].asString,
-                    btn["at_bot_show_channel_list"].asBoolean,
-                    btn["permission_type"].asInt,
-                    ArrayList(btn["specify_role_ids"].asJsonArray.map { it.asString }),
-                    ArrayList(btn["specify_tinyids"].asJsonArray.map { it.asString }),
+                    button["id"].asStringOrNull ?: "",
+                    renderData["label"].asString,
+                    renderData["visited_label"].asString,
+                    renderData["style"].asInt,
+                    action["type"].asInt,
+                    action["click_limit"].asInt,
+                    action["unsupport_tips"].asString,
+                    action["data"].asString,
+                    action["at_bot_show_channel_list"].asBooleanOrNull ?: false,
+                    permission["type"].asInt,
+                    ArrayList(permission["specify_role_ids"].asJsonArrayOrNull?.map { id -> id.asString }
+                        ?: arrayListOf()),
+                    ArrayList(permission["specify_user_ids"].asJsonArrayOrNull?.map { id -> id.asString }
+                        ?: arrayListOf()),
                 )
             }
         }
+
         val elem = MsgElement()
         elem.elementType = MsgConstant.KELEMTYPEINLINEKEYBOARD
         val rows = arrayListOf<InlineKeyboardRow>()
@@ -172,17 +184,6 @@ internal object MsgElementMaker {
         elem.faceBubbleElement = face
         return Result.success(elem)
     }
-
-//    private suspend fun createNodeElem(
-//        chatType: Int,
-//        msgId: Long,
-//        peerId: String,
-//        data: JsonObject
-//    ): Result<MsgElement> {
-//        data.checkAndThrow("data")
-//        SendForwardMessage(MsgConstant.KCHATTYPEC2C, TicketSvc.getUin(), data["content"].asJsonArray)
-//
-//    }
 
     private suspend fun createBasketballElem(
         chatType: Int,
@@ -290,7 +291,7 @@ internal object MsgElementMaker {
         data: JsonObject
     ): Result<MsgElement> {
         data.checkAndThrow("id")
-        GroupSvc.poke(peerId, data["id"].asString)
+        GroupSvc.poke(peerId.toLong(), data["id"].asLong)
         return Result.failure(ActionMsgException)
     }
 
@@ -326,7 +327,6 @@ internal object MsgElementMaker {
                 LogCenter.log("无法发送天气分享", Level.ERROR)
             }
         }
-
         return Result.failure(ActionMsgException)
     }
 
@@ -749,10 +749,10 @@ internal object MsgElementMaker {
         data.checkAndThrow("qq")
 
         val elem = MsgElement()
-        val qq = data["qq"].asString
+        val qqStr = data["qq"].asString
 
         val at = TextElement()
-        when (qq) {
+        when (qqStr) {
             "0", "all" -> {
                 at.content = "@全体成员"
                 at.atType = MsgConstant.ATTYPEALL
@@ -773,25 +773,26 @@ internal object MsgElementMaker {
             }
 
             else -> {
+                val qq = qqStr.toLong()
                 val name = data["name"].asStringOrNull
                 if (name == null) {
-                    val info = GroupSvc.getTroopMemberInfoByUinV2(peerId, qq, true).onFailure {
-                        LogCenter.log("无法获取群成员信息: $qq", Level.ERROR)
+                    val info = GroupSvc.getTroopMemberInfoByUinV2(peerId.toLong(), qq, true).onFailure {
+                        LogCenter.log("无法获取群成员信息: $qqStr", Level.ERROR)
                     }.getOrNull()
                     if (info != null) {
                         at.content = "@${
                             info.troopnick
                                 .ifNullOrEmpty(info.friendnick)
-                                .ifNullOrEmpty(qq)
+                                .ifNullOrEmpty(qqStr)
                         }"
                     } else {
-                        at.content = "@$qq"
+                        at.content = "@$qqStr"
                     }
                 } else {
                     at.content = "@$name"
                 }
                 at.atType = MsgConstant.ATTYPEONE
-                at.atNtUid = ContactHelper.getUidByUinAsync(qq.toLong())
+                at.atNtUid = ContactHelper.getUidByUinAsync(qq)
             }
         }
 
@@ -882,9 +883,11 @@ internal object MsgElementMaker {
         } else {
             val msgService = NTServiceFetcher.kernelService.msgService!!
 
-            val originalPath = msgService.getRichMediaFilePathForMobileQQSend(RichMediaFilePathInfo(
-                MsgConstant.KELEMTYPEPTT, 0, ptt.md5HexStr, file.name, 1, 0, null, "", true
-            ))
+            val originalPath = msgService.getRichMediaFilePathForMobileQQSend(
+                RichMediaFilePathInfo(
+                    MsgConstant.KELEMTYPEPTT, 0, ptt.md5HexStr, file.name, 1, 0, null, "", true
+                )
+            )
             if (!QQNTWrapperUtil.CppProxy.fileIsExist(originalPath) || QQNTWrapperUtil.CppProxy.getFileSize(originalPath) != file.length()) {
                 QQNTWrapperUtil.CppProxy.copyFile(file.absolutePath, originalPath)
             }
@@ -996,6 +999,10 @@ internal object MsgElementMaker {
         // GO-CQHTTP扩展参数 支持
         pic.picSubType = data["subType"].asIntOrNull ?: 0
         pic.isFlashPic = isFlash
+
+        //if (PlatformUtils.getQQVersionCode() >= PlatformUtils.QQ_9_0_8_VER && !ShamrockConfig.enableOldBDH()) {
+        //    pic.storeID = 1
+        //}
 
         elem.picElement = pic
 

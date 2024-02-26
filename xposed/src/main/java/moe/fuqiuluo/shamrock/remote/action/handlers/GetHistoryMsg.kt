@@ -25,14 +25,19 @@ import kotlin.coroutines.suspendCoroutine
 internal object GetHistoryMsg : IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val msgType = session.getString("message_type")
-        val peerId = session.getString(if (msgType == "group") "group_id" else "user_id")
+        val peerId = session.getLong(if (msgType == "group") "group_id" else "user_id").toString()
         val cnt = session.getIntOrNull("count") ?: 20
 
-        val startId = session.getIntOrNull("message_seq")?.let {
+        val startId = session.getIntOrNull("message_id")?.let {
             if (it == 0) return@let 0L
             MessageDB.getInstance()
                 .messageMappingDao()
                 .queryByMsgHashId(it)?.qqMsgId
+        } ?: session.getIntOrNull("message_seq")?.let {
+            if (it == 0) return@let 0L
+            MessageDB.getInstance()
+                .messageMappingDao()
+                .queryByMsgSeq(MessageHelper.obtainMessageTypeByDetailType(msgType), peerId, it)?.qqMsgId
         } ?: 0L
 
         return invoke(msgType, peerId, cnt, startId, echo = session.echo)
@@ -60,21 +65,11 @@ internal object GetHistoryMsg : IActionHandler() {
         val msgList = ArrayList<MessageDetail>().apply {
             addAll(result.data!!.map { msg ->
                 val msgHash = MessageHelper.generateMsgIdHash(msg.chatType, msg.msgId)
-                MessageHelper.saveMsgMappingNotExist(
-                    hash = msgHash,
-                    qqMsgId = msg.msgId,
-                    chatType = msg.chatType,
-                    subChatType = msg.chatType,
-                    peerId = msg.peerUin.toString(),
-                    msgSeq = msg.msgSeq.toInt(),
-                    time = msg.msgTime,
-                    subPeerId = msg.channelId ?: msg.peerUin.toString()
-                )
                 MessageDetail(
                     time = msg.msgTime.toInt(),
                     msgType = MessageHelper.obtainDetailTypeByMsgType(msg.chatType),
                     msgId = msgHash,
-                    realId = msg.msgSeq.toInt(),
+                    msgSeq = msg.msgSeq,
                     sender = MessageSender(
                         msg.senderUin, msg.sendNickName, "unknown", 0, msg.senderUid, msg.senderUid
                     ),
@@ -92,12 +87,11 @@ internal object GetHistoryMsg : IActionHandler() {
                 val msg = MsgSvc.getMsgByQMsgId(chatType, peerId, startMsgId).onFailure {
                     return logic("Obtain msg failed, please check your msg_id.", echo)
                 }.getOrThrow()
-                val seq = msg.clientSeq.toInt()
                 add(MessageDetail(
                     time = msg.msgTime.toInt(),
                     msgType = MessageHelper.obtainDetailTypeByMsgType(msg.chatType),
                     msgId = MessageHelper.generateMsgIdHash(msg.chatType, msg.msgId),
-                    realId = seq,
+                    msgSeq = msg.msgSeq,
                     sender = MessageSender(
                         msg.senderUin, msg.sendNickName
                             .ifEmpty { msg.sendMemberName }
@@ -107,7 +101,8 @@ internal object GetHistoryMsg : IActionHandler() {
                     message = msg.elements.toSegments(
                         chatType,
                         if (chatType == MsgConstant.KCHATTYPEGUILD) msg.guildId else msg.peerUin.toString(),
-                        msg.channelId ?: peerId).toListMap(),
+                        msg.channelId ?: peerId
+                    ).toListMap(),
                     peerId = msg.peerUin,
                     groupId = if (msg.chatType == MsgConstant.KCHATTYPEGROUP) msg.peerUin else 0,
                     targetId = if (msg.chatType != MsgConstant.KCHATTYPEGROUP) msg.peerUin else 0

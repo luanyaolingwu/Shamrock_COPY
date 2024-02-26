@@ -48,7 +48,10 @@ fun Routing.messageAction() {
         post {
             val groupId = fetchPostOrNull("group_id")
             val messages = fetchPostJsonArray("messages")
-            call.respondText(SendForwardMessage(MsgConstant.KCHATTYPEGROUP, groupId ?: "", messages), ContentType.Application.Json)
+            call.respondText(
+                SendForwardMessage(MsgConstant.KCHATTYPEGROUP, groupId ?: "", messages),
+                ContentType.Application.Json
+            )
         }
         get {
             respond(false, Status.InternalHandlerError, "Not support GET method")
@@ -59,7 +62,10 @@ fun Routing.messageAction() {
         post {
             val userId = fetchPostOrNull("user_id")
             val messages = fetchPostJsonArray("messages")
-            call.respondText(SendForwardMessage(MsgConstant.KCHATTYPEC2C, userId ?: "", messages), ContentType.Application.Json)
+            call.respondText(
+                SendForwardMessage(MsgConstant.KCHATTYPEC2C, userId ?: "", messages),
+                ContentType.Application.Json
+            )
         }
         get {
             respond(false, Status.InternalHandlerError, "Not support GET method")
@@ -71,7 +77,10 @@ fun Routing.messageAction() {
             val userId = fetchPostOrNull("user_id")
             val groupId = fetchPostOrNull("group_id")
             val messages = fetchPostJsonArray("messages")
-            call.respondText(SendForwardMessage(MsgConstant.KCHATTYPEC2C, userId ?: groupId?: "", messages), ContentType.Application.Json)
+            call.respondText(
+                SendForwardMessage(MsgConstant.KCHATTYPEC2C, userId ?: groupId ?: "", messages),
+                ContentType.Application.Json
+            )
         }
         get {
             respond(false, Status.InternalHandlerError, "Not support GET method")
@@ -86,11 +95,18 @@ fun Routing.messageAction() {
     getOrPost("/get_group_msg_history") {
         val peerId = fetchOrThrow("group_id")
         val cnt = fetchOrNull("count")?.toInt() ?: 20
-        val startId = fetchOrNull("message_seq")?.toInt()?.let {
-            if (it == 0) return@let 0L
+        val startId = fetchOrNull("message_id")?.let {
+            val messageId = it.toInt()
+            if (messageId == 0) return@let 0L
             MessageDB.getInstance()
                 .messageMappingDao()
-                .queryByMsgHashId(it)?.qqMsgId
+                .queryByMsgHashId(messageId)?.qqMsgId
+        } ?: fetchOrNull("message_seq")?.let {
+            val messageSeq = it.toInt()
+            if (messageSeq == 0) return@let 0L
+            MessageDB.getInstance()
+                .messageMappingDao()
+                .queryByMsgSeq(MsgConstant.KCHATTYPEGROUP, peerId, messageSeq)?.qqMsgId
         } ?: 0L
         call.respondText(GetHistoryMsg("group", peerId, cnt, startId), ContentType.Application.Json)
     }
@@ -137,15 +153,17 @@ fun Routing.messageAction() {
 
             val recallDuration = fetchGetOrNull("recall_duration")?.toLongOrNull()
 
-            call.respondText(SendMessage(
-                chatType = chatType,
-                peerId = if (chatType == MsgConstant.KCHATTYPEC2C) userId!! else groupId!!,
-                message = message,
-                autoEscape = autoEscape,
-                fromId = groupId ?: userId ?: "",
-                retryCnt = retryCnt,
-                recallDuration = recallDuration
-            ), ContentType.Application.Json)
+            call.respondText(
+                SendMessage(
+                    chatType = chatType,
+                    peerId = if (chatType == MsgConstant.KCHATTYPEC2C) userId!! else groupId!!,
+                    message = message,
+                    autoEscape = autoEscape,
+                    fromId = groupId ?: userId ?: "",
+                    retryCnt = retryCnt,
+                    recallDuration = recallDuration
+                ), ContentType.Application.Json
+            )
         }
         post {
             val msgType = fetchPostOrThrow("message_type")
@@ -157,39 +175,32 @@ fun Routing.messageAction() {
             val peerId = if (chatType == MsgConstant.KCHATTYPEC2C) userId!! else groupId!!
             val recallDuration = fetchPostOrNull("recall_duration")?.toLongOrNull()
 
-            call.respondText(if (isJsonData() && !isJsonString("message")) {
-                if (isJsonObject("message")) {
+            call.respondText(
+                if (isJsonData() && !isJsonString("message")) {
                     SendMessage(
                         chatType = chatType,
                         peerId = peerId,
-                        message = listOf(fetchPostJsonObject("message")).jsonArray,
+                        message = if (isJsonObject("message")) listOf(fetchPostJsonObject("message")).jsonArray else fetchPostJsonArray(
+                            "message"
+                        ),
                         fromId = groupId ?: userId ?: "",
                         retryCnt = retryCnt,
                         recallDuration = recallDuration
                     )
                 } else {
+                    val autoEscape = fetchPostOrNull("auto_escape")?.toBooleanStrict() ?: false
+                    //SendMessage(chatType, peerId, fetchPostOrThrow("message"), autoEscape)
                     SendMessage(
                         chatType = chatType,
                         peerId = peerId,
-                        message = fetchPostJsonArray("message"),
+                        message = fetchPostOrThrow("message"),
+                        autoEscape = autoEscape,
                         fromId = groupId ?: userId ?: "",
                         retryCnt = retryCnt,
                         recallDuration = recallDuration
                     )
-                }
-            } else {
-                val autoEscape = fetchPostOrNull("auto_escape")?.toBooleanStrict() ?: false
-                //SendMessage(chatType, peerId, fetchPostOrThrow("message"), autoEscape)
-                SendMessage(
-                    chatType = chatType,
-                    peerId = peerId,
-                    message = fetchPostOrThrow("message"),
-                    autoEscape = autoEscape,
-                    fromId = groupId ?: userId ?: "",
-                    retryCnt = retryCnt,
-                    recallDuration = recallDuration
-                )
-            }, ContentType.Application.Json)
+                }, ContentType.Application.Json
+            )
         }
     }
 
@@ -201,7 +212,16 @@ fun Routing.messageAction() {
             val autoEscape = fetchGetOrNull("auto_escape")?.toBooleanStrict() ?: false
             val recallDuration = fetchGetOrNull("recall_duration")?.toLongOrNull()
 
-            call.respondText(SendMessage(MsgConstant.KCHATTYPEGROUP, groupId, message, autoEscape, retryCnt = retryCnt, recallDuration = recallDuration), ContentType.Application.Json)
+            call.respondText(
+                SendMessage(
+                    MsgConstant.KCHATTYPEGROUP,
+                    groupId,
+                    message,
+                    autoEscape,
+                    retryCnt = retryCnt,
+                    recallDuration = recallDuration
+                ), ContentType.Application.Json
+            )
         }
         post {
             val groupId = fetchPostOrThrow("group_id")
@@ -212,28 +232,34 @@ fun Routing.messageAction() {
 
             val result = if (isJsonData()) {
                 if (isJsonString("message")) {
-                    SendMessage(MsgConstant.KCHATTYPEGROUP, groupId, fetchPostJsonString("message"), autoEscape, retryCnt = retryCnt, recallDuration = recallDuration)
+                    SendMessage(
+                        MsgConstant.KCHATTYPEGROUP,
+                        groupId,
+                        fetchPostJsonString("message"),
+                        autoEscape,
+                        retryCnt = retryCnt,
+                        recallDuration = recallDuration
+                    )
                 } else {
-                    if (isJsonObject("message")) {
-                        SendMessage(
-                            chatType = MsgConstant.KCHATTYPEGROUP,
-                            peerId = groupId,
-                            message = listOf(fetchPostJsonObject("message")).jsonArray,
-                            retryCnt = retryCnt,
-                            recallDuration = recallDuration
-                        )
-                    } else {
-                        SendMessage(
-                            chatType = MsgConstant.KCHATTYPEGROUP,
-                            peerId = groupId,
-                            message = fetchPostJsonArray("message"),
-                            retryCnt = retryCnt,
-                            recallDuration = recallDuration
-                        )
-                    }
+                    SendMessage(
+                        chatType = MsgConstant.KCHATTYPEGROUP,
+                        peerId = groupId,
+                        message = if (isJsonObject("message")) listOf(fetchPostJsonObject("message")).jsonArray else fetchPostJsonArray(
+                            "message"
+                        ),
+                        retryCnt = retryCnt,
+                        recallDuration = recallDuration
+                    )
                 }
             } else {
-                SendMessage(MsgConstant.KCHATTYPEGROUP, groupId, fetchPostOrThrow("message"), autoEscape, retryCnt = retryCnt, recallDuration = recallDuration)
+                SendMessage(
+                    MsgConstant.KCHATTYPEGROUP,
+                    groupId,
+                    fetchPostOrThrow("message"),
+                    autoEscape,
+                    retryCnt = retryCnt,
+                    recallDuration = recallDuration
+                )
             }
 
             call.respondText(result, ContentType.Application.Json)
@@ -248,14 +274,16 @@ fun Routing.messageAction() {
             val retryCnt = fetchGetOrNull("retry_cnt")?.toInt() ?: 3
             val autoEscape = fetchGetOrNull("auto_escape")?.toBooleanStrict() ?: false
             val recallDuration = fetchGetOrNull("recall_duration")?.toLongOrNull()
-            call.respondText(SendMessage(
-                chatType = if (groupId == null) MsgConstant.KCHATTYPEC2C else MsgConstant.KCHATTYPETEMPC2CFROMGROUP,
-                peerId = userId,
-                message = message,
-                autoEscape = autoEscape,
-                fromId = groupId ?: userId,
-                retryCnt = retryCnt, recallDuration = recallDuration
-            ), ContentType.Application.Json)
+            call.respondText(
+                SendMessage(
+                    chatType = if (groupId == null) MsgConstant.KCHATTYPEC2C else MsgConstant.KCHATTYPETEMPC2CFROMGROUP,
+                    peerId = userId,
+                    message = message,
+                    autoEscape = autoEscape,
+                    fromId = groupId ?: userId,
+                    retryCnt = retryCnt, recallDuration = recallDuration
+                ), ContentType.Application.Json
+            )
         }
         post {
             val userId = fetchPostOrThrow("user_id")
@@ -278,23 +306,16 @@ fun Routing.messageAction() {
                         retryCnt = retryCnt, recallDuration = recallDuration
                     )
                 } else {
-                    if (isJsonObject("message")) {
-                        SendMessage(
-                            chatType = chatType,
-                            peerId = userId,
-                            message = listOf(fetchPostJsonObject("message")).jsonArray,
-                            fromId = fromId,
-                            retryCnt = retryCnt, recallDuration = recallDuration
-                        )
-                    } else {
-                        SendMessage(
-                            chatType = chatType,
-                            peerId = userId,
-                            message = fetchPostJsonArray("message"),
-                            fromId = fromId,
-                            retryCnt = retryCnt, recallDuration = recallDuration
-                        )
-                    }
+                    SendMessage(
+                        chatType = chatType,
+                        peerId = userId,
+                        message = if (isJsonObject("message")) listOf(fetchPostJsonObject("message")).jsonArray else fetchPostJsonArray(
+                            "message"
+                        ),
+                        fromId = groupId ?: userId ?: "",
+                        retryCnt = retryCnt,
+                        recallDuration = recallDuration
+                    )
                 }
             } else {
                 SendMessage(

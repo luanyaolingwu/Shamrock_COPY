@@ -12,7 +12,6 @@ import moe.fuqiuluo.qqinterface.servlet.FriendSvc.requestFriendSystemMsgNew
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc
 import moe.fuqiuluo.qqinterface.servlet.GroupSvc.requestGroupSystemMsgNew
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc.getLongUin
-import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
 import moe.fuqiuluo.shamrock.helper.ContactHelper
 import moe.fuqiuluo.shamrock.helper.Level
 import moe.fuqiuluo.shamrock.helper.LogCenter
@@ -30,11 +29,7 @@ import moe.fuqiuluo.symbols.decodeProtobuf
 import protobuf.message.ContentHead
 import protobuf.message.MsgBody
 import protobuf.message.ResponseHead
-import protobuf.message.multimedia.RichMediaForPicData
 import protobuf.push.*
-import java.util.regex.Pattern
-
-private val RKEY_PATTERN = Pattern.compile("rkey=([A-Za-z0-9_-]+)")
 
 internal object PrimitiveListener {
     fun registerListener() {
@@ -94,22 +89,9 @@ internal object PrimitiveListener {
     }
 
     private fun onGroupMessage(msgTime: Long, body: MsgBody) {
-        /*runCatching {
-            body.richText?.elements?.filter {
-                it.commonElem != null && it.commonElem!!.serviceType == 48
-            }?.map {
-                it.commonElem!!.elem!!.decodeProtobuf<RichMediaForPicData>()
-            }?.forEach {
-                it.display?.show?.download?.url?.let {
-                    RKEY_PATTERN.matcher(it).takeIf {
-                        it.find()
-                    }?.group(1)?.let { rkey ->
-                        LogCenter.log("更新NT RKEY成功：$rkey")
-                        RichProtoSvc.multiMediaRKey = rkey
-                    }
-                }
-            }
-        }*/
+        runCatching {
+
+        }
     }
 
     private suspend fun onC2CPoke(msgTime: Long, body: MsgBody) {
@@ -384,7 +366,7 @@ internal object PrimitiveListener {
         val targetUid = event.memberUid
         val type = event.type
 
-        GroupSvc.getGroupMemberList(groupCode.toString(), true).onFailure {
+        GroupSvc.getGroupMemberList(groupCode, true).onFailure {
             LogCenter.log("新成员加入刷新群成员列表失败: $groupCode", Level.WARN)
         }.onSuccess {
             LogCenter.log("新成员加入刷新群成员列表成功，群成员数量: ${it.size}", Level.INFO)
@@ -422,7 +404,7 @@ internal object PrimitiveListener {
         val type = event.type
         val operatorUid = event.operatorUid
 
-        GroupSvc.getGroupMemberList(groupCode.toString(), true).onFailure {
+        GroupSvc.getGroupMemberList(groupCode, true).onFailure {
             LogCenter.log("新成员加入刷新群成员列表失败: $groupCode", Level.WARN)
         }.onSuccess {
             LogCenter.log("新成员加入刷新群成员列表成功，群成员数量: ${it.size}", Level.INFO)

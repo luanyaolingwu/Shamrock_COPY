@@ -21,23 +21,23 @@ import moe.fuqiuluo.shamrock.tools.hex2ByteArray
 
 internal typealias IMsgElementConverter = suspend (Int, String, String, MsgElement) -> MessageSegment
 
-internal object MsgElementConverter {
+internal object NtMsgElementConverter {
     private val convertMap = hashMapOf(
-        MsgConstant.KELEMTYPETEXT to MsgElementConverter::convertTextElem,
-        MsgConstant.KELEMTYPEFACE to MsgElementConverter::convertFaceElem,
-        MsgConstant.KELEMTYPEPIC to MsgElementConverter::convertImageElem,
-        MsgConstant.KELEMTYPEPTT to MsgElementConverter::convertVoiceElem,
-        MsgConstant.KELEMTYPEVIDEO to MsgElementConverter::convertVideoElem,
-        MsgConstant.KELEMTYPEMARKETFACE to MsgElementConverter::convertMarketFaceElem,
-        MsgConstant.KELEMTYPEARKSTRUCT to MsgElementConverter::convertStructJsonElem,
-        MsgConstant.KELEMTYPEREPLY to MsgElementConverter::convertReplyElem,
-        MsgConstant.KELEMTYPEGRAYTIP to MsgElementConverter::convertGrayTipsElem,
-        MsgConstant.KELEMTYPEFILE to MsgElementConverter::convertFileElem,
-        MsgConstant.KELEMTYPEMARKDOWN to MsgElementConverter::convertMarkdownElem,
+        MsgConstant.KELEMTYPETEXT to NtMsgElementConverter::convertTextElem,
+        MsgConstant.KELEMTYPEFACE to NtMsgElementConverter::convertFaceElem,
+        MsgConstant.KELEMTYPEPIC to NtMsgElementConverter::convertImageElem,
+        MsgConstant.KELEMTYPEPTT to NtMsgElementConverter::convertVoiceElem,
+        MsgConstant.KELEMTYPEVIDEO to NtMsgElementConverter::convertVideoElem,
+        MsgConstant.KELEMTYPEMARKETFACE to NtMsgElementConverter::convertMarketFaceElem,
+        MsgConstant.KELEMTYPEARKSTRUCT to NtMsgElementConverter::convertStructJsonElem,
+        MsgConstant.KELEMTYPEREPLY to NtMsgElementConverter::convertReplyElem,
+        MsgConstant.KELEMTYPEGRAYTIP to NtMsgElementConverter::convertGrayTipsElem,
+        MsgConstant.KELEMTYPEFILE to NtMsgElementConverter::convertFileElem,
+        MsgConstant.KELEMTYPEMARKDOWN to NtMsgElementConverter::convertMarkdownElem,
         //MsgConstant.KELEMTYPEMULTIFORWARD to MsgElementConverter::convertXmlMultiMsgElem,
         //MsgConstant.KELEMTYPESTRUCTLONGMSG to MsgElementConverter::convertXmlLongMsgElem,
-        MsgConstant.KELEMTYPEFACEBUBBLE to MsgElementConverter::convertBubbleFaceElem,
-        MsgConstant.KELEMTYPEINLINEKEYBOARD to MsgElementConverter::convertInlineKeyboardElem
+        MsgConstant.KELEMTYPEFACEBUBBLE to NtMsgElementConverter::convertBubbleFaceElem,
+        MsgConstant.KELEMTYPEINLINEKEYBOARD to NtMsgElementConverter::convertInlineKeyboardElem
     )
 
     operator fun get(type: Int): IMsgElementConverter? = convertMap[type]
@@ -193,6 +193,7 @@ internal object MsgElementConverter {
                         fileSize = image.fileSize.toULong(),
                         peer = peerId,
                     )
+
                     MsgConstant.KCHATTYPEGUILD -> RichProtoSvc.getGuildPicDownUrl(
                         originalUrl = originalUrl,
                         md5 = md5,
@@ -204,6 +205,7 @@ internal object MsgElementConverter {
                         peer = peerId,
                         subPeer = subPeer
                     )
+
                     else -> throw UnsupportedOperationException("Not supported chat type: $chatType")
                 },
                 "subType" to image.picSubType,
@@ -558,39 +560,35 @@ internal object MsgElementConverter {
     ): MessageSegment {
         val keyboard = element.inlineKeyboardElement
         return MessageSegment(
-            type = "inline_keyboard",
+            type = "button",
             data = mapOf(
-                "data" to buildJsonObject {
-                    putJsonArray("rows") {
-                        keyboard.rows.forEach { row ->
-                            add(buildJsonObject row@{
-                                putJsonArray("buttons") {
-                                    row.buttons.forEach { button ->
-                                        add(buildJsonObject {
-                                            put("id", button.id ?: "")
-                                            put("label", button.label ?: "")
-                                            put("visited_label", button.visitedLabel ?: "")
-                                            put("style", button.style)
-                                            put("type", button.type)
-                                            put("click_limit", button.clickLimit)
-                                            put("unsupport_tips", button.unsupportTips ?: "")
-                                            put("data", button.data)
-                                            put("at_bot_show_channel_list", button.atBotShowChannelList)
-                                            put("permission_type", button.permissionType)
-                                            putJsonArray("specify_role_ids") {
-                                                button.specifyRoleIds?.forEach { add(it) }
-                                            }
-                                            putJsonArray("specify_tinyids") {
-                                                button.specifyTinyids?.forEach { add(it) }
-                                            }
-                                        })
-                                    }
-                                }
-                            })
-                        }
-                    }
-                    put("bot_appid", keyboard.botAppid)
-                }.toString()
+                "rows" to keyboard.rows.map { row ->
+                    mapOf("buttons" to row.buttons.map { button ->
+                        mapOf(
+                            "id" to button.id,
+                            "render_data" to mapOf(
+                                "label" to (button?.label ?: ""),
+                                "visited_label" to (button?.visitedLabel ?: ""),
+                                "style" to (button?.style ?: 0)
+
+                            ),
+                            "action" to mapOf(
+                                "type" to (button?.type ?: 0),
+                                "permission" to mapOf(
+                                    "type" to (button?.permissionType ?: 0),
+                                    "specify_role_ids" to button?.specifyRoleIds,
+                                    "specify_user_ids" to button?.specifyTinyids
+                                ),
+                                "unsupport_tips" to (button?.unsupportTips ?: ""),
+                                "data" to (button?.data ?: ""),
+                                "reply" to button?.isReply,
+                                "enter" to button?.enter
+                            )
+                        )
+                    })
+
+                },
+                "appid" to keyboard.botAppid
             )
         )
     }

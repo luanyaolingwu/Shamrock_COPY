@@ -42,7 +42,7 @@ val String.asJson: JsonElement
 val String.asJsonObject: JsonObject
     get() = Json.parseToJsonElement(this).asJsonObject
 
-val Collection<Any>.json: JsonArray
+val Collection<Any?>.json: JsonArray
     get() {
         val arrayList = arrayListOf<JsonElement>()
         forEach {
@@ -52,8 +52,8 @@ val Collection<Any>.json: JsonArray
                     is Number -> arrayList.add(it.json)
                     is String -> arrayList.add(it.json)
                     is Boolean -> arrayList.add(it.json)
-                    is Map<*, *> -> arrayList.add((it as Map<String, Any>).json)
-                    is Collection<*> -> arrayList.add((it as Collection<Any>).json)
+                    is Map<*, *> -> arrayList.add((it as Map<String, Any?>).json)
+                    is Collection<*> -> arrayList.add((it as Collection<Any?>).json)
                     else -> error("unknown array type: ${it::class.java}")
                 }
             }
@@ -61,18 +61,20 @@ val Collection<Any>.json: JsonArray
         return arrayList.jsonArray
     }
 
-val Map<String, Any>.json: JsonObject
+val Map<String, Any?>.json: JsonObject
     get() {
         val map = hashMapOf<String, JsonElement>()
         forEach { (key, any) ->
-            when (any) {
-                is JsonElement -> map[key] = any
-                is Number -> map[key] = any.json
-                is String -> map[key] = any.json
-                is Boolean -> map[key] = any.json
-                is Map<*, *> -> map[key] = (any as Map<String, Any>).json
-                is Collection<*> -> map[key] = (any as Collection<Any>).json
-                else -> error("unknown object type: ${any::class.java}")
+            if (any != null) {
+                when (any) {
+                    is JsonElement -> map[key] = any
+                    is Number -> map[key] = any.json
+                    is String -> map[key] = any.json
+                    is Boolean -> map[key] = any.json
+                    is Map<*, *> -> map[key] = (any as Map<String, Any?>).json
+                    is Collection<*> -> map[key] = (any as Collection<Any?>).json
+                    else -> error("unknown object type: ${any::class.java}")
+                }
             }
         }
         return map.jsonObject

@@ -16,8 +16,8 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import moe.fuqiuluo.qqinterface.servlet.MsgSvc
-import moe.fuqiuluo.qqinterface.servlet.msg.maker.MessageElementMaker
-import moe.fuqiuluo.qqinterface.servlet.msg.maker.MsgElementMaker
+import moe.fuqiuluo.qqinterface.servlet.msg.maker.ElemMaker
+import moe.fuqiuluo.qqinterface.servlet.msg.maker.NtMsgElementMaker
 import moe.fuqiuluo.shamrock.helper.db.MessageDB
 import moe.fuqiuluo.shamrock.helper.db.MessageMapping
 import moe.fuqiuluo.shamrock.remote.structures.SendMsgResult
@@ -29,6 +29,7 @@ import moe.fuqiuluo.shamrock.tools.jsonArray
 import protobuf.message.Elem
 import kotlin.coroutines.resume
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.seconds
 
 internal object MessageHelper {
     suspend fun sendMessageWithoutMsgId(
@@ -66,12 +67,15 @@ internal object MessageHelper {
     suspend fun resendMsg(contact: Contact, msgId: Long, retryCnt: Int, msgHashId: Int): Result<SendMsgResult> {
         if (retryCnt < 0) return Result.failure(SendMsgException("消息发送超时次数过多"))
         val service = QRoute.api(IMsgService::class.java)
-        val result = withTimeoutOrNull(15000) {
-            if (suspendCancellableCoroutine {
-                    service.resendMsg(contact, msgId) { result, _ ->
-                        it.resume(result)
-                    }
-                } != 0) {
+        val result = withTimeoutOrNull(15.seconds) {
+            val resendRet = suspendCancellableCoroutine {
+                service.resendMsg(contact, msgId) { result, _ ->
+                    it.resume(result)
+                }
+            }
+            if (resendRet != 0 &&
+                resendRet != 4 // 使用OldBDH 100%触发
+                ) {
                 resendMsg(contact, msgId, retryCnt - 1, msgHashId)
             } else {
                 Result.success(SendMsgResult(msgHashId, msgId, System.currentTimeMillis()))
@@ -201,27 +205,24 @@ internal object MessageHelper {
     fun sendMessageWithMsgId(
         contact: Contact,
         message: ArrayList<MsgElement>,
+        uniseq: Long,
         callback: IOperateCallback
     ): SendMsgResult {
-        val uniseq = generateMsgId(contact.chatType)
         val nonMsg: Boolean = message.isEmpty()
-        return if (!nonMsg) {
+        if (!nonMsg) {
             val service = QRoute.api(IMsgService::class.java)
-            if (callback is MsgSvc.MessageCallback) {
-                callback.msgHash = uniseq.msgHashId
-            }
-
             service.sendMsg(
                 contact,
-                uniseq.qqMsgId,
+                uniseq,
                 message,
                 callback
             )
-
-            uniseq.copy(msgTime = System.currentTimeMillis())
-        } else {
-            uniseq.copy(msgTime = 0, msgHashId = 0)
         }
+        return SendMsgResult(
+            msgTime = if (nonMsg) 0 else System.currentTimeMillis(),
+            msgHashId = 0,
+            qqMsgId = uniseq
+        )
     }
 
     suspend fun sendMessageNoCb(
@@ -287,18 +288,18 @@ internal object MessageHelper {
     suspend fun messageArrayToMsgElements(
         chatType: Int,
         msgId: Long,
-        targetUin: String,
+        peerId: String,
         messageList: JsonArray
     ): Pair<Boolean, ArrayList<MsgElement>> {
         val msgList = arrayListOf<MsgElement>()
         var hasActionMsg = false
         messageList.forEach {
             val msg = it.jsonObject
-            val maker = MsgElementMaker[msg["type"].asString]
+            val maker = NtMsgElementMaker[msg["type"].asString]
             if (maker != null) {
                 try {
                     val data = msg["data"].asJsonObjectOrNull ?: EmptyJsonObject
-                    maker(chatType, msgId, targetUin, data).onSuccess { msgElem ->
+                    maker(chatType, msgId, peerId, data).onSuccess { msgElem ->
                         msgList.add(msgElem)
                     }.onFailure {
                         if (it.javaClass != ActionMsgException::class.java) {
@@ -321,18 +322,18 @@ internal object MessageHelper {
     suspend fun messageArrayToMessageElements(
         chatType: Int,
         msgId: Long,
-        targetUin: String,
+        peerId: String,
         messageList: JsonArray
     ): Pair<Boolean, ArrayList<Elem>> {
         val msgList = arrayListOf<Elem>()
         var hasActionMsg = false
         messageList.forEach {
             val msg = it.jsonObject
-            val maker = MessageElementMaker[msg["type"].asString]
+            val maker = ElemMaker[msg["type"].asString]
             if (maker != null) {
                 try {
                     val data = msg["data"].asJsonObjectOrNull ?: EmptyJsonObject
-                    maker(chatType, msgId, targetUin, data).onSuccess { msgElem ->
+                    maker(chatType, msgId, peerId, data).onSuccess { msgElem ->
                         msgList.add(msgElem)
                     }.onFailure {
                         if (it.javaClass != ActionMsgException::class.java) {
@@ -427,11 +428,11 @@ internal object MessageHelper {
                     params[key] = value.json
                 }
             }
-            val data = hashMapOf(
+            val data = mapOf(
                 "type" to it["_type"]!!.json,
                 "data" to JsonObject(params)
             )
-            arrayList.add(JsonObject(data))
+            arrayList.add(data.json)
         }
         return arrayList.jsonArray
     }

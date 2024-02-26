@@ -14,16 +14,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
-import moe.fuqiuluo.shamrock.helper.ContactHelper
 import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.helper.MessageHelper
 import moe.fuqiuluo.shamrock.helper.TransfileHelper
 import moe.fuqiuluo.shamrock.remote.action.ActionSession
 import moe.fuqiuluo.shamrock.remote.action.IActionHandler
-import moe.fuqiuluo.shamrock.remote.service.api.RichMediaUploadHandler
+import moe.fuqiuluo.qqinterface.servlet.transfile.RichMediaUploadHandler
 import moe.fuqiuluo.shamrock.tools.EmptyJsonString
 import moe.fuqiuluo.shamrock.utils.FileUtils
 import moe.fuqiuluo.shamrock.utils.MD5
@@ -35,7 +32,7 @@ import kotlin.coroutines.resume
 @OneBotHandler("upload_private_file")
 internal object UploadPrivateFile : IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
-        val userId = session.getString("user_id")
+        val userId = session.getLong("user_id")
         val file = session.getString("file")
         val name = session.getString("name")
             .replace("/", "_")
@@ -47,7 +44,7 @@ internal object UploadPrivateFile : IActionHandler() {
     }
 
     suspend operator fun invoke(
-        userId: String,
+        userId: Long,
         file: String,
         name: String,
         echo: JsonElement = EmptyJsonString
@@ -56,6 +53,21 @@ internal object UploadPrivateFile : IActionHandler() {
         if (!srcFile.exists()) {
             srcFile = FileUtils.getFile(file)
         }
+
+        if (!srcFile.exists()) {
+            srcFile = file.let {
+                val md5 = it.replace(
+                    regex = "[{}\\-]".toRegex(),
+                    replacement = ""
+                ).split(".")[0].lowercase()
+                if (md5.length == 32) {
+                    FileUtils.getFileByMd5(it)
+                } else {
+                    FileUtils.parseAndSave(it)
+                }
+            }
+        }
+
         if (!srcFile.exists()) {
             return badParam("文件不存在", echo)
         }
@@ -65,6 +77,7 @@ internal object UploadPrivateFile : IActionHandler() {
         fileElement.fileName = name
         fileElement.filePath = srcFile.absolutePath
         fileElement.fileSize = srcFile.length()
+        fileElement.folderId = srcFile.parent ?: ""
         fileElement.picWidth = 0
         fileElement.picHeight = 0
         fileElement.videoDuration = 0
@@ -106,13 +119,15 @@ internal object UploadPrivateFile : IActionHandler() {
         val msgIdPair = MessageHelper.generateMsgId(MsgConstant.KCHATTYPEC2C)
         val info = (withTimeoutOrNull((srcFile.length() / (300 * 1024)) * 1000 + 5000) {
             val msgService = QRoute.api(IMsgService::class.java)
-            val contact = MessageHelper.generateContact(MsgConstant.KCHATTYPEC2C, userId)
+            val contact = MessageHelper.generateContact(MsgConstant.KCHATTYPEC2C, userId.toString())
             suspendCancellableCoroutine<FileTransNotifyInfo?> {
                 msgService.sendMsgWithMsgId(
                     contact, msgIdPair.qqMsgId, arrayListOf(msgElement)
                 ) { code, reason ->
-                    LogCenter.log("私聊文件消息发送异常(code = $code, reason = $reason)")
-                    it.resume(null)
+                    if (code != 0) {
+                        LogCenter.log("私聊文件消息发送异常(code = $code, reason = $reason)")
+                        it.resume(null)
+                    }
                 }
                 RichMediaUploadHandler.registerListener(msgIdPair.qqMsgId) {
                     it.resume(this)
