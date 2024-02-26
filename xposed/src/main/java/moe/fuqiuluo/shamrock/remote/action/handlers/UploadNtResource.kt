@@ -39,7 +39,7 @@ internal object UploadNtResource: IActionHandler() {
         picture: String,
         echo: JsonElement = EmptyJsonString
     ): String {
-        if (ShamrockConfig.isDev()) {
+        if (/*ShamrockConfig.isDev()*/ShamrockConfig.isPro()) {
             val file = picture.let {
                 val md5 = it.replace(
                     regex = "[{}\\-]".toRegex(),

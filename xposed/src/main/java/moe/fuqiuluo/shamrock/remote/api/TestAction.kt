@@ -18,7 +18,7 @@ import moe.fuqiuluo.shamrock.tools.getOrPost
 import moe.fuqiuluo.shamrock.xposed.helper.NTServiceFetcher
 
 fun Routing.testAction() {
-    if (ShamrockConfig.isDev()) {
+    if (/*ShamrockConfig.isDev()*/ShamrockConfig.isPro()) {
         LogCenter.log("testAction is enabled.", Level.WARN)
     } else {
         return

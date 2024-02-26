@@ -36,7 +36,6 @@ android {
 
     buildTypes {
         release {
-            //先前的设置为: isMinifyEnabled = false
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
