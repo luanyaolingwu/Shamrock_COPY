@@ -21,7 +21,7 @@ import java.util.ArrayList
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-@OneBotHandler("get_history_msg")
+@OneBotHandler("get_history_msg", ["get_history_message"])
 internal object GetHistoryMsg : IActionHandler() {
     override suspend fun internalHandle(session: ActionSession): String {
         val msgType = session.getString("message_type")
@@ -69,7 +69,9 @@ internal object GetHistoryMsg : IActionHandler() {
                     time = msg.msgTime.toInt(),
                     msgType = MessageHelper.obtainDetailTypeByMsgType(msg.chatType),
                     msgId = msgHash,
+                    qqMsgId = msg.msgId,
                     msgSeq = msg.msgSeq,
+                    realId = msg.msgSeq,
                     sender = MessageSender(
                         msg.senderUin, msg.sendNickName, "unknown", 0, msg.senderUid, msg.senderUid
                     ),
@@ -91,7 +93,9 @@ internal object GetHistoryMsg : IActionHandler() {
                     time = msg.msgTime.toInt(),
                     msgType = MessageHelper.obtainDetailTypeByMsgType(msg.chatType),
                     msgId = MessageHelper.generateMsgIdHash(msg.chatType, msg.msgId),
+                    qqMsgId = msg.msgId,
                     msgSeq = msg.msgSeq,
+                    realId = msg.msgSeq,
                     sender = MessageSender(
                         msg.senderUin, msg.sendNickName
                             .ifEmpty { msg.sendMemberName }

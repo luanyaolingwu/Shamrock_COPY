@@ -29,7 +29,9 @@ internal object GetMsg: IActionHandler() {
             time = msg.msgTime.toInt(),
             msgType = MessageHelper.obtainDetailTypeByMsgType(msg.chatType),
             msgId = msgHash,
+            qqMsgId = msg.msgId,
             msgSeq = msg.msgSeq,
+            realId = msg.msgSeq,
             sender = MessageSender(
                 msg.senderUin, msg.sendNickName
                     .ifEmpty { msg.sendMemberName }

@@ -25,12 +25,27 @@ class AntiDetection: IAction {
     private external fun antiNativeDetections(): Boolean
 
     override fun invoke(ctx: Context) {
-        antiFindPackage(ctx)
+        try {
+            antiFindPackage(ctx)
+        }catch(_:Throwable){ } //某个大聪明在外面隐藏了shamrock，导致这个代码抛出异常，俺不说是谁>_<
+        antiGetPackageGidsDetection(ctx)
         antiProviderDetection()
         antiNativeDetection()
         if (ShamrockConfig.isAntiTrace())
             antiTrace()
         antiMemoryWalking()
+    }
+
+    private fun antiGetPackageGidsDetection(ctx: Context) {
+        //通过 android.content.pm.PackageManager->getPackageGids(Ljava/lang/String;)[I  扫 moe.fuqiuluo.shamrock
+        ctx.packageManager::class.java.hookMethod("getPackageGids").before {
+            val packageName = it.args[0] as String
+            if (packageName == "moe.fuqiuluo.shamrock") {
+                it.result = null
+                it.throwable = PackageManager.NameNotFoundException(packageName)
+                LogCenter.log("AntiDetection: 检测到对Shamrock的检测，欺骗GetPackageGids")
+            }
+        }
     }
 
     private fun antiProviderDetection() {

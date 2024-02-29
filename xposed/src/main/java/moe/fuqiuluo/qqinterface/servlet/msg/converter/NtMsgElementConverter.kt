@@ -2,10 +2,6 @@ package moe.fuqiuluo.qqinterface.servlet.msg.converter
 
 import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import com.tencent.qqnt.kernel.nativeinterface.MsgElement
-import kotlinx.serialization.json.add
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import kotlinx.serialization.json.putJsonArray
 import moe.fuqiuluo.qqinterface.servlet.msg.MessageSegment
 import moe.fuqiuluo.qqinterface.servlet.transfile.RichProtoSvc
 import moe.fuqiuluo.shamrock.helper.ContactHelper
@@ -15,9 +11,12 @@ import moe.fuqiuluo.shamrock.helper.MessageHelper
 import moe.fuqiuluo.shamrock.helper.db.ImageDB
 import moe.fuqiuluo.shamrock.helper.db.ImageMapping
 import moe.fuqiuluo.shamrock.helper.db.MessageDB
+import moe.fuqiuluo.shamrock.tools.asJsonArray
 import moe.fuqiuluo.shamrock.tools.asJsonObject
 import moe.fuqiuluo.shamrock.tools.asString
 import moe.fuqiuluo.shamrock.tools.hex2ByteArray
+import moe.fuqiuluo.shamrock.utils.PlatformUtils
+import moe.fuqiuluo.shamrock.utils.PlatformUtils.QQ_9_0_8_VER
 
 internal typealias IMsgElementConverter = suspend (Int, String, String, MsgElement) -> MessageSegment
 
@@ -167,6 +166,14 @@ internal object NtMsgElementConverter {
         val originalUrl = image.originImageUrl ?: ""
         LogCenter.log({ "receive image: $image" }, Level.DEBUG)
 
+        var storeId = 0
+        if (PlatformUtils.getQQVersionCode() > QQ_9_0_8_VER) {
+            storeId = image.storeID
+        }
+
+        /*
+        PicElement{picSubType=0,fileName=A655FCDADABC40D0CEAF6F9AF92937CD.jpg,fileSize=142865,picWidth=886,picHeight=1920,original=false,md5HexStr=a655fcdadabc40d0ceaf6f9af92937cd,sourcePath=null,thumbPath=null,transferStatus=2,progress=0,picType=1000,invalidState=0,fileUuid=CgoxMDI5Mzc0MTE1EhTnucgrUbp3MJjjagUM2-VxSQ5V7hiR3Agg_goo9ZCZt-HNhANQgJqeAQ,fileSubId=,thumbFileSize=0,fileBizId=null,downloadIndex=null,summary=,emojiFrom=null,emojiWebUrl=null,emojiAd=EmojiAD{url=,desc=,},emojiMall=EmojiMall{packageId=0,emojiId=0,},emojiZplan=EmojiZPlan{actionId=0,actionName=,actionType=0,playerNumber=0,peerUid=0,bytesReserveInfo=,},originImageMd5=,originImageUrl=null,importRichMediaContext=null,isFlashPic=false,}
+         */
         return MessageSegment(
             type = "image",
             data = hashMapOf(
@@ -192,6 +199,7 @@ internal object NtMsgElementConverter {
                         sha = "",
                         fileSize = image.fileSize.toULong(),
                         peer = peerId,
+                        storeId = storeId
                     )
 
                     MsgConstant.KCHATTYPEGUILD -> RichProtoSvc.getGuildPicDownUrl(
@@ -234,16 +242,10 @@ internal object NtMsgElementConverter {
             data = hashMapOf(
                 "file" to md5,
                 "url" to when (chatType) {
-                    MsgConstant.KCHATTYPEGROUP -> RichProtoSvc.getGroupPttDownUrl(
-                        "0",
-                        record.md5HexStr,
-                        record.fileUuid
-                    )
-
                     MsgConstant.KCHATTYPEC2C -> RichProtoSvc.getC2CPttDownUrl("0", record.fileUuid)
-                    MsgConstant.KCHATTYPEGUILD -> RichProtoSvc.getGroupPttDownUrl(
+                    MsgConstant.KCHATTYPEGROUP, MsgConstant.KCHATTYPEGUILD -> RichProtoSvc.getGroupPttDownUrl(
                         "0",
-                        record.md5HexStr,
+                        md5.hex2ByteArray(),
                         record.fileUuid
                     )
 
@@ -335,7 +337,10 @@ internal object NtMsgElementConverter {
                 MessageSegment(
                     type = "forward",
                     data = mapOf(
-                        "id" to info["resid"].asString
+                        "id" to info["resid"].asString,
+                        "filename" to info["uniseq"].asString,
+                        "summary" to info["summary"].asString,
+                        "desc" to info["news"].asJsonArray.joinToString("\n") { it.asJsonObject["text"].asString }
                     )
                 )
             }
