@@ -221,7 +221,7 @@ internal object NtMsgElementMaker {
             }
             rows.add(InlineKeyboardRow(buttons))
         }
-        elem.inlineKeyboardElement = InlineKeyboardElement(rows, keyboard["bot_appid"].asLong)
+        elem.inlineKeyboardElement = InlineKeyboardElement(rows, keyboard["appid"].asLong)
         return Result.success(elem)
     }
 
@@ -992,8 +992,9 @@ internal object NtMsgElementMaker {
         peerId: String,
         data: JsonObject
     ): Result<MsgElement> {
-        val isOriginal = data["original"].asBooleanOrNull ?: true
-        val isFlash = data["flash"].asBooleanOrNull ?: false
+        val type = data["type"].asStringOrNull ?: ""
+        val isOriginal = type == "original"
+        val isFlash = type == "flash"
         val filePath = data["file"].asStringOrNull
         val url = data["url"].asStringOrNull
         var file: File? = null

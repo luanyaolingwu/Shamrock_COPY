@@ -70,6 +70,7 @@ class PullConfig: IAction {
             DataRequester.request("init", onFailure = {
                 if (!ShamrockConfig.isInit()) {
                     ctx.toast("请启动Shamrock主进程以初始化服务，进程将退出。")
+                    ShamrockConfig.putDefaultSettings()
                     thread {
                         Thread.sleep(3000)
                         exitProcess(1)

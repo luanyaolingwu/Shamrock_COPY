@@ -1,14 +1,11 @@
 package moe.fuqiuluo.qqinterface.servlet.transfile
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.MediaMetadataRetriever
 import androidx.exifinterface.media.ExifInterface
 import com.tencent.mobileqq.qroute.QRoute
 import com.tencent.qqnt.aio.adapter.api.IAIOPttApi
 import com.tencent.qqnt.kernel.nativeinterface.CommonFileInfo
 import com.tencent.qqnt.kernel.nativeinterface.Contact
-import com.tencent.qqnt.kernel.nativeinterface.FileElement
 import com.tencent.qqnt.kernel.nativeinterface.MsgConstant
 import com.tencent.qqnt.kernel.nativeinterface.MsgElement
 import com.tencent.qqnt.kernel.nativeinterface.PicElement
@@ -16,28 +13,18 @@ import com.tencent.qqnt.kernel.nativeinterface.PttElement
 import com.tencent.qqnt.kernel.nativeinterface.QQNTWrapperUtil
 import com.tencent.qqnt.kernel.nativeinterface.RichMediaFilePathInfo
 import com.tencent.qqnt.kernel.nativeinterface.VideoElement
-import com.tencent.qqnt.msg.api.IMsgUtilApi
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import moe.fuqiuluo.qqinterface.servlet.BaseSvc
 import moe.fuqiuluo.qqinterface.servlet.TicketSvc
-import moe.fuqiuluo.qqinterface.servlet.transfile.data.Private
-import moe.fuqiuluo.qqinterface.servlet.transfile.data.Troop
 import moe.fuqiuluo.qqinterface.servlet.transfile.data.TryUpPicData
-import moe.fuqiuluo.qqinterface.servlet.transfile.data.VideoResource
-import moe.fuqiuluo.shamrock.helper.Level
-import moe.fuqiuluo.shamrock.helper.LogCenter
 import moe.fuqiuluo.shamrock.helper.MessageHelper
-import moe.fuqiuluo.shamrock.helper.TransfileHelper
 import moe.fuqiuluo.shamrock.remote.service.config.ShamrockConfig
 import moe.fuqiuluo.shamrock.tools.hex2ByteArray
 import moe.fuqiuluo.shamrock.tools.slice
 import moe.fuqiuluo.shamrock.utils.AudioUtils
 import moe.fuqiuluo.shamrock.utils.FileUtils
-import moe.fuqiuluo.shamrock.utils.MD5
 import moe.fuqiuluo.shamrock.utils.MediaType
 import moe.fuqiuluo.shamrock.xposed.helper.NTServiceFetcher
 import moe.fuqiuluo.shamrock.xposed.helper.msgService
@@ -58,12 +45,12 @@ import protobuf.oidb.cmd0x11c5.NtV2RichMediaRsp
 import protobuf.oidb.cmd0x11c5.SceneInfo
 import protobuf.oidb.cmd0x11c5.UploadInfo
 import protobuf.oidb.cmd0x11c5.UploadReq
+import protobuf.oidb.cmd0x11c5.UploadRsp
 import protobuf.oidb.cmd0x11c5.VideoDownloadExt
 import protobuf.oidb.cmd0x388.Cmd0x388ReqBody
 import protobuf.oidb.cmd0x388.Cmd0x388RspBody
 import protobuf.oidb.cmd0x388.TryUpImgReq
 import java.io.File
-import java.io.FileOutputStream
 import kotlin.coroutines.resume
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -72,14 +59,30 @@ import kotlin.random.nextULong
 import kotlin.time.Duration
 
 internal object NtV2RichMediaSvc: BaseSvc() {
-    private const val GROUP_PIC_UPLOAD_TO = "100000000"
-
     private val requestIdSeq = atomic(2L)
+
+    fun fetchGroupResUploadTo(): String {
+        return ShamrockConfig.getUpResGroup().ifEmpty { "100000000" }
+    }
+
+    suspend fun tryUploadResourceByNt(
+        chatType: Int,
+        elementType: Int,
+        resources: ArrayList<File>,
+        timeout: Duration,
+        retryCnt: Int = 5
+    ): Result<MutableList<CommonFileInfo>> {
+        return internalTryUploadResourceByNt(chatType, elementType, resources, timeout).onFailure {
+            if (retryCnt > 0) {
+                return tryUploadResourceByNt(chatType, elementType, resources, timeout, retryCnt - 1)
+            }
+        }
+    }
 
     /**
      * 批量上传图片
      */
-    suspend fun tryUploadResourceByNt(
+    private suspend fun internalTryUploadResourceByNt(
         chatType: Int,
         elementType: Int,
         resources: ArrayList<File>,
@@ -276,7 +279,7 @@ internal object NtV2RichMediaSvc: BaseSvc() {
         }
         val contact = when(chatType) {
             MsgConstant.KCHATTYPEC2C -> MessageHelper.generateContact(chatType, TicketSvc.getUin())
-            else -> Contact(chatType, GROUP_PIC_UPLOAD_TO, GROUP_PIC_UPLOAD_TO)
+            else -> Contact(chatType, fetchGroupResUploadTo(), null)
         }
         val result = mutableListOf<CommonFileInfo>()
         withTimeoutOrNull(timeout) {
@@ -297,16 +300,23 @@ internal object NtV2RichMediaSvc: BaseSvc() {
                     message = ArrayList(messages),
                     uniseq = uniseq.qqMsgId
                 ) { _, _ ->
-                    val kernelService = NTServiceFetcher.kernelService
-                    val sessionService = kernelService.wrapperSession
-                    val msgService = sessionService.msgService
-                    msgService.deleteMsg(contact, arrayListOf(uniseq.qqMsgId), null)
+                    if (contact.chatType == MsgConstant.KCHATTYPEGROUP && contact.peerUid == "100000000") {
+                        val kernelService = NTServiceFetcher.kernelService
+                        val sessionService = kernelService.wrapperSession
+                        val msgService = sessionService.msgService
+                        msgService.deleteMsg(contact, arrayListOf(uniseq.qqMsgId), null)
+                    }
                 }
                 it.invokeOnCancellation {
                     RichMediaUploadHandler.removeListener(uniseq.qqMsgId)
                 }
             }
         }
+
+        if (result.isEmpty()) {
+            return Result.failure(Exception("upload failed"))
+        }
+
         return Result.success(result)
     }
 
@@ -386,9 +396,6 @@ internal object NtV2RichMediaSvc: BaseSvc() {
         return Result.failure(Exception("unable to get c2c nt pic"))
     }
 
-    /**
-     * 请求上传Nt图片
-     */
     suspend fun requestUploadNtPic(
         file: File,
         md5: String,
@@ -396,8 +403,29 @@ internal object NtV2RichMediaSvc: BaseSvc() {
         name: String,
         width: UInt,
         height: UInt,
+        retryCnt: Int,
+        chatType: Int = MsgConstant.KCHATTYPEGROUP,
         sceneBuilder: suspend SceneInfo.() -> Unit
-    ) {
+    ): Result<UploadRsp> {
+        return runCatching {
+            requestUploadNtPic(file, md5, sha, name, width, height, chatType, sceneBuilder).getOrThrow()
+        }.onFailure {
+            if (retryCnt > 0) {
+                return requestUploadNtPic(file, md5, sha, name, width, height, retryCnt - 1, chatType, sceneBuilder)
+            }
+        }
+    }
+
+    private suspend fun requestUploadNtPic(
+        file: File,
+        md5: String,
+        sha: String,
+        name: String,
+        width: UInt,
+        height: UInt,
+        chatType: Int,
+        sceneBuilder: suspend SceneInfo.() -> Unit
+    ): Result<UploadRsp> {
         val req = NtV2RichMediaReq(
             head = MultiMediaReqHead(
                 commonHead = CommonHead(
@@ -435,14 +463,29 @@ internal object NtV2RichMediaSvc: BaseSvc() {
                 tryFastUploadCompleted = true,
                 srvSendMsg = false,
                 clientRandomId = Random.nextULong(),
-                compatQMsgSceneType = 1u,
+                compatQMsgSceneType = 2u,
                 clientSeq = Random.nextUInt(),
                 noNeedCompatMsg = true
             )
         ).toByteArray()
-        val buffer = sendOidbAW("OidbSvcTrpcTcp.0x11c5_100", 4549, 100, req, true)?.slice(4)
-        val rsp = buffer?.decodeProtobuf<TrpcOidb>()?.buffer?.decodeProtobuf<NtV2RichMediaRsp>()
-        LogCenter.log("requestUploadPic => rsp: $rsp")
+        val buffer = when (chatType) {
+            MsgConstant.KCHATTYPEGROUP -> {
+                sendOidbAW("OidbSvcTrpcTcp.0x11c4_100", 4548, 100, req, true, timeout = 3_000)?.slice(4)
+                    ?: return Result.failure(Exception("no response: timeout"))
+            }
+            MsgConstant.KCHATTYPEC2C -> {
+                sendOidbAW("OidbSvcTrpcTcp.0x11c5_100", 4549, 100, req, true, timeout = 3_000)?.slice(4)
+                    ?: return Result.failure(Exception("no response: timeout"))
+            }
+
+            else -> return Result.failure(Exception("unknown chat type: $chatType"))
+        }
+        val rspBuffer = buffer.decodeProtobuf<TrpcOidb>().buffer
+        val rsp = rspBuffer.decodeProtobuf<NtV2RichMediaRsp>()
+        if (rsp.upload == null) {
+            return Result.failure(Exception("unable to request upload nt pic: ${rsp.head}"))
+        }
+        return Result.success(rsp.upload!!)
     }
 
     /**
